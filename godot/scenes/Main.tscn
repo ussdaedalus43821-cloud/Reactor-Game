@@ -1,0 +1,147 @@
+[gd_scene load_steps=12 format=3]
+
+[ext_resource type="Script" path="res://scripts/control_room.gd" id="1_room"]
+[ext_resource type="PackedScene" path="res://scenes/widgets/HeaderBar.tscn" id="2_header"]
+[ext_resource type="PackedScene" path="res://scenes/widgets/FaultBanner.tscn" id="3_banner"]
+[ext_resource type="PackedScene" path="res://scenes/widgets/AnalogDial.tscn" id="4_dial"]
+[ext_resource type="PackedScene" path="res://scenes/widgets/CoreGrid.tscn" id="5_grid"]
+[ext_resource type="PackedScene" path="res://scenes/widgets/ScrollingGraph.tscn" id="6_graph"]
+[ext_resource type="PackedScene" path="res://scenes/widgets/RodSlider.tscn" id="7_rod"]
+[ext_resource type="PackedScene" path="res://scenes/widgets/ReadoutPanel.tscn" id="8_readouts"]
+[ext_resource type="PackedScene" path="res://scenes/widgets/ScramButton.tscn" id="9_scram"]
+[ext_resource type="PackedScene" path="res://scenes/widgets/EventLog.tscn" id="10_log"]
+[ext_resource type="PackedScene" path="res://scenes/widgets/GameOverlay.tscn" id="11_overlay"]
+
+[node name="ControlRoom" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_room")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(0.04, 0.045, 0.055, 1)
+
+[node name="Header" parent="." instance=ExtResource("2_header")]
+layout_mode = 1
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 1440.0
+offset_bottom = 46.0
+mouse_filter = 2
+
+[node name="Banner" parent="." instance=ExtResource("3_banner")]
+layout_mode = 1
+offset_left = 16.0
+offset_top = 52.0
+offset_right = 1424.0
+offset_bottom = 90.0
+mouse_filter = 2
+
+[node name="FluxDial" parent="." instance=ExtResource("4_dial")]
+layout_mode = 1
+offset_left = 16.0
+offset_top = 98.0
+offset_right = 352.0
+offset_bottom = 278.0
+mouse_filter = 2
+
+[node name="TempDial" parent="." instance=ExtResource("4_dial")]
+layout_mode = 1
+offset_left = 16.0
+offset_top = 278.0
+offset_right = 352.0
+offset_bottom = 458.0
+mouse_filter = 2
+label_text = "FUEL TEMP"
+unit_text = "C"
+max_value = 3000.0
+decimals = 0
+major_ticks = 6
+dial_color = Color(0.941, 0.651, 0.235, 1)
+
+[node name="PressureDial" parent="." instance=ExtResource("4_dial")]
+layout_mode = 1
+offset_left = 16.0
+offset_top = 458.0
+offset_right = 352.0
+offset_bottom = 638.0
+mouse_filter = 2
+label_text = "PRIMARY PRESSURE"
+unit_text = "MPa"
+min_value = 10.0
+max_value = 22.0
+decimals = 2
+major_ticks = 6
+dial_color = Color(0.247, 0.82, 0.541, 1)
+
+[node name="CoreGrid" parent="." instance=ExtResource("5_grid")]
+layout_mode = 1
+offset_left = 366.0
+offset_top = 98.0
+offset_right = 906.0
+offset_bottom = 640.0
+mouse_filter = 2
+
+[node name="Graph" parent="." instance=ExtResource("6_graph")]
+layout_mode = 1
+offset_left = 920.0
+offset_top = 98.0
+offset_right = 1424.0
+offset_bottom = 640.0
+mouse_filter = 2
+
+[node name="RodA" parent="." instance=ExtResource("7_rod")]
+layout_mode = 1
+offset_left = 16.0
+offset_top = 652.0
+offset_right = 112.0
+offset_bottom = 884.0
+bank_name = "A"
+accent = Color(0.294, 0.588, 0.922, 1)
+
+[node name="RodB" parent="." instance=ExtResource("7_rod")]
+layout_mode = 1
+offset_left = 124.0
+offset_top = 652.0
+offset_right = 220.0
+offset_bottom = 884.0
+bank_name = "B"
+accent = Color(0.878, 0.353, 0.784, 1)
+
+[node name="Readouts" parent="." instance=ExtResource("8_readouts")]
+layout_mode = 1
+offset_left = 236.0
+offset_top = 652.0
+offset_right = 616.0
+offset_bottom = 884.0
+mouse_filter = 2
+
+[node name="ScramButton" parent="." instance=ExtResource("9_scram")]
+layout_mode = 1
+offset_left = 640.0
+offset_top = 658.0
+offset_right = 860.0
+offset_bottom = 878.0
+
+[node name="Log" parent="." instance=ExtResource("10_log")]
+layout_mode = 1
+offset_left = 880.0
+offset_top = 652.0
+offset_right = 1424.0
+offset_bottom = 884.0
+mouse_filter = 2
+
+[node name="Overlay" parent="." instance=ExtResource("11_overlay")]
+layout_mode = 1
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 1440.0
+offset_bottom = 900.0
+mouse_filter = 2
