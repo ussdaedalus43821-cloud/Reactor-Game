@@ -1,0 +1,13 @@
+# The reference implementation has no required dependencies -- the tests and
+# the conformance generator run on a stock python3.
+#
+# NumPy is optional and only affects reference/reactor_physics.py, where it
+# turns the RK4 hot loop into array arithmetic. Without it an identical
+# pure-Python path runs instead.
+#
+# Nothing here is needed to build, run or ship the game: the Godot project
+# contains no Python at all.
+#
+#     python3 -m pip install -r requirements.txt
+#
+numpy>=1.21

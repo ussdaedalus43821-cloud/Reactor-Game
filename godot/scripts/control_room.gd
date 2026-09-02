@@ -2,11 +2,12 @@ extends Control
 
 ## Control room -- the conductor.
 ##
-## Owns the bridge, drives it at the simulation's fixed rate regardless of
-## render frame rate, and fans the resulting state out to the instruments.
-## It contains no physics and no policy: the core is integrated by Python
-## or by sim_local.gd, and every trip, alarm and fault decision comes from
-## reactor_rules.nova. This script is the panel and nothing more.
+## Owns the NovaLang bridge, drives it at the simulation's fixed rate
+## regardless of render frame rate, and fans the resulting state out to the
+## instruments. It contains no physics and no policy: the core is
+## integrated by reactor_physics.gd, and every trip, alarm and fault
+## decision comes from reactor_rules.nova, interpreted in-engine. This
+## script is the panel and nothing more.
 
 const BG_SHADER_PATH := "res://shaders/control_room_bg.gdshader"
 const MAX_STEPS_PER_FRAME := 12     # 0.6 s of catch-up; beyond that we drop
@@ -27,7 +28,7 @@ const MAX_STEPS_PER_FRAME := 12     # 0.6 s of catch-up; beyond that we drop
 @onready var event_log: EventLog = $Log
 @onready var overlay: GameOverlay = $Overlay
 
-var bridge: ReactorBridge = null
+var bridge: NovaBridge = null
 
 var _accum := 0.0
 var _dt := 0.05
@@ -46,10 +47,10 @@ func _ready() -> void:
 	rod_b.target_changed.connect(_on_rod_b_changed)
 	scram_button.pressed.connect(_on_scram_pressed)
 
-	bridge = ReactorBridge.new()
-	bridge.name = "Bridge"
-	bridge.backend_selected.connect(_on_backend_selected)
-	bridge.backend_lost.connect(_on_backend_lost)
+	bridge = NovaBridge.new()
+	bridge.name = "NovaBridge"
+	bridge.engine_ready.connect(_on_engine_ready)
+	bridge.engine_error.connect(_on_engine_error)
 	add_child(bridge)
 	bridge.start()
 
@@ -302,27 +303,23 @@ func _restart() -> void:
 
 
 # ==========================================================================
-# Bridge status
+# Engine status
 # ==========================================================================
 
-func _on_backend_selected(_backend: int, label: String, info: Dictionary) -> void:
+func _on_engine_ready(label: String, info: Dictionary) -> void:
 	header.backend_label = label
 	header.backend_ok = bool(info.get("ok", true))
 	_dt = float(info.get("dt", _dt))
 	var title := str(info.get("title", ""))
 	if title != "":
-		event_log.add_line("POLICY LOADED: %s v%d" % [title,
-				int(info.get("rules_version", 1))], 0.0)
-	var err := str(info.get("error", ""))
-	if err != "":
-		event_log.add_line("CONTROL LOGIC ERROR: " + err, 0.0)
+		event_log.add_line("POLICY LOADED: %s v%d  (%d rules, %d faults)"
+				% [title, int(info.get("rules_version", 1)),
+				   int(info.get("rules", 0)), int(info.get("faults", 0))], 0.0)
 
 
-func _on_backend_lost(reason: String) -> void:
-	event_log.add_line("SIM BACKEND LOST: " + reason, header.plant_time)
-	event_log.add_line("SWITCHED TO IN-ENGINE SIM -- CORE RESTARTED", header.plant_time)
-	graph.clear_history()
-	_target_a = 0.0
-	_target_b = 0.0
-	rod_a.target = 0.0
-	rod_b.target = 0.0
+## A .nova error stops the policy dead; the physics keeps integrating so the
+## panel stays live, but the operator needs to see why nothing is tripping.
+func _on_engine_error(message: String) -> void:
+	header.backend_ok = false
+	header.backend_label = "NovaLang ERROR"
+	event_log.add_line("CONTROL LOGIC ERROR: " + message, header.plant_time)

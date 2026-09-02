@@ -1,8 +1,0 @@
-# NumPy is optional. With it, the RK4 hot loop runs as array arithmetic;
-# without it, reactor_physics.py falls back to an identical pure-Python
-# path, so the bridge still works against a stock macOS `python3` with no
-# site-packages at all. Install it if you want the faster core:
-#
-#     python3 -m pip install -r requirements.txt
-#
-numpy>=1.21

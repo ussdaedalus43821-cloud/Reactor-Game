@@ -1,0 +1,182 @@
+# ==========================================================================
+# daedalus_rules.nova -- tactical advisor for DAEDALUS.
+#
+# The second NovaLang program, and the reason the language grew past a
+# rules-only DSL: this one needs real functions, a module, lists and dicts.
+# It watches the ship and the scope and tells the pilot what is about to
+# kill them, in the same interpreter that runs reactor_rules.nova.
+#
+# `reactor "..."` is just the program-title declaration -- the keyword is a
+# holdover from the first program ever written in NovaLang.
+#
+# Read each tick from the host:
+#   t, dt                    seconds, step size
+#   hull, hull_max           player hull points
+#   shield, shield_max       player shield points
+#   cloaked, cloak_energy    invincibility cloak
+#   infested                 replicator infestation, 0..1.6 (>=1 = failure)
+#   contacts                 list of enemy kind strings on the scope
+#   ally_count               live wingmen
+#   sector_danger            0 safe .. 3 extreme
+#   rockets, homing          remaining ordnance
+#   hyper_state              "idle" / "charging" / "travel"
+#
+# Written back: everything in `effects`, plus alert(), advise() via log(),
+# and the alarm tier.
+# ==========================================================================
+
+reactor "DAEDALUS  BC-304" version 1
+
+import "lib/combat.nova" as combat
+
+params {
+    hull_critical_frac   = 0.30
+    hull_warn_frac       = 0.55
+    shield_warn_frac     = 0.25
+    cloak_reserve        = 25.0     # advise decloaking below this
+    infest_warn          = 0.35
+    infest_critical      = 0.80
+    ordnance_low         = 4
+    wingman_floor        = 1        # call another below this
+    overwhelm_score      = 34
+
+    # Encounter scheduling, reusing the fault engine as an event director.
+    fault_first_min_s    = 25.0
+    fault_first_max_s    = 55.0
+    fault_gap_min_s      = 40.0
+    fault_gap_max_s      = 90.0
+}
+
+effects {
+    alert_level     = 0
+    recommend       = ""
+    encounter_bonus = 0
+    threat_peak     = 0   persistent
+}
+
+signals {
+    hull_frac    = combat.frac(hull, hull_max)
+    shield_frac  = combat.frac(shield, shield_max)
+    threat       = combat.threat_score(contacts)
+    threat_tier  = combat.tier_name(threat)
+    focus        = combat.priority_target(contacts)
+    exposed      = shield_frac < shield_warn_frac and not cloaked
+    can_jump     = hyper_state == "idle"
+}
+
+# ==========================================================================
+# SURVIVAL -- highest priority
+# ==========================================================================
+
+rule hull_critical priority 300 {
+    when  hull_frac < hull_critical_frac
+    then  alarm(3, "HULL CRITICAL")
+          set recommend = "DISENGAGE -- JUMP OUT"
+}
+
+rule hull_damaged priority 290 edge {
+    when  hull_frac < hull_warn_frac and hull_frac >= hull_critical_frac
+    then  alarm(2, "HULL DAMAGED")
+          log("HULL AT " + round(hull_frac * 100) + "%  --  drones deploying")
+}
+
+rule shields_down priority 280 {
+    when  exposed and threat > 0
+    then  alarm(2, "SHIELDS DOWN, HOSTILES ENGAGED")
+          set recommend = "CLOAK OR BREAK OFF"
+}
+
+# ==========================================================================
+# REPLICATOR INFESTATION -- the one thing shields do not stop
+# ==========================================================================
+
+rule infestation_detected priority 270 edge {
+    when  infested > 0
+    then  alarm(2, "REPLICATOR INFESTATION")
+          log("BLOCKS ON THE HULL  --  destroy the source ship")
+}
+
+rule infestation_spreading priority 265 {
+    when  infested >= infest_warn and infested < infest_critical
+    then  alarm(2, "INFESTATION " + round(infested * 100) + "%")
+          set recommend = "KILL THE REPLICATOR SHIP"
+}
+
+rule infestation_terminal priority 264 {
+    when  infested >= infest_critical
+    then  alarm(3, "SYSTEMS FAILING")
+          set recommend = "HYPERDRIVE NOW -- THE JUMP SCRAMBLES IT"
+}
+
+# ==========================================================================
+# TACTICAL ADVICE
+# ==========================================================================
+
+rule overwhelmed priority 200 {
+    when  threat >= overwhelm_score and can_jump
+    then  alarm(3, threat_tier + " RESISTANCE")
+          set recommend = "JUMP OUT -- you cannot win this one"
+}
+
+rule focus_fire priority 150 edge {
+    when  focus != "" and threat >= 8
+    then  log("PRIORITY TARGET: " + upper(focus) + "   (" + threat_tier + ")")
+}
+
+rule call_wingman priority 140 edge {
+    when  ally_count < wingman_floor and threat >= 8
+    then  log("OUTNUMBERED  --  press G for a wingman")
+}
+
+rule cloak_reserve_low priority 130 edge {
+    when  cloaked and cloak_energy < cloak_reserve
+    then  alarm(1, "CLOAK RESERVE LOW")
+          log("DECLOAK SOON  --  shields restart from zero")
+}
+
+rule ordnance_low priority 120 edge {
+    when  rockets < ordnance_low and homing < ordnance_low
+    then  log("ORDNANCE LOW  --  guns and beam only")
+}
+
+# Track the worst the scope has ever looked this run; `threat_peak` is a
+# persistent effect, so it survives the per-tick reset.
+rule record_peak priority 60 {
+    when  threat > threat_peak
+    then  set threat_peak = threat
+          set encounter_bonus = round(threat * 10)
+}
+
+rule all_clear priority 50 edge {
+    when  threat == 0 and hull_frac > hull_warn_frac and infested == 0
+    then  alarm(0, "")
+          set recommend = ""
+          log("SCOPE CLEAR")
+}
+
+# ==========================================================================
+# ENCOUNTER DIRECTOR
+#
+# The same fault engine reactor_rules.nova uses for equipment failures,
+# repurposed: each "fault" here is a scripted encounter that runs for a
+# while and then clears.
+# ==========================================================================
+
+fault wraith_ambush weight 2.0 duration 45.0 label "WRAITH DARTS INBOUND" {
+    set encounter_bonus = 250
+    set alert_level = 2
+}
+
+fault ori_satellite weight 1.0 duration 60.0 label "ORI SATELLITE CHARGING" {
+    set encounter_bonus = 600
+    set alert_level = 3
+}
+
+fault replicator_incursion weight 1.0 duration 55.0 label "REPLICATOR INCURSION" {
+    set encounter_bonus = 400
+    set alert_level = 3
+}
+
+fault sensor_ghost weight 1.5 duration 20.0 label "SENSOR GHOSTS" {
+    set alert_level = 1
+}

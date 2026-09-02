@@ -13,7 +13,11 @@ This catches the whole class of problem from the command line:
   * every $NodePath in control_room.gd resolves against Main.tscn
   * .gd files: tabs-only indentation, balanced brackets, no duplicated
     function name in a file, no duplicated class_name across the project
-  * the export presets actually ship reactor_rules.nova
+  * every .nova file in the project parses (using the reference parser)
+  * the export presets actually ship the .nova policies
+  * the project really is Python-free: no .py under godot/, and no
+    OS.execute / OS.execute_with_pipe anywhere in the GDScript. That is
+    requirement, not preference -- neither exists on iOS or Web.
 
 Run from the repository root:  python3 tools/check_project.py
 """
@@ -270,8 +274,8 @@ def check_config() -> None:
         if required not in names:
             problem("export_presets.cfg has no %s preset" % required)
 
-    # Every preset must ship the NovaLang policy, or the exported build has
-    # no control logic at all.
+    # Every preset must ship the NovaLang policies, or the exported build
+    # has no control logic at all.
     filters = re.findall(r'^include_filter="([^"]*)"', ptext, re.M)
     if len(filters) != len(names):
         problem("export_presets.cfg: %d presets but %d include_filter lines"
@@ -280,7 +284,54 @@ def check_config() -> None:
         if "*.nova" not in flt:
             problem("the %s preset does not include *.nova, so the exported "
                     "build would have no control policy" % name)
+        if ".py" in flt:
+            problem("the %s preset still ships Python; the project no longer "
+                    "has any" % name)
     notes.append("%d export presets checked: %s" % (len(names), ", ".join(names)))
+
+
+# --------------------------------------------------------------------------
+# The project must be self-contained GDScript
+# --------------------------------------------------------------------------
+
+BANNED_CALLS = ("OS.execute(", "OS.execute_with_pipe(", "OS.create_process(")
+
+
+def check_no_python() -> None:
+    strays = sorted(p.relative_to(ROOT) for p in PROJECT.rglob("*.py"))
+    for stray in strays:
+        problem("%s: the Godot project must contain no Python" % stray)
+
+    for path in sorted(PROJECT.rglob("*.gd")):
+        text = path.read_text(encoding="utf-8")
+        for i, line in enumerate(text.splitlines(), 1):
+            if line.strip().startswith("#"):
+                continue
+            for banned in BANNED_CALLS:
+                if banned in line:
+                    problem("%s:%d calls %s -- it does not exist on iOS or "
+                            "Web" % (path.relative_to(ROOT), i, banned[:-1]))
+    notes.append("no Python and no process spawning in the Godot project")
+
+
+def check_nova_files() -> None:
+    """Parse every shipped policy with the reference parser, so a syntax
+    error is a failed check rather than a black panel at launch."""
+    sys.path.insert(0, str(ROOT / "reference"))
+    try:
+        from nova_lexer import NovaError
+        from nova_parser import parse
+    except Exception as exc:
+        problem("cannot load the reference parser: %s" % exc)
+        return
+    count = 0
+    for path in sorted(PROJECT.rglob("*.nova")):
+        count += 1
+        try:
+            parse(path.read_text(encoding="utf-8"), str(path.name))
+        except NovaError as exc:
+            problem("%s: %s" % (path.relative_to(ROOT), exc))
+    notes.append("%d .nova policies parsed" % count)
 
 
 def main() -> int:
@@ -292,6 +343,8 @@ def main() -> int:
     check_node_paths(scenes)
     check_gdscript()
     check_config()
+    check_no_python()
+    check_nova_files()
 
     for note in notes:
         print("  " + note)

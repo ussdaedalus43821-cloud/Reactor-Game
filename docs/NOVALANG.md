@@ -1,119 +1,110 @@
 # NovaLang
 
-NovaLang is the small declarative language the reactor's control policy is
-written in. One file — `godot/sim/reactor_rules.nova` — holds every trip
-setpoint, alarm tier, fault definition and operating-state transition in
-the simulation.
+A small scripting language, implemented in pure GDScript, that runs inside
+Godot on every platform the engine targets.
 
-It is executed by two interpreters that are kept in step by
-`tools/check_parity.py`:
+* **Ships:** `godot/scripts/nova/` — `nova_lexer.gd`, `nova_parser.gd`,
+  `nova_evaluator.gd`, `nova_vm.gd`.
+* **Judges:** `reference/` — a second implementation in Python that is
+  never shipped and never executed by the game. See
+  [ARCHITECTURE.md](ARCHITECTURE.md).
 
-* `godot/sim/nova_runtime.py` — Python, used by the desktop bridge daemon
-* `godot/scripts/nova_vm.gd` — GDScript, used in-engine on iOS and Web
+## Embedding it
 
-Both are hand-written recursive-descent parsers over the same grammar.
-Neither knows anything about pixels, and neither integrates the core.
+```gdscript
+var vm := NovaVM.new()
+vm.register_function("hull", func(args): return $Ship.hull)
+vm.load_file("daedalus_rules.nova")          # from res://scripts/
+vm.call_function("threat_score", [["capital", "wdart"]])
+```
 
-## Why it exists
+| Method | Purpose |
+|---|---|
+| `vm.eval(source, name)` | parse and initialise a program; `false` on failure, see `vm.error` |
+| `vm.load_file(path)` | the same, reading `res://scripts/<path>` |
+| `vm.call_function(name, args)` | call a NovaLang function from GDScript |
+| `vm.register_function(name, callable)` | expose a GDScript function to NovaLang |
+| `vm.get_global(name, fallback)` / `set_global` | read/write the program's globals |
+| `vm.tick(dt, inputs, faults_enabled)` | run one cycle of the rule engine |
+| `vm.drain_output()` | lines `print()` has emitted since the last drain |
+| `vm.reset(seed)` | re-run the program from scratch |
+| `vm.describe()` | title, params, rules, faults, exports |
 
-The physics answers *what the reactor is doing*. The policy answers *what
-should happen about it* — and that second question is the one you actually
-want to iterate on. Pulling it out into a data file means a setpoint change
-is a two-character edit that takes effect on macOS, iOS and Web at once,
-with no Python change, no GDScript change and no rebuild.
+`call_function()` rather than `call()`: every Godot `Object` already has a
+`call()` method and redefining it is a hard error.
+
+A registered function receives **one argument: an `Array` of the evaluated
+arguments**, and its return value becomes the call's value in NovaLang.
 
 ## Program structure
 
-A program is a sequence of top-level declarations in any order.
+Declarations may appear in any order.
 
 ```nova
-reactor "CHERNOBYL-1" version 1
+reactor "TITLE" version 1     # program title (the keyword is a holdover
+                              # from the first program written in NovaLang)
 
-params  { ... }
-effects { ... }
-signals { ... }
+import "lib/util.nova" as u   # modules
+let x = 1                     # top-level statements run at load
+func f(a) { return a * 2 }
 
-rule  <name> [priority N] [once] [edge] { when <expr> then <action>... }
-fault <name> [weight W] [duration S] [label "TEXT"] { <action>... }
+params  { name = <expr> ... }             # constants, evaluated at reset
+effects { name = <expr> [persistent] ... } # vars faults write
+signals { name = <expr> ... }             # derived, recomputed each tick
+
+rule  NAME [priority N] [once] [edge] { when <expr> then <stmt>... }
+fault NAME [weight W] [duration S] [label "TEXT"] { <stmt>... }
 ```
 
-Comments run to end of line with either `#` or `//`. Whitespace and
-newlines are insignificant.
+Comments run to end of line with `#` or `//`.
 
-### `params`
+## Values
 
-Constants. Evaluated once at reset, in order, so a later param may
-reference an earlier one.
+Numbers (always 64-bit floats), strings, booleans, `null`, lists, dicts,
+and functions.
 
 ```nova
-params {
-    trip_flux_pct = 150.0
-    warn_flux_pct = trip_flux_pct * 0.77
-}
+let n = 2.5e3
+let s = "quotes \" and \n newlines"
+let l = [1, "two", [3], null]
+let d = { bare: 1, "quoted": 2, [key_expr]: 3 }
 ```
 
-### `effects`
-
-The variables faults write to. At the top of every tick each one is reset
-to its declared default **unless** marked `persistent` — which is what
-makes a fault stop acting on the plant the moment it clears, with no
-cleanup code anywhere.
+Indexing works on lists (negative indices count from the end), dicts and
+strings. `d.name` is sugar for `d["name"]`.
 
 ```nova
-effects {
-    flow_frac  = 1.0             # snaps back to 1.0 every tick
-    xenon_pcm  = 0.0 persistent  # keeps its value; a rule decays it
-}
+l[0] = 7      d.temp = 812.5      print(l[-1], "abc"[1])
 ```
 
-### `signals`
+Out-of-range list indices and missing dict keys are **errors**, not `null`
+— use `has(d, k)` or `get(d, k, default)`. Truthiness: `null` and `false`
+are false, `0` is false, `""` is false, `[]` and `{}` are false.
 
-Derived values, recomputed each tick after fault effects and before any
-rule runs. Use them to name a condition once and read it everywhere.
+`==` compares deeply and never approximately: `[1,[2]] == [1,[2]]` is true,
+`1 == "1"` is false.
+
+## Statements
 
 ```nova
-signals {
-    hot     = fuel_temp_c > overheat_temp_c
-    running = not game_over
-}
+let x = 1                     # declare in the current scope
+x = 2                         # assign (nearest binding, else global)
+set x = 3                     # v1 spelling of the same thing
+
+if a { ... } else if b { ... } else { ... }
+while cond { ... break ... continue ... }
+
+func name(a, b) { return a + b }
+let anon = func(x) { return x * 2 }
+
+import "lib/util.nova"          # merge the module's exports into scope
+import "lib/util.nova" as util  # or bind them to a name
+export let VERSION = 3          # visible to importers
+export func helper() { }
 ```
 
-### `rule`
-
-```nova
-rule fuel_temp_trip priority 285 {
-    when  running and not scram and fuel_temp_c > trip_fuel_temp_c
-    then  scram("AUTO SCRAM -- FUEL TEMPERATURE HIGH")
-}
-```
-
-Rules run every tick, highest `priority` first (default 0). Because `set`
-actions are applied as they run, **the lowest-priority rule that writes a
-variable wins** — so write mutually exclusive guards when order should not
-matter, as the operating-state rules do.
-
-Modifiers:
-
-| Modifier | Effect |
-|---|---|
-| `priority N` | execution order, descending. Default 0. |
-| `once` | fires at most once per run. For end-of-run events. |
-| `edge` | fires only on the rising edge of its condition, not while it stays true. For log lines and one-shot latches. |
-
-### `fault`
-
-```nova
-fault feedwater_failure weight 1.0 duration 45.0 label "FEEDWATER PUMP FAILURE" {
-    set flow_frac = 0.3
-}
-```
-
-One fault is active at a time. The scheduler waits
-`fault_first_min_s..fault_first_max_s` for the first, picks by `weight`,
-runs the body **every tick** for `duration` seconds, then waits
-`fault_gap_min_s..fault_gap_max_s` and picks again. Entry logs
-`ALARM: <label>`, exit logs `<label> CLEARED`. Inside the body,
-`fault_elapsed` counts seconds since activation.
+A `{` in statement position always opens a **block**, never a dict literal.
+Parenthesise a dict used as a statement.
 
 ## Expressions
 
@@ -127,93 +118,171 @@ not
 +  -
 *  /  %
 unary -
-literals, identifiers, calls, ( )
+call ()   index []   member .
+literals, identifiers, ( )
 ```
 
-`and` and `or` short-circuit. A `held()` inside a skipped branch does not
-accumulate, which is the behaviour you want for guarded trips.
+`and` / `or` short-circuit. `+` is string concatenation when either side is
+a string, and list concatenation when both are lists. Division and modulo
+by zero yield `0` rather than an error — a policy file should not be able
+to take the reactor down.
 
-`+` is string concatenation when either side is a string. Division and
-modulo by zero yield `0.0` rather than an error — a policy file should not
-be able to take the reactor down.
+### Call resolution
 
-### Builtins
+A bare name in call position resolves in this order:
 
-| Function | Meaning |
+1. a **user function** bound to that name,
+2. a **builtin**,
+3. a **host function** registered by the embedder.
+
+A *non-callable* binding is skipped rather than being an error. That is
+deliberate: `reactor_rules.nova` has both a `scram` variable (the trip
+latch) and a `scram()` host function, and neither shadows the other.
+
+Builtins and host functions are **not first-class values** — only
+user-defined functions can be passed around, returned and stored.
+
+## Functions, recursion, closures
+
+A named declaration is sugar for `let NAME = func...`, which is where
+recursion and closures come from:
+
+```nova
+func fib(n) {
+    if n < 2 { return n }
+    return fib(n - 1) + fib(n - 2)
+}
+
+func counter() {
+    let n = 0
+    return func() { n = n + 1  return n }     # captures n
+}
+let tick = counter()
+tick()  tick()  print(tick())                 # 3
+```
+
+Arity is checked; a call with the wrong number of arguments is an error.
+A function that falls off the end returns `null`.
+
+## Builtins
+
+| Group | Functions |
 |---|---|
-| `abs(x)` `min(...)` `max(...)` `clamp(x,lo,hi)` | the usual |
-| `exp(x)` `sqrt(x)` `floor(x)` | `sqrt` clamps negatives to 0 |
-| `ramp(x)` | `clamp(x, 0, 1)` |
-| `lerp(a,b,t)` | `t` clamped to 0..1 |
-| `pick(a, b, ...)` | uniform random choice |
-| `rand(lo, hi)` | uniform random float |
-| `held(cond, seconds)` | **true once `cond` has been continuously true for that long** |
+| numeric | `abs` `min` `max` `clamp(v,lo,hi)` `exp` `sqrt` `floor` `round` `pow(b,e)` `ramp(x)` `lerp(a,b,t)` |
+| random | `pick(...)` `rand(lo,hi)` |
+| temporal | `held(cond, seconds)` |
+| types | `type(v)` `str` `num` `bool` `int` |
+| collections | `len` `keys` `has(c,k)` `get(d,k,default)` `append(l,v)` `remove_at(l,i)` `slice(seq,a,b)` `range(n)` / `range(a,b)` |
+| strings | `join(l,sep)` `split(s,sep)` `contains(h,n)` `upper` `lower` |
+| output | `print(...)` |
 
-`held()` is the temporal predicate that makes sustained-condition trips
-expressible in one line:
+`ramp` clamps to 0..1; `lerp`'s `t` is clamped; `round` is half-away-from-
+zero; `type` returns `"number"`, `"string"`, `"bool"`, `"list"`, `"dict"`,
+`"func"` or `"null"`.
+
+**`held(cond, seconds)`** is the temporal predicate — true once `cond` has
+been continuously true for that long. Each call site gets its own timer,
+allocated at parse time, so the same condition in two rules tracks two
+clocks. Its condition is left unevaluated until reached, so a `held()`
+behind a short-circuited `and` does not accumulate — which is exactly what
+you want for a guarded trip:
 
 ```nova
 rule core_disassembly priority 200 once {
-    when  running and held(fuel_temp_c > meltdown_temp_c, meltdown_sustain_s)
-    then  meltdown("CORE DISASSEMBLY -- MELTDOWN")
+    when  running and held(fuel_temp_c > meltdown_temp_c, 5.0)
+    then  meltdown("CORE DISASSEMBLY")
 }
 ```
 
-Each `held()` call site gets its own timer, allocated at parse time, so the
-same condition used in two rules tracks two independent clocks.
+## Modules
 
-## Actions
-
-| Action | Effect |
-|---|---|
-| `set NAME = expr` | write a variable |
-| `log(text)` | append a line to the operator event log |
-| `alarm(level, text)` | raise the alarm tier; highest in a tick wins (0 clear … 3 emergency) |
-| `scram(reason)` | trip the plant; latches immediately, so lower-priority rules in the same tick already see `scram` true |
-| `reset_trip()` | clear the latch and give the rod drives back |
-| `meltdown(text)` | end the run badly |
-| `victory(text)` | end the run well |
-| `inject_fault(name)` | force a specific fault now |
-| `clear_fault()` | end the active fault early |
-
-`meltdown()` and `victory()` also set `game_over` and `running` for the
-remainder of the tick, so the state machine never lags the event it is
-reporting.
-
-## Variables the host provides
-
-Read-only, refreshed before every tick:
-
-`t` `dt` `flux_pct` `fuel_temp_c` `mod_temp_c` `out_temp_c` `pressure_mpa`
-`reactivity_pcm` `decay_heat_pct` `rod_a` `rod_b` `rod_target_a`
-`rod_target_b` `scram` `scram_elapsed` `operator_scram` `game_over`
-`victory` `meltdown`
-
-Plus, maintained by the fault scheduler: `active_fault` `fault_label`
-`fault_elapsed` `fault_duration`.
-
-Values the host reads back: everything in `effects`, plus `state`,
-`rod_target_a`, `rod_target_b`.
-
-## Errors
-
-Parse errors report a line number and abort the load. Runtime errors
-(unknown identifier, wrong argument type) abort the tick and are surfaced
-on the panel rather than swallowed:
-
-```bash
-python3 godot/sim/reactor_server.py --validate
+```nova
+# lib/util.nova
+export func double(x) { return x * 2 }
+export let VERSION = 3
+let private = 99                # not exported, invisible to importers
 ```
 
-prints the parsed program — title, counts, every rule and fault by name —
-or the first error with its line. Run it after every edit.
+```nova
+import "lib/util.nova" as u     # u.double(21), u.VERSION
+import "lib/util.nova"          # double(21), VERSION
+```
 
-## One deliberate difference between the runtimes
+Modules are resolved relative to `res://scripts/`, evaluated **once** and
+cached, and get their own global scope — a module sees the builtins and the
+host functions, never the importer's variables. Circular imports are
+reported rather than hanging.
 
-`pick()`, `rand()` and the fault scheduler draw from Python's `random` in
-one interpreter and Godot's `RandomNumberGenerator` in the other, so the
-same seed does **not** produce the same fault sequence on both. Everything
-else — precedence, short-circuiting, `held()` timers, `edge`/`once`
-latches, priority ordering, effect reset semantics — is identical, and the
-parity checker fails the build if the keyword, builtin or action sets ever
-diverge.
+## The rule engine
+
+`vm.tick(dt, inputs, faults_enabled)` runs one cycle:
+
+1. every non-`persistent` `effects` var is reset to its declared default,
+2. `inputs` are written into the globals,
+3. the fault scheduler runs (and executes the active fault's body),
+4. `signals` are recomputed,
+5. `rules` fire in descending `priority`.
+
+Because `set` applies as rules run, **the lowest-priority rule that writes
+a variable wins** — so write mutually exclusive guards when order should
+not matter, as the operating-state rules do.
+
+| Modifier | Effect |
+|---|---|
+| `priority N` | execution order, descending. Default 0. |
+| `once` | fires at most once per run |
+| `edge` | fires only on the rising edge of its condition |
+
+`effects` declares what faults write. Resetting them every tick is what
+makes a cleared fault stop acting on the plant with no cleanup code:
+
+```nova
+effects {
+    flow_frac = 1.0              # snaps back to 1.0 every tick
+    xenon_pcm = 0.0 persistent   # keeps its value; a rule decays it
+}
+```
+
+A `fault` is scheduled by weight, runs its body **every tick** for
+`duration` seconds, and logs `ALARM: <label>` on entry and
+`<label> CLEARED` on exit through the host's `log()`.
+`fault_elapsed`, `fault_label` and `active_fault` are readable inside it.
+
+## Errors and limits
+
+Parse errors abort the load; runtime errors abort the tick. Both land in
+`vm.error` with a line number, and `nova_bridge.gd` surfaces them on the
+panel rather than swallowing them.
+
+Two guards make a bad policy file survivable:
+
+* **step budget** — 500 000 evaluation steps per tick. `while true {}`
+  fails the tick instead of hanging the render thread.
+* **call depth** — 128 frames. Runaway recursion is an error, not a crash.
+
+Both limits are identical in the reference and checked by
+`tools/check_parity.py`.
+
+## Deliberate differences between the two implementations
+
+Only one: `pick()`, `rand()` and the fault scheduler draw from Godot's
+`RandomNumberGenerator` in the shipping interpreter and Python's `random`
+in the reference, so the same seed does **not** produce the same fault
+sequence in both. Nothing in the conformance corpus depends on randomness.
+
+Everything else — precedence, short-circuiting, number formatting, deep
+equality, `held()` timers, `edge`/`once` latches, priority ordering, effect
+reset semantics, and the exact text of every error message — is identical,
+and `parity_check.gd` proves it by replaying 51 recorded programs and a
+900-step reactor trace inside Godot.
+
+## Validating a policy
+
+```bash
+python3 reference/reactor_host.py --validate --rules reactor_rules.nova
+```
+
+prints the parsed program — title, params, every rule and fault by name —
+or the first error with its line. `tools/check_project.py` runs the same
+parse over every `.nova` file in the project, so a syntax error is a failed
+build check rather than a black panel at launch.
