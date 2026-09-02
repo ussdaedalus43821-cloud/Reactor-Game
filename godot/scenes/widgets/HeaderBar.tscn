@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/widgets/header_bar.gd" id="1_script"]
+
+[node name="HeaderBar" type="Control"]
+offset_right = 1440.0
+offset_bottom = 46.0
+script = ExtResource("1_script")

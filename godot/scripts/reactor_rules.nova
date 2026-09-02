@@ -1,0 +1,270 @@
+# ==========================================================================
+# reactor_rules.nova -- reactor control policy, in NovaLang
+#
+# This file is the reactor's brain. Trip setpoints, alarm tiers, the
+# fault injector and the operating-state machine all live here, and
+# nothing else does: the core integration is reactor_physics.py, the
+# panel is Godot. Edit this file and the plant behaves differently on
+# the next run -- no Python change, no Godot rebuild.
+#
+# Read each tick from the host (do not `set` these):
+#   t, dt                      seconds since start, step size
+#   flux_pct                   neutron flux, 100 == rated power
+#   fuel_temp_c, mod_temp_c, out_temp_c, pressure_mpa
+#   reactivity_pcm             total reactivity this step
+#   rod_a, rod_b               actual bank positions, % withdrawn
+#   scram                      is the plant currently latched in SCRAM
+#   scram_elapsed              seconds since the trip (0 if not scrammed)
+#   operator_scram             the big red button, this tick only
+#   game_over                  run has ended (meltdown or victory)
+#
+# Written back to the host: everything in `effects`, plus state,
+# rod_target_a/b, and the scram()/meltdown()/victory()/alarm()/log()
+# actions.
+# ==========================================================================
+
+reactor "CHERNOBYL-1" version 1
+
+params {
+    # ---- protection setpoints ----
+    trip_flux_pct         = 150.0     # neutron flux high trip
+    trip_fuel_temp_c      = 1800.0    # fuel temperature high trip
+    trip_pressure_mpa     = 18.5      # primary overpressure trip
+    trip_lowflow_frac     = 0.5       # loss-of-flow trip, above trip_lowflow_power_pct
+    trip_lowflow_power_pct = 50.0
+
+    # ---- alarm thresholds (advisory tier) ----
+    warn_flux_pct         = 115.0
+    warn_fuel_temp_c      = 1200.0
+    warn_pressure_mpa     = 17.5
+
+    # ---- damage / win conditions ----
+    meltdown_temp_c       = 2800.0
+    meltdown_sustain_s    = 5.0
+    overheat_temp_c       = 1500.0
+    startup_flux_pct      = 3.0
+    ascension_flux_pct    = 60.0
+    survive_time_s        = 900.0     # 15 minutes on shift and you win
+
+    # ---- post-trip cooldown ----
+    scram_cooldown_s      = 600.0
+
+    # ---- fault injector timing ----
+    fault_first_min_s     = 45.0
+    fault_first_max_s     = 90.0
+    fault_gap_min_s       = 45.0
+    fault_gap_max_s       = 90.0
+
+    # ---- xenon ----
+    xenon_max_pcm         = 400.0
+    xenon_ramp_s          = 60.0
+
+    # ---- optional autopilot (0 = manual, the default) ----
+    auto_rod_control      = 0.0
+    auto_target_power_pct = 100.0
+    auto_rod_gain         = 0.010
+}
+
+# Values faults drive. Anything not marked `persistent` snaps back to its
+# default at the top of every tick, so a fault that clears stops acting on
+# the plant with no explicit cleanup.
+effects {
+    flow_frac       = 1.0
+    load_frac       = 1.0
+    stuck_bank      = ""
+    xenon_pcm       = 0.0   persistent
+    stuck_bank_pick = "A"   persistent
+}
+
+# Derived each tick, before any rule runs.
+signals {
+    power_ok      = flux_pct < warn_flux_pct and fuel_temp_c < warn_fuel_temp_c
+    thermal_slack = meltdown_temp_c - fuel_temp_c
+    hot           = fuel_temp_c > overheat_temp_c
+    running       = not game_over
+}
+
+# ==========================================================================
+# PROTECTION -- highest priority, these run before anything else
+# ==========================================================================
+
+rule operator_scram priority 300 edge {
+    when  operator_scram and running
+    then  scram("MANUAL SCRAM INITIATED")
+}
+
+rule flux_high_trip priority 290 {
+    when  running and not scram and flux_pct > trip_flux_pct
+    then  scram("AUTO SCRAM -- NEUTRON FLUX HIGH")
+}
+
+rule fuel_temp_trip priority 285 {
+    when  running and not scram and fuel_temp_c > trip_fuel_temp_c
+    then  scram("AUTO SCRAM -- FUEL TEMPERATURE HIGH")
+}
+
+rule overpressure_trip priority 280 {
+    when  running and not scram and pressure_mpa > trip_pressure_mpa
+    then  scram("AUTO SCRAM -- PRIMARY OVERPRESSURE")
+}
+
+rule loss_of_flow_trip priority 275 {
+    when  running and not scram
+          and flow_frac < trip_lowflow_frac
+          and flux_pct > trip_lowflow_power_pct
+    then  scram("AUTO SCRAM -- LOSS OF COOLANT FLOW")
+}
+
+# ==========================================================================
+# END OF RUN
+# ==========================================================================
+
+rule core_disassembly priority 200 once {
+    when  running and held(fuel_temp_c > meltdown_temp_c, meltdown_sustain_s)
+    then  meltdown("CORE DISASSEMBLY -- MELTDOWN")
+          alarm(3, "MELTDOWN")
+}
+
+rule shift_survived priority 195 once {
+    when  running and t >= survive_time_s
+    then  victory("15 MINUTES SURVIVED -- VETERAN OPERATOR")
+}
+
+# ==========================================================================
+# ALARMS -- highest level raised in a tick wins
+# ==========================================================================
+
+rule alarm_meltdown_imminent priority 150 {
+    when  running and fuel_temp_c > meltdown_temp_c
+    then  alarm(3, "CORE TEMPERATURE CRITICAL")
+}
+
+rule alarm_overheat priority 145 {
+    when  running and hot and fuel_temp_c <= meltdown_temp_c
+    then  alarm(2, "CORE OVERHEATING")
+}
+
+rule alarm_flux priority 140 {
+    when  running and flux_pct > warn_flux_pct
+    then  alarm(2, "NEUTRON FLUX HIGH")
+}
+
+rule alarm_pressure priority 135 {
+    when  running and pressure_mpa > warn_pressure_mpa
+    then  alarm(2, "PRIMARY PRESSURE HIGH")
+}
+
+rule alarm_fault priority 130 {
+    when  running and active_fault != ""
+    then  alarm(1, fault_label)
+}
+
+rule warn_flux_entry priority 125 edge {
+    when  running and flux_pct > warn_flux_pct
+    then  log("CAUTION: FLUX ABOVE 115%")
+}
+
+rule warn_temp_entry priority 124 edge {
+    when  running and fuel_temp_c > warn_fuel_temp_c
+    then  log("CAUTION: FUEL TEMPERATURE ABOVE 1200 C")
+}
+
+# ==========================================================================
+# OPERATING STATE -- guards are mutually exclusive, so order is irrelevant
+# ==========================================================================
+
+rule state_meltdown priority 60 {
+    when  not running and not victory
+    then  set state = "MELTDOWN"
+}
+
+rule state_victory priority 59 {
+    when  not running and victory
+    then  set state = "SECURED"
+}
+
+rule state_scram priority 58 {
+    when  running and scram
+    then  set state = "SCRAM"
+}
+
+rule state_overheat priority 57 {
+    when  running and not scram and hot
+    then  set state = "OVERHEAT"
+}
+
+rule state_startup priority 56 {
+    when  running and not scram and not hot and flux_pct < startup_flux_pct
+    then  set state = "STARTUP"
+}
+
+rule state_ascension priority 55 {
+    when  running and not scram and not hot
+          and flux_pct >= startup_flux_pct and flux_pct < ascension_flux_pct
+    then  set state = "POWER ASCENSION"
+}
+
+rule state_steady priority 54 {
+    when  running and not scram and not hot and flux_pct >= ascension_flux_pct
+    then  set state = "STEADY"
+}
+
+# Once decay heat has died away the trip is cleared and the operator gets
+# the rod drives back. Until then the sliders are dead and the rods stay in.
+rule cooldown_complete priority 50 edge {
+    when  scram and running and scram_elapsed >= scram_cooldown_s
+    then  reset_trip()
+          log("REACTOR COOLDOWN COMPLETE -- ROD DRIVES RESTORED")
+}
+
+# ==========================================================================
+# XENON -- keeps decaying after the poisoning fault clears
+# ==========================================================================
+
+rule xenon_recovery priority 20 {
+    when  active_fault != "xenon_poisoning" and xenon_pcm < 0.0
+    then  set xenon_pcm = min(0.0, xenon_pcm + (xenon_max_pcm / xenon_ramp_s) * dt)
+}
+
+# ==========================================================================
+# OPTIONAL AUTOPILOT -- set auto_rod_control = 1 in params to enable
+# ==========================================================================
+
+rule auto_regulate priority 10 {
+    when  auto_rod_control > 0 and running and not scram
+    then  set rod_target_a = clamp(rod_target_a + auto_rod_gain * (auto_target_power_pct - flux_pct) * dt, 0.0, 100.0)
+          set rod_target_b = clamp(rod_target_b + auto_rod_gain * (auto_target_power_pct - flux_pct) * dt, 0.0, 100.0)
+}
+
+# ==========================================================================
+# FAULT INJECTOR
+#
+# One fault is active at a time. The engine picks by weight, keeps the
+# body running every tick for `duration` seconds, logs "ALARM: <label>"
+# on entry and "<label> CLEARED" on exit, then waits fault_gap_min_s..
+# fault_gap_max_s before the next one.
+# ==========================================================================
+
+fault turbine_trip weight 1.0 duration 40.0 label "TURBINE TRIP" {
+    set load_frac = 0.0
+}
+
+fault feedwater_failure weight 1.0 duration 45.0 label "FEEDWATER PUMP FAILURE" {
+    set flow_frac = 0.3
+}
+
+fault rod_stuck weight 1.0 duration 35.0 label "CONTROL ROD BANK STUCK" {
+    set stuck_bank = stuck_bank_pick
+}
+
+fault xenon_poisoning weight 1.0 duration 60.0 label "XENON POISONING" {
+    set xenon_pcm = 0.0 - xenon_max_pcm * ramp(fault_elapsed / xenon_ramp_s)
+}
+
+# The bank a stuck-rod fault seizes is latched once, on the rising edge of
+# the fault, so it cannot flicker between A and B while the fault runs.
+rule latch_stuck_bank priority 95 edge {
+    when  active_fault == "rod_stuck"
+    then  set stuck_bank_pick = pick("A", "B")
+          log("BANK " + stuck_bank_pick + " DRIVE SEIZED")
+}

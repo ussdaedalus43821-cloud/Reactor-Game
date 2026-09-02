@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/widgets/event_log.gd" id="1_script"]
+
+[node name="EventLog" type="Control"]
+offset_right = 544.0
+offset_bottom = 232.0
+script = ExtResource("1_script")
