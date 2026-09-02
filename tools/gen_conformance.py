@@ -204,7 +204,69 @@ def build_doc() -> dict:
         "modules": MODULES,
         "cases": [run_case(name, src) for name, src in CASES],
         "reactor_trace": reactor_trace(),
+        "daedalus_data": daedalus_data(),
     }
+
+
+DAEDALUS_DAMAGE_PAIRS = [
+    ["fighter", "battlecruiser"], ["fighter", "capital"],
+    ["battlecruiser", "fighter"], ["battlecruiser", "capital"],
+    ["capital", "fighter"], ["capital", "battlecruiser"],
+    ["fighter", "fighter"], ["battlecruiser", "battlecruiser"],
+    ["capital", "capital"], ["fighter", "no_such_class"],
+]
+DAEDALUS_DANGER_SAMPLES = [[0, 40.0], [1, 0.0], [1, 12.5], [2, 0.0],
+                           [2, 7.25], [3, 0.0], [3, 3.75], [3, 20.0]]
+
+
+def daedalus_data() -> dict:
+    """Pin the Stage 1 balance tables. parity_check.gd loads the same
+    daedalus_rules.nova through the GDScript interpreter and diffs, so a
+    number that reads differently in the two runtimes fails the build."""
+    vm = NovaVM(random.Random(7),
+                module_reader=lambda p: _read_script(p))
+    for fn_name in host.HOST_FUNCTIONS:
+        vm.register_function(fn_name, lambda args: None)
+    if not vm.load_file("daedalus_rules.nova"):
+        raise SystemExit("daedalus_rules.nova failed to load: %s" % vm.error)
+
+    ships = {}
+    for key, entry in vm.get_global("SHIPS").items():
+        ships[key] = {k: entry[k] for k in
+                      ("name", "class", "shield", "hull", "speed", "turn",
+                       "gun_dmg", "rocket_dmg", "homing_dmg", "beam_dmg")}
+
+    return {
+        "ship_order": vm.get_global("SHIP_ORDER"),
+        "ships": ships,
+        "damage_pairs": [
+            {"a": a, "b": b,
+             "mult": vm.call_function("damage_multiplier", [a, b])}
+            for a, b in DAEDALUS_DAMAGE_PAIRS],
+        "power": dict(vm.get_global("POWER")),
+        "danger_samples": [
+            {"danger": d, "gen": g,
+             "hostiles": vm.call_function("hostiles_for", [float(d), g])}
+            for d, g in DAEDALUS_DANGER_SAMPLES],
+        "sector_keys": [int(s["key"]) for s in vm.get_global("SECTORS")],
+        "sector_hostiles": [
+            {"key": k, "gen": 6.0,
+             "hostiles": vm.call_function("sector_hostiles", [float(k), 6.0])}
+            for k in (1, 4, 5, 9)],
+        "power_balance": [
+            {"thrust": t, "cloak": c, "shields": sh,
+             "net": vm.call_function("power_balance", [t, c, sh])}
+            for t, c, sh in ((False, False, False), (True, False, True),
+                             (True, True, False), (True, True, True))],
+    }
+
+
+def _read_script(path: str):
+    full = os.path.join(ROOT, "godot", "scripts", path)
+    if not os.path.exists(full):
+        return None
+    with open(full, "r", encoding="utf-8") as fh:
+        return fh.read()
 
 
 def main() -> int:
@@ -217,8 +279,10 @@ def main() -> int:
 
     failures = sum(1 for c in cases if not c["ok"])
     print("wrote %s" % os.path.relpath(OUT_PATH, ROOT))
-    print("  %d cases (%d expected-error), %d reactor frames"
-          % (len(cases), failures, len(doc["reactor_trace"]["frames"])))
+    print("  %d cases (%d expected-error), %d reactor frames, "
+          "%d daedalus hulls"
+          % (len(cases), failures, len(doc["reactor_trace"]["frames"]),
+             len(doc["daedalus_data"]["ships"])))
     return 0
 
 

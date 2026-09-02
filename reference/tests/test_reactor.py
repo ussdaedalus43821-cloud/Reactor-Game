@@ -674,5 +674,186 @@ class TestReactorHost(unittest.TestCase):
         self.assertEqual(sim.error, "")
 
 
+# ==========================================================================
+# DAEDALUS Stage 1 balance tables
+#
+# Every figure is asserted literally. These numbers are measurements, not
+# design knobs, so an accidental edit should fail a test rather than quietly
+# rebalance the game.
+# ==========================================================================
+
+class TestDaedalusData(unittest.TestCase):
+
+    # ship -> (class, shield, hull, speed, turn, gun, rocket, homing, beam)
+    TABLE = {
+        "x302":     ("fighter",        397,  228, 1142, 348,  4.7,  74.2,
+                     55.3, 0),
+        "daedalus": ("battlecruiser", 1583, 1049,  917, 218, 12.3, 117.5,
+                     89.1, 2431),
+        "phoenix":  ("battlecruiser", 2471, 1654, 1035, 241, 14.1, 163.0,
+                     114.6, 3422),
+        "aurora":   ("capital",       3682, 2183,  948, 184, 11.8, 138.4,
+                     122.7, 0),
+        "destiny":  ("capital",       1762, 3517,  806, 139, 11.1, 134.8,
+                     94.2, 0),
+        "atlantis": ("capital",       7124, 5843,  753, 108, 16.3, 186.5,
+                     131.9, 0),
+    }
+    COLUMNS = ["class", "shield", "hull", "speed", "turn", "gun_dmg",
+               "rocket_dmg", "homing_dmg", "beam_dmg"]
+
+    @classmethod
+    def setUpClass(cls):
+        cls.vm = NovaVM(random.Random(7), base_dir=host.RULES_DIR)
+        for name in host.HOST_FUNCTIONS:
+            cls.vm.register_function(name, lambda args: None)
+        assert cls.vm.load_file("daedalus_rules.nova"), cls.vm.error
+
+    def test_every_ship_stat_is_exact(self):
+        ships = self.vm.get_global("SHIPS")
+        self.assertEqual(set(ships), set(self.TABLE))
+        for key, row in self.TABLE.items():
+            for column, want in zip(self.COLUMNS, row):
+                got = ships[key][column]
+                if isinstance(want, str):
+                    self.assertEqual(got, want, "%s.%s" % (key, column))
+                else:
+                    self.assertAlmostEqual(float(got), float(want), places=9,
+                                           msg="%s.%s" % (key, column))
+
+    def test_ship_order_covers_the_registry(self):
+        order = self.vm.get_global("SHIP_ORDER")
+        self.assertEqual(order, ["x302", "daedalus", "phoenix", "aurora",
+                                 "destiny", "atlantis"])
+        self.assertEqual(set(order), set(self.vm.get_global("SHIPS")))
+
+    def test_damage_scaling_matrix(self):
+        for (a, b), want in {
+                ("fighter", "battlecruiser"): 0.082,
+                ("fighter", "capital"): 0.047,
+                ("battlecruiser", "fighter"): 2.37,
+                ("battlecruiser", "capital"): 0.74,
+                ("capital", "fighter"): 3.14,
+                ("capital", "battlecruiser"): 1.12}.items():
+            self.assertAlmostEqual(
+                self.vm.call_function("damage_multiplier", [a, b]), want,
+                places=9, msg="%s -> %s" % (a, b))
+
+    def test_unlisted_matchups_are_neutral(self):
+        for a, b in (("fighter", "fighter"),
+                     ("battlecruiser", "battlecruiser"),
+                     ("capital", "capital"),
+                     ("fighter", "not_a_class"),
+                     ("not_a_class", "capital")):
+            self.assertEqual(self.vm.call_function("damage_multiplier", [a, b]),
+                             1.0, "%s -> %s must fall back to 1.0" % (a, b))
+
+    def test_weapon_damage_applies_the_matrix(self):
+        # An F-302 railgun round barely scratches a city-ship...
+        self.assertAlmostEqual(
+            self.vm.call_function("weapon_damage",
+                                  ["x302", "gun_dmg", "atlantis"]),
+            4.7 * 0.047, places=9)
+        # ...and one Atlantis bolt is three F-302 rounds' worth of overkill.
+        self.assertAlmostEqual(
+            self.vm.call_function("weapon_damage",
+                                  ["atlantis", "gun_dmg", "x302"]),
+            16.3 * 3.14, places=9)
+        # Same-class stays raw.
+        self.assertAlmostEqual(
+            self.vm.call_function("weapon_damage",
+                                  ["daedalus", "beam_dmg", "phoenix"]),
+            2431.0, places=9)
+
+    def test_power_constants(self):
+        power = self.vm.get_global("POWER")
+        for key, want in {"max": 1047, "recharge": 112, "shield_draw": 143,
+                          "thrust_drain": 48, "cloak_drain": 27,
+                          "primary_cost": 9.4, "rocket_cost": 31.2,
+                          "homing_cost": 22.7}.items():
+            self.assertAlmostEqual(float(power[key]), float(want), places=9,
+                                   msg=key)
+
+    def test_shield_recharge_outruns_the_reactor(self):
+        """The load-bearing property of the power table: rebuilding shields
+        costs more than the bus makes, so regenerating under fire is always
+        a losing trade and running away is always affordable."""
+        idle = self.vm.call_function("power_balance", [False, False, False])
+        shields = self.vm.call_function("power_balance", [False, False, True])
+        fighting = self.vm.call_function("power_balance", [True, False, True])
+        running = self.vm.call_function("power_balance", [True, True, False])
+        self.assertEqual(idle, 112.0)
+        self.assertEqual(shields, -31.0)
+        self.assertEqual(fighting, -79.0)
+        self.assertEqual(running, 37.0)
+        self.assertGreater(running, 0.0, "cloak + thrust must be sustainable")
+        self.assertLess(shields, 0.0, "shield regen must never be free")
+
+    def test_weapon_costs(self):
+        for weapon, want in (("primary", 9.4), ("rocket", 31.2),
+                             ("homing", 22.7), ("nonexistent", 0.0)):
+            self.assertAlmostEqual(
+                self.vm.call_function("weapon_cost", [weapon]), want, places=9)
+
+    def test_danger_scaling(self):
+        for danger, base, rate in ((1, 4, 0.8), (2, 9, 1.3), (3, 15, 2.1)):
+            for gen in (0.0, 1.0, 3.5, 10.0, 25.0):
+                self.assertEqual(
+                    self.vm.call_function("hostiles_for", [float(danger), gen]),
+                    math.floor(base + gen * rate),
+                    "danger %d at gen %s" % (danger, gen))
+
+    def test_danger_zero_never_spawns(self):
+        for gen in (0.0, 5.0, 120.0):
+            self.assertEqual(
+                self.vm.call_function("hostiles_for", [0.0, gen]), 0)
+
+    def test_saturation_points(self):
+        """26 is the engine's live-hostile ceiling; this is how long each
+        band takes to reach it."""
+        for danger, want in ((1, 27.5), (2, 13.076923076923077),
+                             (3, 5.238095238095238)):
+            self.assertAlmostEqual(
+                self.vm.call_function("saturation_minutes",
+                                      [float(danger), 26.0]),
+                want, places=9)
+        self.assertEqual(
+            self.vm.call_function("saturation_minutes", [0.0, 26.0]), -1)
+
+    def test_sector_table(self):
+        sectors = self.vm.get_global("SECTORS")
+        self.assertEqual([int(s["key"]) for s in sectors],
+                         [1, 2, 3, 4, 5, 6, 7, 8, 9, 0])
+        for s in sectors:
+            for field in ("key", "name", "danger", "spawns", "capital_chance",
+                          "charge", "travel"):
+                self.assertIn(field, s, "sector %s" % s.get("name"))
+            self.assertGreater(float(s["charge"]), 0.0)
+            self.assertGreater(float(s["travel"]), 0.0)
+
+    def test_home_sector_never_spawns_whatever_its_band(self):
+        home = self.vm.call_function("sector_by_key", [1.0])
+        self.assertFalse(home["spawns"])
+        for gen in (0.0, 30.0):
+            self.assertEqual(
+                self.vm.call_function("sector_hostiles", [1.0, gen]), 0)
+
+    def test_sector_hostiles_follow_the_band(self):
+        # Asuran Frontier is danger 3; at gen 6 that is 15 + 6*2.1 = 27.6.
+        self.assertEqual(
+            self.vm.call_function("sector_hostiles", [4.0, 6.0]), 27)
+        # Lantea is danger 1: 4 + 6*0.8 = 8.8.
+        self.assertEqual(
+            self.vm.call_function("sector_hostiles", [5.0, 6.0]), 8)
+
+    def test_unknown_sector_and_ship_degrade_safely(self):
+        self.assertIsNone(self.vm.call_function("sector_by_key", [42.0]))
+        self.assertEqual(self.vm.call_function("sector_hostiles", [42.0, 5.0]), 0)
+        self.assertIsNone(self.vm.call_function("ship", ["not_a_hull"]))
+        self.assertEqual(
+            self.vm.call_function("ship_stat", ["not_a_hull", "shield", -1.0]),
+            -1.0)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

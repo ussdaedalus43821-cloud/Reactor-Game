@@ -33,6 +33,32 @@ python3 reference/reactor_host.py --validate --rules daedalus_rules.nova \
   | python3 -c 'import json,sys; d=json.load(sys.stdin); print("  daedalus_rules.nova:", d["title"], "--", len(d["rules"]), "rules,", len(d["faults"]), "faults")'
 
 echo
+echo "== daedalus stage 1 data ==================================="
+python3 - <<'PY'
+import random, sys
+sys.path.insert(0, "reference")
+from nova_vm import NovaVM
+import reactor_host as host
+vm = NovaVM(random.Random(7), base_dir=host.RULES_DIR)
+for n in host.HOST_FUNCTIONS:
+    vm.register_function(n, lambda a: None)
+assert vm.load_file("daedalus_rules.nova"), vm.error
+ships = vm.get_global("SHIPS")
+print("  %d hulls, %d sectors, %d danger bands"
+      % (len(ships), len(vm.get_global("SECTORS")),
+         len(vm.get_global("DANGER"))))
+for key in vm.get_global("SHIP_ORDER"):
+    s = ships[key]
+    print("    %-9s %-14s shield %6.0f  hull %6.0f  spd %5.0f  turn %4.0f"
+          % (key, s["class"], s["shield"], s["hull"], s["speed"], s["turn"]))
+print("  power: %.0f cap, %+.0f/s idle, %+.0f/s shields+thrust, %+.0f/s cloak+thrust"
+      % (vm.get_global("POWER")["max"],
+         vm.call_function("power_balance", [False, False, False]),
+         vm.call_function("power_balance", [True, False, True]),
+         vm.call_function("power_balance", [True, True, False])))
+PY
+
+echo
 echo "== headless reactor run ===================================="
 python3 reference/reactor_host.py --selftest --seconds 300 \
   | python3 -c 'import json,sys; d=json.load(sys.stdin); print("  %.0fx realtime, %s us/step, final state %s" % (d["realtime_factor"], d["us_per_step"], d["final"]["state"])); [print("   ", e) for e in d["events"]]'

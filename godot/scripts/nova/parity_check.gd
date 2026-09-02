@@ -47,6 +47,9 @@ func _initialize() -> void:
 	if doc.has("reactor_trace"):
 		_check_reactor_trace(doc["reactor_trace"])
 
+	if doc.has("daedalus_data"):
+		_check_daedalus_data(doc["daedalus_data"])
+
 	print("")
 	if failures.is_empty():
 		print("parity OK -- %d checks, GDScript matches the reference" % checked)
@@ -179,6 +182,109 @@ func _compare_frame(want: Dictionary, got: Dictionary, index: int) -> void:
 			return
 	if not _same_string_list(got["events"], want["events"]):
 		_fail(label, "events", want["events"], got["events"])
+
+
+# ==========================================================================
+# Stage 1 balance tables
+#
+# Loads the real daedalus_rules.nova through the shipping interpreter and
+# diffs every number against what the reference read out of the same file.
+# A hull stat that parses differently in the two runtimes fails here.
+# ==========================================================================
+
+func _check_daedalus_data(data: Dictionary) -> void:
+	var vm := NovaVM.new()
+	for fn_name in ["log", "alarm", "scram", "reset_trip", "meltdown",
+			"victory", "inject_fault", "clear_fault"]:
+		vm.register_function(String(fn_name), func(_args: Array): return null)
+
+	checked += 1
+	if not vm.load_file("daedalus_rules.nova"):
+		failures.append("daedalus_rules.nova failed to load: " + vm.error)
+		return
+
+	var order: Array = data["ship_order"]
+	var got_order = vm.get_global("SHIP_ORDER", [])
+	if not _same_string_list(got_order, order):
+		_fail("daedalus SHIP_ORDER", "order", order, got_order)
+
+	var want_ships: Dictionary = data["ships"]
+	var got_ships = vm.get_global("SHIPS", {})
+	if typeof(got_ships) != TYPE_DICTIONARY:
+		failures.append("daedalus SHIPS is not a dict")
+		return
+	for key in want_ships:
+		checked += 1
+		var want: Dictionary = want_ships[key]
+		if not (got_ships as Dictionary).has(key):
+			failures.append("daedalus SHIPS is missing hull '%s'" % key)
+			continue
+		var got: Dictionary = (got_ships as Dictionary)[key]
+		for stat in want:
+			var expected = want[stat]
+			var actual = got.get(stat, null)
+			if typeof(expected) == TYPE_STRING:
+				if String(actual) != String(expected):
+					_fail("daedalus %s.%s" % [key, stat], "value",
+							expected, actual)
+			elif not _close(float(expected), float(actual)):
+				_fail("daedalus %s.%s" % [key, stat], "value",
+						expected, actual)
+
+	for entry in data["damage_pairs"]:
+		var pair: Dictionary = entry
+		checked += 1
+		var got_mult := float(vm.call_function("damage_multiplier",
+				[pair["a"], pair["b"]]))
+		if not _close(float(pair["mult"]), got_mult):
+			_fail("daedalus damage_multiplier(%s, %s)" % [pair["a"], pair["b"]],
+					"value", pair["mult"], got_mult)
+
+	var want_power: Dictionary = data["power"]
+	var got_power = vm.get_global("POWER", {})
+	for key in want_power:
+		checked += 1
+		var actual = (got_power as Dictionary).get(key, null)
+		if actual == null or not _close(float(want_power[key]), float(actual)):
+			_fail("daedalus POWER.%s" % key, "value", want_power[key], actual)
+
+	for entry in data["danger_samples"]:
+		var sample: Dictionary = entry
+		checked += 1
+		var got_n := float(vm.call_function("hostiles_for",
+				[float(sample["danger"]), float(sample["gen"])]))
+		if not _close(float(sample["hostiles"]), got_n):
+			_fail("daedalus hostiles_for(%s, %s)"
+					% [sample["danger"], sample["gen"]], "value",
+					sample["hostiles"], got_n)
+
+	for entry in data["sector_hostiles"]:
+		var sample2: Dictionary = entry
+		checked += 1
+		var got_s := float(vm.call_function("sector_hostiles",
+				[float(sample2["key"]), float(sample2["gen"])]))
+		if not _close(float(sample2["hostiles"]), got_s):
+			_fail("daedalus sector_hostiles(%s)" % sample2["key"], "value",
+					sample2["hostiles"], got_s)
+
+	for entry in data["power_balance"]:
+		var pb: Dictionary = entry
+		checked += 1
+		var got_net := float(vm.call_function("power_balance",
+				[bool(pb["thrust"]), bool(pb["cloak"]), bool(pb["shields"])]))
+		if not _close(float(pb["net"]), got_net):
+			_fail("daedalus power_balance(%s,%s,%s)"
+					% [pb["thrust"], pb["cloak"], pb["shields"]], "value",
+					pb["net"], got_net)
+
+	var want_keys: Array = data["sector_keys"]
+	var got_sectors = vm.get_global("SECTORS", [])
+	var got_keys: Array = []
+	for entry in (got_sectors as Array):
+		got_keys.append(int(float((entry as Dictionary)["key"])))
+	checked += 1
+	if String(got_keys) != String(want_keys):
+		_fail("daedalus SECTORS", "keys", want_keys, got_keys)
 
 
 static func _close(a: float, b: float) -> bool:

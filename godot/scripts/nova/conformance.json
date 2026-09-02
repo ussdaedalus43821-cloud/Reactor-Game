@@ -1883,5 +1883,253 @@
     "events": []
    }
   ]
+ },
+ "daedalus_data": {
+  "ship_order": [
+   "x302",
+   "daedalus",
+   "phoenix",
+   "aurora",
+   "destiny",
+   "atlantis"
+  ],
+  "ships": {
+   "x302": {
+    "name": "F-302 Fighter",
+    "class": "fighter",
+    "shield": 397.0,
+    "hull": 228.0,
+    "speed": 1142.0,
+    "turn": 348.0,
+    "gun_dmg": 4.7,
+    "rocket_dmg": 74.2,
+    "homing_dmg": 55.3,
+    "beam_dmg": 0.0
+   },
+   "daedalus": {
+    "name": "Daedalus  (BC-304)",
+    "class": "battlecruiser",
+    "shield": 1583.0,
+    "hull": 1049.0,
+    "speed": 917.0,
+    "turn": 218.0,
+    "gun_dmg": 12.3,
+    "rocket_dmg": 117.5,
+    "homing_dmg": 89.1,
+    "beam_dmg": 2431.0
+   },
+   "phoenix": {
+    "name": "Phoenix  (BC-305)",
+    "class": "battlecruiser",
+    "shield": 2471.0,
+    "hull": 1654.0,
+    "speed": 1035.0,
+    "turn": 241.0,
+    "gun_dmg": 14.1,
+    "rocket_dmg": 163.0,
+    "homing_dmg": 114.6,
+    "beam_dmg": 3422.0
+   },
+   "aurora": {
+    "name": "Aurora-class Warship",
+    "class": "capital",
+    "shield": 3682.0,
+    "hull": 2183.0,
+    "speed": 948.0,
+    "turn": 184.0,
+    "gun_dmg": 11.8,
+    "rocket_dmg": 138.4,
+    "homing_dmg": 122.7,
+    "beam_dmg": 0.0
+   },
+   "destiny": {
+    "name": "Destiny",
+    "class": "capital",
+    "shield": 1762.0,
+    "hull": 3517.0,
+    "speed": 806.0,
+    "turn": 139.0,
+    "gun_dmg": 11.1,
+    "rocket_dmg": 134.8,
+    "homing_dmg": 94.2,
+    "beam_dmg": 0.0
+   },
+   "atlantis": {
+    "name": "Atlantis  (City-Ship)",
+    "class": "capital",
+    "shield": 7124.0,
+    "hull": 5843.0,
+    "speed": 753.0,
+    "turn": 108.0,
+    "gun_dmg": 16.3,
+    "rocket_dmg": 186.5,
+    "homing_dmg": 131.9,
+    "beam_dmg": 0.0
+   }
+  },
+  "damage_pairs": [
+   {
+    "a": "fighter",
+    "b": "battlecruiser",
+    "mult": 0.082
+   },
+   {
+    "a": "fighter",
+    "b": "capital",
+    "mult": 0.047
+   },
+   {
+    "a": "battlecruiser",
+    "b": "fighter",
+    "mult": 2.37
+   },
+   {
+    "a": "battlecruiser",
+    "b": "capital",
+    "mult": 0.74
+   },
+   {
+    "a": "capital",
+    "b": "fighter",
+    "mult": 3.14
+   },
+   {
+    "a": "capital",
+    "b": "battlecruiser",
+    "mult": 1.12
+   },
+   {
+    "a": "fighter",
+    "b": "fighter",
+    "mult": 1.0
+   },
+   {
+    "a": "battlecruiser",
+    "b": "battlecruiser",
+    "mult": 1.0
+   },
+   {
+    "a": "capital",
+    "b": "capital",
+    "mult": 1.0
+   },
+   {
+    "a": "fighter",
+    "b": "no_such_class",
+    "mult": 1.0
+   }
+  ],
+  "power": {
+   "max": 1047.0,
+   "recharge": 112.0,
+   "shield_draw": 143.0,
+   "thrust_drain": 48.0,
+   "cloak_drain": 27.0,
+   "primary_cost": 9.4,
+   "rocket_cost": 31.2,
+   "homing_cost": 22.7
+  },
+  "danger_samples": [
+   {
+    "danger": 0,
+    "gen": 40.0,
+    "hostiles": 0
+   },
+   {
+    "danger": 1,
+    "gen": 0.0,
+    "hostiles": 4
+   },
+   {
+    "danger": 1,
+    "gen": 12.5,
+    "hostiles": 14
+   },
+   {
+    "danger": 2,
+    "gen": 0.0,
+    "hostiles": 9
+   },
+   {
+    "danger": 2,
+    "gen": 7.25,
+    "hostiles": 18
+   },
+   {
+    "danger": 3,
+    "gen": 0.0,
+    "hostiles": 15
+   },
+   {
+    "danger": 3,
+    "gen": 3.75,
+    "hostiles": 22
+   },
+   {
+    "danger": 3,
+    "gen": 20.0,
+    "hostiles": 57
+   }
+  ],
+  "sector_keys": [
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   0
+  ],
+  "sector_hostiles": [
+   {
+    "key": 1,
+    "gen": 6.0,
+    "hostiles": 0.0
+   },
+   {
+    "key": 4,
+    "gen": 6.0,
+    "hostiles": 27
+   },
+   {
+    "key": 5,
+    "gen": 6.0,
+    "hostiles": 8
+   },
+   {
+    "key": 9,
+    "gen": 6.0,
+    "hostiles": 27
+   }
+  ],
+  "power_balance": [
+   {
+    "thrust": false,
+    "cloak": false,
+    "shields": false,
+    "net": 112.0
+   },
+   {
+    "thrust": true,
+    "cloak": false,
+    "shields": true,
+    "net": -79.0
+   },
+   {
+    "thrust": true,
+    "cloak": true,
+    "shields": false,
+    "net": 37.0
+   },
+   {
+    "thrust": true,
+    "cloak": true,
+    "shields": true,
+    "net": -106.0
+   }
+  ]
  }
 }
