@@ -164,12 +164,14 @@ func _cache_ships() -> void:
 			_fail("SHIPS.%s is not a dict" % key)
 			continue
 		var src: Dictionary = table[key]
-		if not _require(src, STAT_KEYS + ["name", "class"], "SHIPS.%s" % key):
+		if not _require(src, STAT_KEYS + ["name", "class", "hardened"],
+				"SHIPS.%s" % key):
 			continue
 		var entry := {
 			"key": String(key),
 			"name": String(src["name"]),
 			"class": String(src["class"]),
+			"hardened": bool(src["hardened"]),
 		}
 		for stat in STAT_KEYS:
 			entry[stat] = float(src[stat])
@@ -320,6 +322,38 @@ func _self_check() -> void:
 				_fail("%s.%s: cached %f but NovaLang says %f"
 						% [key, stat, fast, slow])
 				return
+		var hard_fast: bool = ships[key]["hardened"]
+		var hard_slow := bool(vm.call_function("ship_hardened", [key]))
+		if hard_fast != hard_slow:
+			_fail("%s.hardened: cached %s but NovaLang says %s"
+					% [key, hard_fast, hard_slow])
+			return
+
+	# Exactly two hulls are hardened, and Destiny -- capital-class but not
+	# hardened -- must not be one of them. If this ever fails, Stage 2's
+	# dart-dive-avoidance and replicator-block logic are silently wrong for
+	# every ship in the registry, so it is worth naming explicitly rather
+	# than trusting the generic loop above to catch it.
+	var hardened_keys: Array = []
+	for key in ships:
+		if bool(ships[key]["hardened"]):
+			hardened_keys.append(key)
+	hardened_keys.sort()
+	if hardened_keys != ["atlantis", "aurora"]:
+		_fail("expected exactly {aurora, atlantis} to be hardened, got %s"
+				% [hardened_keys])
+		return
+
+	if vm.get_global("ENEMY_ORDER", null) != null:
+		var enemy_order = vm.get_global("ENEMY_ORDER", [])
+		for kind in enemy_order:
+			var fast_dmg := enemy_weapon_damage(String(kind), "x302")
+			var slow_dmg := float(vm.call_function("enemy_weapon_damage",
+					[String(kind), "x302"]))
+			if not is_equal_approx(maxf(fast_dmg, 1e-9), maxf(slow_dmg, 1e-9)):
+				_fail("enemy_weapon_damage(%s, x302): %f vs %f"
+						% [kind, fast_dmg, slow_dmg])
+				return
 
 
 # ==========================================================================
@@ -337,6 +371,15 @@ func ship_class(key: String) -> String:
 
 func ship_name(key: String) -> String:
 	return String(ships.get(key, {}).get("name", key))
+
+
+## Whether `key` carries a distributed Lantean/Ancient shield lattice --
+## Aurora and Atlantis only. Not implied by ship_class(): Destiny is
+## capital-class and NOT hardened, which is exactly the distinction
+## Stage 2's enemy AI (a Wraith Dart's dive, a Replicator's infection
+## bolt) has to get right.
+func ship_hardened(key: String) -> bool:
+	return bool(ships.get(key, {}).get("hardened", false))
 
 
 func stat(key: String, name: String, fallback: float = 0.0) -> float:
@@ -385,6 +428,38 @@ func weapon_damage(attacker_key: String, weapon: String,
 		defender_key: String) -> float:
 	return effective_damage(stat(attacker_key, weapon),
 			ship_class(attacker_key), ship_class(defender_key))
+
+
+# ==========================================================================
+# Enemy-facing damage (Stage 2)
+#
+# The class matrix above is exactly the one Stage 2's enemy AI reuses --
+# these three calls are the composition point, backed by the
+# enemy_weapon_damage() / player_weapon_vs_enemy() / enemy_behavior()
+# functions daedalus_rules.nova added when it started importing
+# daedalus_ai.nova. Nothing here duplicates ENEMY or DAMAGE_SCALING; both
+# stay declared exactly once.
+# ==========================================================================
+
+## What a named hostile's gun does to a named player hull.
+func enemy_weapon_damage(kind: String, defender_key: String) -> float:
+	return float(vm.call_function("enemy_weapon_damage", [kind, defender_key]))
+
+
+## What a named player hull's weapon does to a named hostile.
+func player_weapon_vs_enemy(attacker_key: String, weapon: String,
+		kind: String) -> float:
+	return float(vm.call_function("player_weapon_vs_enemy",
+			[attacker_key, weapon, kind]))
+
+
+## The fully-resolved AI behavior for `kind` against whatever `player_key`
+## is flying -- resolves class and the hardened flag from SHIPS so the
+## caller does not have to. Empty Dictionary if daedalus_ai.nova is not on
+## the import path (e.g. an older daedalus_rules.nova).
+func enemy_behavior(kind: String, player_key: String) -> Dictionary:
+	var result = vm.call_function("enemy_behavior", [kind, player_key])
+	return result if typeof(result) == TYPE_DICTIONARY else {}
 
 
 # ==========================================================================

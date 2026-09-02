@@ -205,6 +205,7 @@ def build_doc() -> dict:
         "cases": [run_case(name, src) for name, src in CASES],
         "reactor_trace": reactor_trace(),
         "daedalus_data": daedalus_data(),
+        "ai_data": ai_data(),
     }
 
 
@@ -234,7 +235,8 @@ def daedalus_data() -> dict:
     for key, entry in vm.get_global("SHIPS").items():
         ships[key] = {k: entry[k] for k in
                       ("name", "class", "shield", "hull", "speed", "turn",
-                       "gun_dmg", "rocket_dmg", "homing_dmg", "beam_dmg")}
+                       "gun_dmg", "rocket_dmg", "homing_dmg", "beam_dmg",
+                       "hardened")}
 
     return {
         "ship_order": vm.get_global("SHIP_ORDER"),
@@ -261,6 +263,79 @@ def daedalus_data() -> dict:
     }
 
 
+AI_PLAYER_CLASSES = ["fighter", "battlecruiser", "capital"]
+
+AI_DAMAGE_SAMPLES = [
+    ["dart", "atlantis"], ["capital", "x302"], ["ori", "x302"],
+    ["fighter", "daedalus"], ["hive", "phoenix"], ["replicator", "destiny"],
+]
+
+AI_BEHAVIOR_SAMPLES = [
+    ["dart", "atlantis"], ["dart", "destiny"], ["dart", "daedalus"],
+    ["replicator", "aurora"], ["replicator", "phoenix"],
+    ["fighter", "aurora"],
+]
+
+
+def ai_data() -> dict:
+    """Pin every (kind, player_class, hardened) behavior -- all 36
+    combinations, not a sample, since the whole point of a uniform-shape
+    dict is that there is no cheap subset to spot-check instead. Also pins
+    the raw ENEMY table and the rules.nova <-> ai.nova integration seam
+    (enemy_weapon_damage, player_weapon_vs_enemy, enemy_behavior)."""
+    vm = NovaVM(random.Random(7), module_reader=_read_script)
+    if not vm.load_file("daedalus_ai.nova"):
+        raise SystemExit("daedalus_ai.nova failed to load: %s" % vm.error)
+
+    enemy = {}
+    for key, entry in vm.get_global("ENEMY").items():
+        enemy[key] = {k: entry[k] for k in
+                     ("name", "class", "role", "shield", "hull", "score",
+                      "max_speed", "turn_rate", "gun_dmg", "keep_dist",
+                      "engage_range", "fire_cd")}
+
+    behaviors = []
+    for kind in vm.get_global("ENEMY_ORDER"):
+        for player_class in AI_PLAYER_CLASSES:
+            for hardened in (False, True):
+                b = vm.call_function("get_behavior",
+                                     [kind, player_class, hardened])
+                behaviors.append({"kind": kind, "player_class": player_class,
+                                  "hardened": hardened, "behavior": b})
+
+    ram_samples = [{"speed": s, "damage": vm.call_function("dart_ram_damage", [s])}
+                   for s in (0.0, 293.6, 587.2, 5872.0)]
+
+    rules_vm = NovaVM(random.Random(7), module_reader=_read_script)
+    for fn_name in host.HOST_FUNCTIONS:
+        rules_vm.register_function(fn_name, lambda args: None)
+    if not rules_vm.load_file("daedalus_rules.nova"):
+        raise SystemExit("daedalus_rules.nova failed to load: %s" % rules_vm.error)
+
+    enemy_damage = [
+        {"kind": k, "defender": d,
+         "damage": rules_vm.call_function("enemy_weapon_damage", [k, d])}
+        for k, d in AI_DAMAGE_SAMPLES]
+    player_damage = [
+        {"attacker": "x302", "weapon": "gun_dmg", "kind": "hive",
+         "damage": rules_vm.call_function("player_weapon_vs_enemy",
+                                          ["x302", "gun_dmg", "hive"])}]
+    resolved_behaviors = [
+        {"kind": k, "player_key": p,
+         "behavior": rules_vm.call_function("enemy_behavior", [k, p])}
+        for k, p in AI_BEHAVIOR_SAMPLES]
+
+    return {
+        "enemy_order": vm.get_global("ENEMY_ORDER"),
+        "enemy": enemy,
+        "behaviors": behaviors,
+        "ram_samples": ram_samples,
+        "enemy_damage": enemy_damage,
+        "player_damage": player_damage,
+        "resolved_behaviors": resolved_behaviors,
+    }
+
+
 def _read_script(path: str):
     full = os.path.join(ROOT, "godot", "scripts", path)
     if not os.path.exists(full):
@@ -280,9 +355,9 @@ def main() -> int:
     failures = sum(1 for c in cases if not c["ok"])
     print("wrote %s" % os.path.relpath(OUT_PATH, ROOT))
     print("  %d cases (%d expected-error), %d reactor frames, "
-          "%d daedalus hulls"
+          "%d daedalus hulls, %d ai behaviors"
           % (len(cases), failures, len(doc["reactor_trace"]["frames"]),
-             len(doc["daedalus_data"]["ships"])))
+             len(doc["daedalus_data"]["ships"]), len(doc["ai_data"]["behaviors"])))
     return 0
 
 

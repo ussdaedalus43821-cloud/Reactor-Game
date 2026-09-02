@@ -50,6 +50,9 @@ func _initialize() -> void:
 	if doc.has("daedalus_data"):
 		_check_daedalus_data(doc["daedalus_data"])
 
+	if doc.has("ai_data"):
+		_check_ai_data(doc["ai_data"])
+
 	print("")
 	if failures.is_empty():
 		print("parity OK -- %d checks, GDScript matches the reference" % checked)
@@ -285,6 +288,153 @@ func _check_daedalus_data(data: Dictionary) -> void:
 	checked += 1
 	if String(got_keys) != String(want_keys):
 		_fail("daedalus SECTORS", "keys", want_keys, got_keys)
+
+
+# ==========================================================================
+# Stage 2 enemy AI
+#
+# Loads daedalus_ai.nova standalone (the ai_bridge.gd path) and diffs the
+# raw ENEMY table and every one of the 36 (kind, player_class, hardened)
+# behaviors against the reference. Then loads daedalus_rules.nova (the
+# import path) and diffs the integration seam -- enemy_weapon_damage(),
+# player_weapon_vs_enemy(), enemy_behavior() -- separately, since that
+# exercises the aliased `import ... as ai` rather than the standalone load.
+# ==========================================================================
+
+func _check_ai_data(data: Dictionary) -> void:
+	var vm := NovaVM.new()
+	checked += 1
+	if not vm.load_file("daedalus_ai.nova"):
+		failures.append("daedalus_ai.nova failed to load: " + vm.error)
+		return
+
+	checked += 1
+	var got_order = vm.get_global("ENEMY_ORDER", [])
+	if not _same_string_list(got_order, data["enemy_order"]):
+		_fail("ai ENEMY_ORDER", "order", data["enemy_order"], got_order)
+
+	var want_enemy: Dictionary = data["enemy"]
+	var got_enemy = vm.get_global("ENEMY", {})
+	for kind in want_enemy:
+		checked += 1
+		if typeof(got_enemy) != TYPE_DICTIONARY or not (got_enemy as Dictionary).has(kind):
+			failures.append("ai ENEMY is missing hull '%s'" % kind)
+			continue
+		_compare_stat_dict("ai ENEMY.%s" % kind, want_enemy[kind],
+				(got_enemy as Dictionary)[kind])
+
+	for entry in data["behaviors"]:
+		var sample: Dictionary = entry
+		checked += 1
+		var got := vm.call_function("get_behavior",
+				[sample["kind"], sample["player_class"], sample["hardened"]])
+		var label := "ai get_behavior(%s, %s, %s)" % [sample["kind"],
+				sample["player_class"], sample["hardened"]]
+		if not _dict_matches(sample["behavior"], got):
+			_fail(label, "behavior", sample["behavior"], got)
+
+	for entry in data["ram_samples"]:
+		var rs: Dictionary = entry
+		checked += 1
+		var got_dmg := float(vm.call_function("dart_ram_damage", [float(rs["speed"])]))
+		if not _close(float(rs["damage"]), got_dmg):
+			_fail("ai dart_ram_damage(%s)" % rs["speed"], "value",
+					rs["damage"], got_dmg)
+
+	# The integration seam: daedalus_rules.nova importing daedalus_ai.nova.
+	var rules_vm := NovaVM.new()
+	for fn_name in ["log", "alarm", "scram", "reset_trip", "meltdown",
+			"victory", "inject_fault", "clear_fault"]:
+		rules_vm.register_function(String(fn_name), func(_args: Array): return null)
+	checked += 1
+	if not rules_vm.load_file("daedalus_rules.nova"):
+		failures.append("daedalus_rules.nova (ai import) failed to load: "
+				+ rules_vm.error)
+		return
+
+	for entry in data["enemy_damage"]:
+		var ed: Dictionary = entry
+		checked += 1
+		var got_ed := float(rules_vm.call_function("enemy_weapon_damage",
+				[ed["kind"], ed["defender"]]))
+		if not _close(float(ed["damage"]), got_ed):
+			_fail("ai enemy_weapon_damage(%s, %s)" % [ed["kind"], ed["defender"]],
+					"value", ed["damage"], got_ed)
+
+	for entry in data["player_damage"]:
+		var pd: Dictionary = entry
+		checked += 1
+		var got_pd := float(rules_vm.call_function("player_weapon_vs_enemy",
+				[pd["attacker"], pd["weapon"], pd["kind"]]))
+		if not _close(float(pd["damage"]), got_pd):
+			_fail("ai player_weapon_vs_enemy(%s, %s, %s)"
+					% [pd["attacker"], pd["weapon"], pd["kind"]],
+					"value", pd["damage"], got_pd)
+
+	for entry in data["resolved_behaviors"]:
+		var rb: Dictionary = entry
+		checked += 1
+		var got_rb := rules_vm.call_function("enemy_behavior",
+				[rb["kind"], rb["player_key"]])
+		if not _dict_matches(rb["behavior"], got_rb):
+			_fail("ai enemy_behavior(%s, %s)" % [rb["kind"], rb["player_key"]],
+					"behavior", rb["behavior"], got_rb)
+
+
+func _compare_stat_dict(label: String, want: Dictionary, got) -> void:
+	if typeof(got) != TYPE_DICTIONARY:
+		_fail(label, "type", "dict", got)
+		return
+	var gd: Dictionary = got
+	for field in want:
+		var expected = want[field]
+		var actual = gd.get(field, null)
+		if typeof(expected) == TYPE_STRING:
+			if String(actual) != String(expected):
+				_fail("%s.%s" % [label, field], "value", expected, actual)
+		elif typeof(expected) == TYPE_ARRAY:
+			if not _dict_matches(expected, actual):
+				_fail("%s.%s" % [label, field], "value", expected, actual)
+		elif not _close(float(expected), float(actual)):
+			_fail("%s.%s" % [label, field], "value", expected, actual)
+
+
+## Deep structural comparison for JSON-shaped values: dicts, arrays,
+## strings, bools and numbers (numbers within float tolerance).
+func _dict_matches(want, got) -> bool:
+	if typeof(want) != typeof(got):
+		# A JSON `true`/`false` and a GDScript bool both parse as TYPE_BOOL,
+		# and a JSON number always parses as TYPE_FLOAT, so a real type
+		# mismatch here is a real mismatch, not a JSON-round-trip artifact.
+		return false
+	match typeof(want):
+		TYPE_DICTIONARY:
+			var wd: Dictionary = want
+			var gd: Dictionary = got
+			if wd.size() != gd.size():
+				return false
+			for key in wd:
+				if not gd.has(key) or not _dict_matches(wd[key], gd[key]):
+					return false
+			return true
+		TYPE_ARRAY:
+			var wl: Array = want
+			var gl: Array = got
+			if wl.size() != gl.size():
+				return false
+			for i in range(wl.size()):
+				if not _dict_matches(wl[i], gl[i]):
+					return false
+			return true
+		TYPE_FLOAT, TYPE_INT:
+			return _close(float(want), float(got))
+		TYPE_STRING:
+			return String(want) == String(got)
+		TYPE_BOOL:
+			return bool(want) == bool(got)
+		TYPE_NIL:
+			return got == null
+	return want == got
 
 
 static func _close(a: float, b: float) -> bool:

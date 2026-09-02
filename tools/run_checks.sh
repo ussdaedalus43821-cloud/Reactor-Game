@@ -59,6 +59,27 @@ print("  power: %.0f cap, %+.0f/s idle, %+.0f/s shields+thrust, %+.0f/s cloak+th
 PY
 
 echo
+echo "== daedalus stage 2 enemy ai ================================"
+python3 - <<'PY'
+import random, sys
+sys.path.insert(0, "reference")
+from nova_vm import NovaVM
+vm = NovaVM(random.Random(7), base_dir="godot/scripts")
+assert vm.load_file("daedalus_ai.nova"), vm.error
+order = vm.get_global("ENEMY_ORDER")
+print("  %d hostile archetypes" % len(order))
+for kind in order:
+    e = vm.get_global("ENEMY")[kind]
+    print("    %-11s %-9s %-14s shield %7.1f  hull %7.1f  score %6.0f"
+          % (kind, e["class"], e["role"], e["shield"], e["hull"], e["score"]))
+for kind, cls, hard in [("fighter","capital",False), ("fighter","fighter",False),
+                        ("dart","capital",True), ("dart","capital",False),
+                        ("replicator","capital",True)]:
+    b = vm.call_function("get_behavior", [kind, cls, hard])
+    print("    %-11s vs %-13s hardened=%-5s -> %s" % (kind, cls, hard, b["tactical_role"]))
+PY
+
+echo
 echo "== headless reactor run ===================================="
 python3 reference/reactor_host.py --selftest --seconds 300 \
   | python3 -c 'import json,sys; d=json.load(sys.stdin); print("  %.0fx realtime, %s us/step, final state %s" % (d["realtime_factor"], d["us_per_step"], d["final"]["state"])); [print("   ", e) for e in d["events"]]'

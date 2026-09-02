@@ -684,23 +684,24 @@ class TestReactorHost(unittest.TestCase):
 
 class TestDaedalusData(unittest.TestCase):
 
-    # ship -> (class, shield, hull, speed, turn, gun, rocket, homing, beam)
+    # ship -> (class, shield, hull, speed, turn, gun, rocket, homing, beam,
+    #           hardened)
     TABLE = {
         "x302":     ("fighter",        397,  228, 1142, 348,  4.7,  74.2,
-                     55.3, 0),
+                     55.3, 0, False),
         "daedalus": ("battlecruiser", 1583, 1049,  917, 218, 12.3, 117.5,
-                     89.1, 2431),
+                     89.1, 2431, False),
         "phoenix":  ("battlecruiser", 2471, 1654, 1035, 241, 14.1, 163.0,
-                     114.6, 3422),
+                     114.6, 3422, False),
         "aurora":   ("capital",       3682, 2183,  948, 184, 11.8, 138.4,
-                     122.7, 0),
+                     122.7, 0, True),
         "destiny":  ("capital",       1762, 3517,  806, 139, 11.1, 134.8,
-                     94.2, 0),
+                     94.2, 0, False),
         "atlantis": ("capital",       7124, 5843,  753, 108, 16.3, 186.5,
-                     131.9, 0),
+                     131.9, 0, True),
     }
     COLUMNS = ["class", "shield", "hull", "speed", "turn", "gun_dmg",
-               "rocket_dmg", "homing_dmg", "beam_dmg"]
+               "rocket_dmg", "homing_dmg", "beam_dmg", "hardened"]
 
     @classmethod
     def setUpClass(cls):
@@ -717,9 +718,29 @@ class TestDaedalusData(unittest.TestCase):
                 got = ships[key][column]
                 if isinstance(want, str):
                     self.assertEqual(got, want, "%s.%s" % (key, column))
+                elif isinstance(want, bool):
+                    self.assertEqual(bool(got), want, "%s.%s" % (key, column))
                 else:
                     self.assertAlmostEqual(float(got), float(want), places=9,
                                            msg="%s.%s" % (key, column))
+
+    def test_exactly_aurora_and_atlantis_are_hardened(self):
+        """Destiny is capital-class and NOT hardened -- this is the exact
+        distinction Stage 2's dart-dive-avoidance and replicator-block
+        logic have to get right, so it gets its own explicit test rather
+        than trusting the generic per-field loop above."""
+        ships = self.vm.get_global("SHIPS")
+        hardened = sorted(k for k, s in ships.items() if s.get("hardened"))
+        self.assertEqual(hardened, ["atlantis", "aurora"])
+        self.assertFalse(ships["destiny"]["hardened"],
+                         "Destiny is capital-class but must not be hardened")
+
+    def test_ship_hardened_accessor(self):
+        self.assertTrue(self.vm.call_function("ship_hardened", ["aurora"]))
+        self.assertTrue(self.vm.call_function("ship_hardened", ["atlantis"]))
+        self.assertFalse(self.vm.call_function("ship_hardened", ["destiny"]))
+        self.assertFalse(self.vm.call_function("ship_hardened", ["daedalus"]))
+        self.assertFalse(self.vm.call_function("ship_hardened", ["not_a_ship"]))
 
     def test_ship_order_covers_the_registry(self):
         order = self.vm.get_global("SHIP_ORDER")
@@ -853,6 +874,320 @@ class TestDaedalusData(unittest.TestCase):
         self.assertEqual(
             self.vm.call_function("ship_stat", ["not_a_hull", "shield", -1.0]),
             -1.0)
+
+
+# ==========================================================================
+# DAEDALUS Stage 2 enemy AI
+# ==========================================================================
+
+class TestDaedalusAI(unittest.TestCase):
+
+    # kind -> (class, keep_dist, engage_range, fire_cd, gun_dmg, max_speed,
+    #          turn_rate, shield, hull, score)
+    TABLE = {
+        "fighter": ("fighter", [286, 412], [783, 912], [1.13, 1.67], 6.2,
+                    312.7, 204.8, 438.2, 307.5, 104),
+        "capital": ("capital", [516, 638], [947, 1138], [1.82, 2.41], 17.3,
+                    58.4, 19.4, 1538.4, 3172.8, 3184),
+        "dart": ("fighter", [194, 273], [704, 831], [0.48, 0.73], 5.1,
+                 587.2, 386.1, 92.7, 68.3, 126),
+        "hive": ("capital", [614, 748], [1184, 1372], [2.21, 2.89], 18.7,
+                 42.3, 14.7, 2417.6, 5283.7, 6273),
+        "replicator": ("fighter", [372, 461], [873, 1014], [1.72, 2.31], 0,
+                       384.6, 226.3, 837.5, 967.2, 3017),
+        "ori": ("capital", [1024, 1318], [1147, 1284], [2.14, 2.63], 0,
+               18.2, 11.7, 3421.8, 3618.4, 5817),
+    }
+    PLAYER_CLASSES = ["fighter", "battlecruiser", "capital"]
+    BEHAVIOR_KEYS = [
+        "kind", "class", "name", "role", "shield", "hull", "score",
+        "max_speed", "turn_rate", "gun_dmg", "keep_dist", "engage_range",
+        "fire_cd", "burst_min", "burst_max", "strafe_interval", "flak_cd",
+        "dive_cd", "dive_enabled", "ram_dmg_base", "spawn_cd",
+        "release_range", "max_stored", "prioritize_distance",
+        "flee_hull_frac", "flee_speed", "infect_blocked",
+        "hide_behind_allies", "charge_time", "fire_time", "beam_dps",
+        "beam_cooldown", "tactical_role",
+    ]
+
+    @classmethod
+    def setUpClass(cls):
+        cls.vm = NovaVM(random.Random(7), base_dir=host.RULES_DIR)
+        assert cls.vm.load_file("daedalus_ai.nova"), cls.vm.error
+
+    def behavior(self, kind, player_class, hardened=False):
+        b = self.vm.call_function("get_behavior", [kind, player_class, hardened])
+        self.assertEqual(self.vm.error, "")
+        return b
+
+    def test_every_enemy_stat_is_exact(self):
+        enemy = self.vm.get_global("ENEMY")
+        self.assertEqual(set(enemy), set(self.TABLE))
+        for kind, row in self.TABLE.items():
+            cls, keep_dist, engage_range, fire_cd, gun, speed, turn, \
+                shield, hull, score = row
+            e = enemy[kind]
+            self.assertEqual(e["class"], cls, kind)
+            for field, want in (("keep_dist", keep_dist),
+                                ("engage_range", engage_range),
+                                ("fire_cd", fire_cd)):
+                self.assertAlmostEqual(e[field][0], want[0], places=9,
+                                       msg="%s.%s[0]" % (kind, field))
+                self.assertAlmostEqual(e[field][1], want[1], places=9,
+                                       msg="%s.%s[1]" % (kind, field))
+            for field, want in (("gun_dmg", gun), ("max_speed", speed),
+                                ("turn_rate", turn), ("shield", shield),
+                                ("hull", hull), ("score", score)):
+                self.assertAlmostEqual(float(e[field]), float(want), places=9,
+                                       msg="%s.%s" % (kind, field))
+
+    def test_enemy_order_covers_the_registry(self):
+        order = self.vm.get_global("ENEMY_ORDER")
+        self.assertEqual(order, ["fighter", "capital", "dart", "hive",
+                                 "replicator", "ori"])
+        self.assertEqual(set(order), set(self.vm.get_global("ENEMY")))
+
+    def test_class_assignment_matches_original_hull_tiers(self):
+        """fighter/dart/replicator are fighter-scale; capital/hive/ori are
+        capital-scale -- the same tier split the original engine used."""
+        for kind, want in {"fighter": "fighter", "capital": "capital",
+                          "dart": "fighter", "hive": "capital",
+                          "replicator": "fighter", "ori": "capital"}.items():
+            self.assertEqual(self.vm.call_function("enemy_class", [kind]),
+                             want, kind)
+
+    def test_kind_aliases_resolve(self):
+        self.assertEqual(self.vm.call_function("resolve_kind", ["wdart"]),
+                         "dart")
+        self.assertEqual(self.vm.call_function("resolve_kind", ["whive"]),
+                         "hive")
+        self.assertEqual(self.vm.call_function("resolve_kind", ["capital"]),
+                         "capital")
+        self.assertEqual(self.vm.call_function("enemy_class", ["wdart"]),
+                         "fighter")
+
+    def test_prose_only_constants(self):
+        """Values given only in the brief's bulleted description, not the
+        tuning table, are still pinned exactly."""
+        e = self.vm.get_global("ENEMY")
+        self.assertEqual(e["fighter"]["strafe_interval"], [2.7, 4.3])
+        self.assertEqual(e["fighter"]["burst_min"], 2)
+        self.assertEqual(e["fighter"]["burst_max"], 4)
+        self.assertEqual(e["capital"]["flak_cd"], [2.7, 4.1])
+        self.assertEqual(e["dart"]["dive_cd"], [3.1, 5.4])
+        self.assertAlmostEqual(e["dart"]["ram_dmg_base"], 26.4)
+        self.assertEqual(e["hive"]["spawn_cd"], [5.7, 9.2])
+        self.assertAlmostEqual(e["replicator"]["flee_hull_frac"], 0.30)
+        self.assertAlmostEqual(e["replicator"]["flee_speed"], 512.0)
+        self.assertAlmostEqual(e["ori"]["charge_time"], 1.14)
+        self.assertAlmostEqual(e["ori"]["fire_time"], 1.52)
+        self.assertAlmostEqual(e["ori"]["beam_dps"], 1547.0)
+
+    def test_every_behavior_has_the_full_uniform_shape(self):
+        """All 36 (kind, class, hardened) combinations return exactly the
+        same key set -- no missing fields, no stray ones."""
+        count = 0
+        for kind in self.vm.get_global("ENEMY_ORDER"):
+            for cls in self.PLAYER_CLASSES:
+                for hardened in (False, True):
+                    b = self.behavior(kind, cls, hardened)
+                    self.assertEqual(set(b), set(self.BEHAVIOR_KEYS),
+                                     "%s/%s/%s" % (kind, cls, hardened))
+                    count += 1
+        self.assertEqual(count, 36)
+
+    def test_fighter_keep_dist_reacts_to_player_class(self):
+        base = self.behavior("fighter", "battlecruiser")["keep_dist"]
+        vs_capital = self.behavior("fighter", "capital")["keep_dist"]
+        vs_fighter = self.behavior("fighter", "fighter")["keep_dist"]
+        self.assertEqual(base, [286.0, 412.0])
+        self.assertAlmostEqual(vs_capital[0], 286.0 * 0.88, places=9)
+        self.assertAlmostEqual(vs_capital[1], 412.0 * 0.88, places=9)
+        self.assertAlmostEqual(vs_fighter[0], 286.0 * 1.15, places=9)
+        self.assertAlmostEqual(vs_fighter[1], 412.0 * 1.15, places=9)
+
+    def test_capital_flak_and_burst_react_to_player_class(self):
+        base = self.behavior("capital", "battlecruiser")
+        vs_fighter = self.behavior("capital", "fighter")
+        vs_capital = self.behavior("capital", "capital")
+        self.assertEqual(base["flak_cd"], [2.7, 4.1])
+        self.assertEqual(base["fire_cd"], [1.82, 2.41])
+        self.assertAlmostEqual(vs_fighter["flak_cd"][0], 2.7 * 0.82, places=9)
+        self.assertAlmostEqual(vs_fighter["flak_cd"][1], 4.1 * 0.82, places=9)
+        self.assertEqual(vs_fighter["fire_cd"], base["fire_cd"],
+                         "flak reaction must not also change the burst cycle")
+        self.assertAlmostEqual(vs_capital["fire_cd"][0], 1.82 * 0.88, places=9)
+        self.assertAlmostEqual(vs_capital["fire_cd"][1], 2.41 * 0.88, places=9)
+        self.assertEqual(vs_capital["flak_cd"], base["flak_cd"],
+                         "burst reaction must not also change flak")
+        for b in (base, vs_fighter, vs_capital):
+            self.assertEqual(b["burst_min"], 3.0)
+            self.assertEqual(b["burst_max"], 3.0)
+
+    def test_dart_avoids_diving_only_when_hardened(self):
+        normal = self.behavior("dart", "battlecruiser", False)
+        vs_capital_soft = self.behavior("dart", "capital", False)
+        vs_hardened = self.behavior("dart", "capital", True)
+        self.assertTrue(normal["dive_enabled"])
+        self.assertEqual(normal["dive_cd"], [3.1, 5.4])
+        self.assertTrue(vs_capital_soft["dive_enabled"],
+                        "capital class alone (e.g. Destiny) must not suppress the dive")
+        self.assertFalse(vs_hardened["dive_enabled"])
+        # It still circles at its own standoff rather than vanishing.
+        self.assertEqual(vs_hardened["keep_dist"], [194.0, 273.0])
+
+    def test_dart_ram_damage_scales_with_the_square_of_speed(self):
+        full = self.vm.call_function("dart_ram_damage", [587.2])
+        half = self.vm.call_function("dart_ram_damage", [293.6])
+        zero = self.vm.call_function("dart_ram_damage", [0.0])
+        self.assertAlmostEqual(full, 26.4, places=9)
+        self.assertAlmostEqual(half, 26.4 * 0.25, places=9)
+        self.assertAlmostEqual(zero, 0.0, places=9)
+        # Clamped, not unbounded, for a hypothetical overspeed dive.
+        overspeed = self.vm.call_function("dart_ram_damage", [587.2 * 10])
+        self.assertAlmostEqual(overspeed, 26.4 * 1.5, places=9)
+
+    def test_hive_ignores_player_class(self):
+        vs_fighter = self.behavior("hive", "fighter")
+        vs_capital = self.behavior("hive", "capital")
+        self.assertEqual(vs_fighter, vs_capital)
+        self.assertEqual(vs_fighter["spawn_cd"], [5.7, 9.2])
+        self.assertAlmostEqual(vs_fighter["release_range"], 307.0, places=9)
+        self.assertEqual(vs_fighter["max_stored"], 6.0)
+        self.assertTrue(vs_fighter["prioritize_distance"])
+
+    def test_replicator_blocked_only_when_hardened(self):
+        open_ = self.behavior("replicator", "battlecruiser", False)
+        blocked = self.behavior("replicator", "capital", True)
+        self.assertFalse(open_["infect_blocked"])
+        self.assertTrue(blocked["infect_blocked"])
+        self.assertTrue(open_["hide_behind_allies"])
+        self.assertTrue(blocked["hide_behind_allies"])
+        self.assertAlmostEqual(open_["flee_hull_frac"], 0.30, places=9)
+        self.assertAlmostEqual(open_["flee_speed"], 512.0, places=9)
+
+    def test_ori_charge_and_dps_react_independently(self):
+        base = self.behavior("ori", "battlecruiser")
+        vs_fighter = self.behavior("ori", "fighter")
+        vs_capital = self.behavior("ori", "capital")
+        self.assertAlmostEqual(base["charge_time"], 1.14, places=9)
+        self.assertAlmostEqual(base["beam_dps"], 1547.0, places=9)
+        self.assertAlmostEqual(vs_fighter["charge_time"], 1.14 * 0.92, places=9)
+        self.assertAlmostEqual(vs_fighter["beam_dps"], 1547.0, places=9,
+                               msg="fighter reaction must not also raise DPS")
+        self.assertAlmostEqual(vs_capital["beam_dps"], 1547.0 * 1.12, places=9)
+        self.assertAlmostEqual(vs_capital["charge_time"], 1.14, places=9,
+                               msg="capital reaction must not also speed up the charge")
+
+    def test_unknown_kind_returns_null(self):
+        self.assertIsNone(self.vm.call_function(
+            "get_behavior", ["not_a_kind", "fighter", False]))
+        self.assertEqual(self.vm.call_function("enemy_class", ["not_a_kind"]),
+                         "fighter")
+        self.assertEqual(self.vm.call_function(
+            "enemy_stat", ["not_a_kind", "shield", -1.0]), -1.0)
+
+    def test_behavior_calls_are_idempotent_and_independent(self):
+        a = self.behavior("ori", "capital")
+        b = self.behavior("ori", "capital")
+        self.assertEqual(a, b)
+        a["beam_dps"] = -1.0
+        self.assertNotEqual(a["beam_dps"], b["beam_dps"],
+                            "each call must return an independent value")
+
+
+class TestDaedalusRulesEnemyBridge(unittest.TestCase):
+    """The seam between rules.nova (SHIPS, DAMAGE_SCALING) and ai.nova
+    (ENEMY, get_behavior), exercised through daedalus_rules.nova's import
+    of daedalus_ai.nova rather than by loading ai.nova directly."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.vm = NovaVM(random.Random(7), base_dir=host.RULES_DIR)
+        for name in host.HOST_FUNCTIONS:
+            cls.vm.register_function(name, lambda args: None)
+        assert cls.vm.load_file("daedalus_rules.nova"), cls.vm.error
+
+    def test_enemy_order_and_stats_are_reachable_through_the_import(self):
+        self.assertEqual(self.vm.get_global("ENEMY_ORDER"),
+                         ["fighter", "capital", "dart", "hive",
+                          "replicator", "ori"])
+        self.assertEqual(
+            self.vm.call_function("enemy_stat", ["ori", "shield", -1.0]),
+            3421.8)
+
+    def test_enemy_weapon_damage_applies_the_class_matrix(self):
+        # Dart (fighter-class) vs Atlantis (capital-class player hull).
+        self.assertAlmostEqual(
+            self.vm.call_function("enemy_weapon_damage", ["dart", "atlantis"]),
+            5.1 * 0.047, places=9)
+        # Hostile Cruiser (capital-class) vs F-302 (fighter-class): overmatch.
+        self.assertAlmostEqual(
+            self.vm.call_function("enemy_weapon_damage", ["capital", "x302"]),
+            17.3 * 3.14, places=9)
+        # A gun_dmg of 0 (Ori, Replicator) stays 0 regardless of matchup.
+        self.assertEqual(
+            self.vm.call_function("enemy_weapon_damage", ["ori", "x302"]), 0.0)
+
+    def test_player_weapon_vs_enemy_is_the_mirror_direction(self):
+        self.assertAlmostEqual(
+            self.vm.call_function("player_weapon_vs_enemy",
+                                  ["x302", "gun_dmg", "hive"]),
+            4.7 * 0.047, places=9)
+
+    def test_enemy_behavior_resolves_a_player_ship_key_end_to_end(self):
+        """The case the brief calls out by name: Destiny is capital-class
+        but not hardened, so a Dart must still dive on it -- only Aurora
+        and Atlantis, which really are hardened, turn it away."""
+        vs_atlantis = self.vm.call_function("enemy_behavior",
+                                            ["dart", "atlantis"])
+        vs_destiny = self.vm.call_function("enemy_behavior",
+                                           ["dart", "destiny"])
+        vs_daedalus = self.vm.call_function("enemy_behavior",
+                                            ["dart", "daedalus"])
+        self.assertFalse(vs_atlantis["dive_enabled"])
+        self.assertTrue(vs_destiny["dive_enabled"],
+                        "Destiny is capital-class but not hardened")
+        self.assertTrue(vs_daedalus["dive_enabled"])
+
+        vs_aurora_rep = self.vm.call_function("enemy_behavior",
+                                              ["replicator", "aurora"])
+        vs_phoenix_rep = self.vm.call_function("enemy_behavior",
+                                               ["replicator", "phoenix"])
+        self.assertTrue(vs_aurora_rep["infect_blocked"])
+        self.assertFalse(vs_phoenix_rep["infect_blocked"])
+
+    def test_ai_nova_still_loads_and_matches_standalone(self):
+        """rules.nova imports ai.nova with an alias (`as ai`), so
+        get_behavior() is deliberately reachable through daedalus_rules.nova
+        only via the ship-key-resolving enemy_behavior() wrapper, not as a
+        bare top-level name -- that alias is not a leak to plug, it is the
+        namespacing aliased import is for. What must actually hold is that
+        ai.nova loaded standalone (the path ai_bridge.gd uses) agrees with
+        ai.nova loaded through the import (the path daedalus_rules.nova
+        uses): the same module source must not answer differently
+        depending on who asked."""
+        standalone = NovaVM(random.Random(7), base_dir=host.RULES_DIR)
+        assert standalone.load_file("daedalus_ai.nova"), standalone.error
+
+        # daedalus_rules.nova has no bare get_behavior() -- confirm that is
+        # deliberate namespacing, not an accidental gap.
+        missing = self.vm.call_function("get_behavior", ["fighter", "capital", False])
+        self.assertIsNone(missing)
+        self.assertIn("no such function", self.vm.error)
+
+        # The two real call paths: ai_bridge.gd calls get_behavior()
+        # directly; daedalus_rules.nova calls it by resolving a player ship
+        # key first. Fed the same underlying (class, hardened) pair --
+        # aurora is capital-class and hardened -- they must agree exactly.
+        direct = standalone.call_function("get_behavior",
+                                          ["fighter", "capital", True])
+        via_rules = self.vm.call_function("enemy_behavior",
+                                          ["fighter", "aurora"])
+        self.assertEqual(self.vm.call_function("ship_class", ["aurora"]),
+                         "capital")
+        self.assertTrue(self.vm.call_function("ship_hardened", ["aurora"]))
+        self.assertEqual(direct, via_rules)
 
 
 if __name__ == "__main__":

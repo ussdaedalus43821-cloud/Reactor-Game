@@ -1,0 +1,625 @@
+# ==========================================================================
+# daedalus_ai.nova -- enemy AI behavior definitions.
+#
+# STAGE 2 of the Godot + NovaLang conversion. Six hostile archetypes, each
+# with its own tuning table and its own reaction to what the player is
+# flying -- a Wraith Dart reads your shield lattice before it commits to a
+# dive; a brawler cruiser reads your hull class before it decides whether
+# you are a fire-control problem or a flak problem.
+#
+# This file is pure data and pure functions: no `rule`, `fault`, `effects`
+# or `signals` blocks, and no host functions to register. Nothing here runs
+# on its own -- ai_bridge.gd calls get_behavior() on demand (at spawn, and
+# whenever the player switches ships), not once a tick. The physics loop
+# that actually flies these hulls is Stage 3's concern.
+#
+# Loaded two ways:
+#   * standalone, by ai_bridge.gd, for `ai.get_behavior(kind, class, hard)`
+#   * imported into daedalus_rules.nova (`import "daedalus_ai.nova" as ai`),
+#     which is how "reference the AI definitions" is satisfied without a
+#     second copy of the table: rules.nova owns SHIPS and DAMAGE_SCALING,
+#     ai.nova owns ENEMY, and rules.nova's enemy_weapon_damage() is the one
+#     place the two meet.
+#
+# Every range below is [min, max]; the engine rolls its own random value in
+# that range per spawn (or per cycle) using its own RNG. NovaLang decides
+# *what the range is*, not the individual roll -- that keeps AI tuning
+# reproducible and testable without pinning the game's randomness to it.
+# ==========================================================================
+
+reactor "DAEDALUS AI DIRECTOR" version 1
+
+
+# ==========================================================================
+# ENEMY REGISTRY
+#
+# Nine measured figures per hull, matching the table exactly. `class` is
+# the same three-value damage-scaling band from daedalus_rules.nova
+# (fighter / battlecruiser / capital) -- battlecruiser never appears here
+# because nothing hostile is built to that doctrine, only flown to it.
+#
+# Class assignment follows displacement, the same rule Stage 1 uses for
+# player hulls: Fighter, Wraith Dart and the Replicator seed ship are
+# fighter-scale (a single emitter ring, an airframe you can put a railgun
+# through); Capital, the Wraith Hive and the Ori satellite are capital-
+# scale (a shield lattice built to eat a broadside, not dodge one).
+# ==========================================================================
+
+export let ENEMY_ORDER = ["fighter", "capital", "dart", "hive", "replicator", "ori"]
+
+## Old engine contact-kind strings (from before this conversion) resolve to
+## their canonical Stage 2 name, so a caller can pass either. Not exported
+## -- resolve_kind() is the public door to it.
+let KIND_ALIAS = {
+    wdart: "dart",
+    whive: "hive",
+}
+
+export func resolve_kind(kind) {
+    return get(KIND_ALIAS, kind, kind)
+}
+
+export let ENEMY = {
+
+    # -- Fighter (Skirmisher) -----------------------------------------------
+    # A licensed hull, not a stolen one -- roughly F-302 grade avionics on a
+    # cheaper airframe. It cannot win a straight fight with one, so it never
+    # offers one: hold range, strafe, burst-fire, repeat.
+    fighter: {
+        name: "Hostile Fighter",
+        class: "fighter",
+        role: "Skirmisher",
+
+        # 438.2: a single emitter ring, 10% hotter than the F-302's 397 --
+        # it never has to power a hyperspace window generator, so the extra
+        # margin goes into the ring instead.
+        shield: 438.2,
+
+        # 307.5: heavier airframe than the F-302's 228. Cheaper alloy, more
+        # of it.
+        hull: 307.5,
+
+        # 312.7: well under the F-302's 1142. These are line interceptors,
+        # not aces -- the gap is what makes a 302 pilot's job survivable.
+        max_speed: 312.7,
+
+        # 204.8: RCS authority in the same band as a BC-304's 218. It can
+        # out-turn a battlecruiser. It cannot out-turn a 302.
+        turn_rate: 204.8,
+
+        # 6.2: one coilgun round, 32% hotter than a stock F-302 round (4.7)
+        # -- no warhead bays to budget mass against.
+        gun_dmg: 6.2,
+
+        score: 104,
+
+        # 286-412: standoff band. Past ~300u a fighter-grade coilgun round
+        # is already losing to the 0.082 fighter-vs-battlecruiser coupling
+        # curve, so there is little to gain by closing further uninvited.
+        keep_dist: [286.0, 412.0],
+
+        # 783-912: roughly twice standoff -- far enough to commit to an
+        # attack run before the target can clear the intercept envelope.
+        engage_range: [783.0, 912.0],
+
+        # 1.13-1.67: coilgun capacitor recharge between bursts.
+        fire_cd: [1.13, 1.67],
+
+        # 2-4 rounds: one bank discharge. The bank holds four cells, but a
+        # target that shields the first two wasn't going to lose the fight
+        # to the last two either.
+        burst_min: 2.0,
+        burst_max: 4.0,
+
+        # 2.7-4.3s: how long a strafe vector holds before predictive
+        # targeting locks onto the pattern and it has to break it.
+        strafe_interval: [2.7, 4.3],
+    },
+
+    # -- Capital (Brawler) ---------------------------------------------------
+    # No finesse. A heavy hull that closes to gun range and stays there,
+    # with just enough point-defense discipline to keep fighters honest.
+    capital: {
+        name: "Hostile Cruiser",
+        class: "capital",
+        role: "Brawler",
+
+        # 1538.4: an export-grade shield emitter -- a notch below the
+        # naquadah-lattice spec Tau'ri hulls run (1583), which is the whole
+        # reason it stays at arm's length from a BC-304 rather than closing.
+        shield: 1538.4,
+
+        # 3172.8: hull scaled for a slugging match, not for outliving its
+        # own crew the way Destiny's is.
+        hull: 3172.8,
+
+        # 58.4: a gun platform, not a manoeuvring one. It wins by not
+        # having to move.
+        max_speed: 58.4,
+
+        # 19.4 deg/s: the slowest yaw in the registry. Anything that gets
+        # onto its flank stays there.
+        turn_rate: 19.4,
+
+        # 17.3: heaviest single-round figure of any hostile with a direct
+        # gun -- this is what "heavy guns" in the brief means in points.
+        gun_dmg: 17.3,
+
+        score: 3184,
+
+        keep_dist: [516.0, 638.0],
+        engage_range: [947.0, 1138.0],
+
+        # 1.82-2.41: time between 3-round direct-fire bursts.
+        fire_cd: [1.82, 2.41],
+        burst_min: 3.0,
+        burst_max: 3.0,
+
+        # 2.7-4.1s: anti-fighter flak cadence. Not in the tuning table --
+        # this is the brief's own prose figure, kept as its own field
+        # because it answers a different question than `fire_cd` (point
+        # defense cadence, not main-battery cadence).
+        flak_cd: [2.7, 4.1],
+    },
+
+    # -- Wraith Dart (Dive-Bomber) -------------------------------------------
+    # Grown, not built -- organic hull regeneration is why 68.3 hull points
+    # is survivable for something this reckless. It strafes with a light
+    # cannon between passes and periodically commits to a full ram dive;
+    # a hardened shield lattice turns every dive away, so against Atlantis
+    # or Aurora it simply stops offering them.
+    dart: {
+        name: "Wraith Dart",
+        class: "fighter",
+        role: "Dive-Bomber",
+
+        # 92.7: the lightest shield in the registry -- barely a screen.
+        shield: 92.7,
+
+        # 68.3: the lightest hull too. It survives by never being where the
+        # last shot was, not by tanking the next one.
+        hull: 68.3,
+
+        # 587.2: fastest thing in the sky. Nothing here outruns a diving
+        # Dart; the only defense is not being where it dives to.
+        max_speed: 587.2,
+
+        # 386.1: agility to match. It can reverse a dive committed at full
+        # speed inside its own turning circle.
+        turn_rate: 386.1,
+
+        # 5.1: a light strafing cannon, fired between dives, not instead of
+        # them.
+        gun_dmg: 5.1,
+
+        score: 126,
+
+        # 194-273: tightest standoff of any hostile. It has to be close to
+        # dive at all.
+        keep_dist: [194.0, 273.0],
+        engage_range: [704.0, 831.0],
+
+        # 0.48-0.73: cannon cooldown while circling -- the fastest trigger
+        # in the registry, matching an airframe with nothing else to budget
+        # power against.
+        fire_cd: [0.48, 0.73],
+
+        # 3.1-5.4s: time between ram-dive commitments.
+        dive_cd: [3.1, 5.4],
+
+        # 26.4: ram damage at full dive speed. Scales with the square of
+        # closing speed against its own 587.2 cap (kinetic energy, not raw
+        # velocity), so a dive broken up early does proportionally less --
+        # see dart_ram_damage(). Not a directed-energy weapon, so it is
+        # never run through the class damage matrix: a collision does not
+        # care what frequency your shields reject.
+        ram_dmg_base: 26.4,
+    },
+
+    # -- Wraith Hive (Carrier) -----------------------------------------------
+    # The one hostile that would rather not be found. It launches Darts
+    # from a standoff distance and only fights directly when something
+    # gets inside its own defensive perimeter, at which point it empties
+    # the bay rather than trickle out one Dart at a time.
+    hive: {
+        name: "Wraith Hive",
+        class: "capital",
+        role: "Carrier",
+
+        # 2417.6: second-heaviest shield in the registry -- a bay full of
+        # Darts is worth protecting.
+        shield: 2417.6,
+
+        # 5283.7: heaviest hull of anything here, hostile or player-flown.
+        # It out-masses even Atlantis's 5843 by less than 11%.
+        hull: 5283.7,
+
+        # 42.3: barely mobile. A carrier does not need to chase; its Darts
+        # do that for it.
+        max_speed: 42.3,
+
+        turn_rate: 14.7,
+
+        # 18.7: point-defense guns, secondary to launching Darts.
+        gun_dmg: 18.7,
+
+        score: 6273,
+
+        # 614-748: the standoff it tries to hold. Inside this band it would
+        # rather retreat than fight.
+        keep_dist: [614.0, 748.0],
+        engage_range: [1184.0, 1372.0],
+        fire_cd: [2.21, 2.89],
+
+        # 5.7-9.2s: time between individual Dart launches under normal
+        # conditions.
+        spawn_cd: [5.7, 9.2],
+
+        # 307.0: half its own minimum standoff (614 / 2). Once something
+        # closes inside that ring, the doctrine flips from launching
+        # sorties to dumping the whole bay at once -- there is no longer
+        # time to be economical about it.
+        release_range: 307.0,
+
+        # 6: six firing bays, six Darts held in reserve for that release.
+        max_stored: 6.0,
+    },
+
+    # -- Replicator (Infestor) -----------------------------------------------
+    # Deals no direct damage at all -- gun_dmg is zero by design, per the
+    # brief's own "(infest)" annotation. It wins by attrition: every bolt
+    # that lands starts a countdown nothing but a hyperdrive jump or a
+    # hardened shield can stop. It would much rather not be shot at all,
+    # and behaves that way.
+    replicator: {
+        name: "Replicator Seed Ship",
+        class: "fighter",
+        role: "Infestor",
+
+        # 837.5: mid-weight shield -- not built to take a fight, built to
+        # survive long enough to seed one.
+        shield: 837.5,
+
+        # 967.2: mid-weight hull to match.
+        hull: 967.2,
+
+        # 384.6: baseline cruising speed. See `flee_speed` below for what
+        # it does once it decides to run.
+        max_speed: 384.6,
+
+        turn_rate: 226.3,
+
+        # 0: the infection bolt carries no kinetic or energy payload of its
+        # own. Whatever it does to the target happens after it lands, not
+        # on impact.
+        gun_dmg: 0,
+
+        score: 3017,
+
+        keep_dist: [372.0, 461.0],
+        engage_range: [873.0, 1014.0],
+
+        # 1.72-2.31: time between infection bolts.
+        fire_cd: [1.72, 2.31],
+
+        # 0.30: hull fraction below which it breaks off and runs rather
+        # than pressing an attack it cannot afford to lose the ship in.
+        flee_hull_frac: 0.30,
+
+        # 512: the speed it flees at -- 33% over its own cruising 384.6.
+        # Whatever is powering that burst is not available while cruising,
+        # which is why it is not just the ship's normal top speed.
+        flee_speed: 512.0,
+    },
+
+    # -- Ori (Beam Satellite) -------------------------------------------------
+    # Immobile and nearly blind by the standards of anything else here --
+    # 18.2 max speed and 11.7 deg/s turn are not flight numbers, they are
+    # station-keeping numbers. It does not need to move. What it does need
+    # is a clear shot, and it takes its time getting one: a visible charge,
+    # then a beam that punishes anything caught in it disproportionately
+    # to the ship class it is scaled for.
+    ori: {
+        name: "Ori Beam Satellite",
+        class: "capital",
+        role: "Beam Satellite",
+
+        # 3421.8: heaviest shield of anything in the game, hostile or
+        # player-flown -- it cannot dodge, so it has to be able to sit
+        # there and take a broadside indefinitely.
+        shield: 3421.8,
+
+        hull: 3618.4,
+
+        # 18.2: a station-keeping thruster, not a sublight drive.
+        max_speed: 18.2,
+
+        # 11.7 deg/s: enough to track a slow target, nothing more.
+        turn_rate: 11.7,
+
+        # 0: no gun at all -- see beam_dps below for what it actually hits
+        # with.
+        gun_dmg: 0,
+
+        score: 5817,
+
+        # 1024-1318: by a wide margin the longest standoff of any hostile.
+        # It never needs to close, because the beam already reaches this
+        # far.
+        keep_dist: [1024.0, 1318.0],
+        engage_range: [1147.0, 1284.0],
+
+        # 2.14-2.63: recharge between beam attempts -- idle time after one
+        # firing cycle completes before the next charge can begin.
+        fire_cd: [2.14, 2.63],
+
+        # 1.14s: visible charge-up, the player's warning to break line of
+        # sight. Not in the tuning table -- see the ori-specific note below
+        # on how player class moves this number.
+        charge_time: 1.14,
+
+        # 1.52s: how long the beam stays live once it fires.
+        fire_time: 1.52,
+
+        # 1547: damage per second of beam contact. Devastating to a
+        # fighter-scale shield, survivable-but-threatening to a capital
+        # one -- see the player-class scaling below.
+        beam_dps: 1547.0,
+    },
+}
+
+
+export func enemy(kind) {
+    return get(ENEMY, resolve_kind(kind), null)
+}
+
+export func enemy_stat(kind, stat, fallback) {
+    let e = enemy(kind)
+    if e == null {
+        return fallback
+    }
+    return get(e, stat, fallback)
+}
+
+export func enemy_class(kind) {
+    return enemy_stat(kind, "class", "fighter")
+}
+
+export func enemy_name(kind) {
+    return enemy_stat(kind, "name", kind)
+}
+
+
+# ==========================================================================
+# BEHAVIOR RESOLUTION
+#
+# get_behavior(kind, player_class, player_hardened) is the one entry point
+# ai_bridge.gd calls. Every kind returns the same uniform set of keys --
+# fields that do not apply to a given hostile sit at a neutral zero, empty
+# range, or false rather than being absent, so a caller never has to check
+# "does this dict have a dive_cd field" before reading one.
+#
+# player_class is one of "fighter" / "battlecruiser" / "capital" (Stage 1's
+# CLASS_* constants). Battlecruiser is the neutral case throughout: every
+# reaction below is calibrated against a fighter or a capital specifically,
+# and a BC-304/305 pilot gets nobody's special treatment.
+#
+# player_hardened is true only for Aurora and Atlantis (Stage 1's `hardened`
+# ship field) -- it is not implied by player_class, because Destiny is
+# capital-class without a hardened shield. Only the Dart's dive-avoidance
+# and the Replicator's bolt-blocking read it.
+# ==========================================================================
+
+func _base_behavior(kind) {
+    let e = enemy(kind)
+    return {
+        kind: resolve_kind(kind),
+        class: get(e, "class", "fighter"),
+        name: get(e, "name", kind),
+        role: get(e, "role", ""),
+
+        shield: get(e, "shield", 0.0),
+        hull: get(e, "hull", 0.0),
+        score: get(e, "score", 0.0),
+        max_speed: get(e, "max_speed", 0.0),
+        turn_rate: get(e, "turn_rate", 0.0),
+        gun_dmg: get(e, "gun_dmg", 0.0),
+
+        keep_dist: get(e, "keep_dist", [0.0, 0.0]),
+        engage_range: get(e, "engage_range", [0.0, 0.0]),
+        fire_cd: get(e, "fire_cd", [0.0, 0.0]),
+
+        # kind-specific fields: neutral defaults, filled in below by
+        # whichever _*_behavior() function actually uses them.
+        burst_min: 0.0,
+        burst_max: 0.0,
+        strafe_interval: [0.0, 0.0],
+        flak_cd: [0.0, 0.0],
+        dive_cd: [0.0, 0.0],
+        dive_enabled: false,
+        ram_dmg_base: 0.0,
+        spawn_cd: [0.0, 0.0],
+        release_range: 0.0,
+        max_stored: 0.0,
+        prioritize_distance: false,
+        flee_hull_frac: 0.0,
+        flee_speed: 0.0,
+        infect_blocked: false,
+        hide_behind_allies: false,
+        charge_time: 0.0,
+        fire_time: 0.0,
+        beam_dps: 0.0,
+        beam_cooldown: [0.0, 0.0],
+
+        tactical_role: "",
+    }
+}
+
+func _scaled(range_pair, factor) {
+    return [range_pair[0] * factor, range_pair[1] * factor]
+}
+
+
+## Skirmisher: shortens its leash against a capital (a heavy hull's point
+## defense needs time to track a fighter-sized contact), lengthens it
+## against a fellow fighter (an even fight favors whoever shoots first, so
+## it declines to offer one).
+func _fighter_behavior(player_class) {
+    let b = _base_behavior("fighter")
+    let kd = ENEMY.fighter.keep_dist
+    let note = "holds its lane"
+    if player_class == "capital" {
+        kd = _scaled(kd, 0.88)
+        note = "presses 12% closer -- your point defense needs time to track it"
+    }
+    if player_class == "fighter" {
+        kd = _scaled(kd, 1.15)
+        note = "opens the range 15% -- an even fight favors whoever fires first"
+    }
+    b.keep_dist = kd
+    b.strafe_interval = ENEMY.fighter.strafe_interval
+    b.burst_min = ENEMY.fighter.burst_min
+    b.burst_max = ENEMY.fighter.burst_max
+    b.tactical_role = "Skirmisher: " + note
+    return b
+}
+
+
+## Brawler: tightens flak cadence against a fighter (point defense never
+## stands down), shortens the burst cycle against a capital (a direct-fire
+## problem, not a point-defense one).
+func _capital_behavior(player_class) {
+    let b = _base_behavior("capital")
+    let burst_cd = ENEMY.capital.fire_cd
+    let flak = ENEMY.capital.flak_cd
+    let note = "alternates 3-round bursts with baseline anti-fighter flak"
+    if player_class == "fighter" {
+        flak = _scaled(flak, 0.82)
+        note = "tightens flak cadence 18% -- point defense never stands down on you"
+    }
+    if player_class == "capital" {
+        burst_cd = _scaled(burst_cd, 0.88)
+        note = "shortens its burst cycle 12% -- this is direct fire, not point defense"
+    }
+    b.fire_cd = burst_cd
+    b.flak_cd = flak
+    b.burst_min = 3.0
+    b.burst_max = 3.0
+    b.tactical_role = "Brawler: " + note
+    return b
+}
+
+
+## Dive-Bomber: a hardened shield lattice (Aurora, Atlantis) turns every
+## dive away before it commits -- ram damage on a target like that just
+## does not land -- so it falls back to circling at its own standoff and
+## working with the strafing cannon instead. Against anything else it dives
+## on schedule.
+func _dart_behavior(player_class, player_hardened) {
+    let b = _base_behavior("dart")
+    b.fire_cd = ENEMY.dart.fire_cd
+    b.ram_dmg_base = ENEMY.dart.ram_dmg_base
+    if player_hardened {
+        b.dive_enabled = false
+        b.tactical_role = "Dive-Bomber: hardened shielding turns away every " +
+            "run -- circles at standoff and works the cannon instead"
+    } else {
+        b.dive_enabled = true
+        b.dive_cd = ENEMY.dart.dive_cd
+        b.tactical_role = "Dive-Bomber: commits to a ram pass every " +
+            str(ENEMY.dart.dive_cd[0]) + "-" + str(ENEMY.dart.dive_cd[1]) + "s"
+    }
+    return b
+}
+
+## Ram damage at the moment of impact, scaled by the square of closing
+## speed against the Dart's own top speed -- kinetic energy, not raw
+## velocity, so a dive broken up early costs it most of the payoff rather
+## than a proportional slice of it. Clamped to 1.5x for a boosted dive
+## faster than nominal max_speed; never negative.
+export func dart_ram_damage(dive_speed) {
+    let ratio = dive_speed / ENEMY.dart.max_speed
+    return ENEMY.dart.ram_dmg_base * clamp(ratio * ratio, 0.0, 1.5)
+}
+
+
+## Carrier: no player-class reaction -- a Hive treats a fighter and a
+## capital identically, because its own doctrine (launch from standoff,
+## dump the bay if approached) never depended on what is approaching.
+func _hive_behavior() {
+    let b = _base_behavior("hive")
+    b.spawn_cd = ENEMY.hive.spawn_cd
+    b.release_range = ENEMY.hive.release_range
+    b.max_stored = ENEMY.hive.max_stored
+    b.prioritize_distance = true
+    b.tactical_role = "Carrier: holds " + str(ENEMY.hive.keep_dist[0]) + "-" +
+        str(ENEMY.hive.keep_dist[1]) + "u, launches a Dart every " +
+        str(ENEMY.hive.spawn_cd[0]) + "-" + str(ENEMY.hive.spawn_cd[1]) +
+        "s, dumps the bay inside " + str(ENEMY.hive.release_range) + "u"
+    return b
+}
+
+
+## Infestor: a hardened shield blocks the infection bolt outright -- it
+## still shadows the fight from behind its allies rather than disengage
+## entirely, because it costs it nothing to keep trying against everyone
+## else on the scope.
+func _replicator_behavior(player_hardened) {
+    let b = _base_behavior("replicator")
+    b.flee_hull_frac = ENEMY.replicator.flee_hull_frac
+    b.flee_speed = ENEMY.replicator.flee_speed
+    b.hide_behind_allies = true
+    b.infect_blocked = player_hardened
+    if player_hardened {
+        b.tactical_role = "Infestor: hardened shielding blocks its bolts " +
+            "outright -- it keeps its distance and lets its allies take the fire"
+    } else {
+        b.fire_cd = ENEMY.replicator.fire_cd
+        b.tactical_role = "Infestor: seeds a bolt every " +
+            str(ENEMY.replicator.fire_cd[0]) + "-" +
+            str(ENEMY.replicator.fire_cd[1]) + "s, bolts at " +
+            str(ENEMY.replicator.flee_speed) + "u/s under " +
+            str(ENEMY.replicator.flee_hull_frac * 100) + "% hull"
+    }
+    return b
+}
+
+
+## Beam Satellite: charges faster against a fighter (less time to break the
+## lock before it fires) and hits harder against a capital (its own
+## fire-control assumes a capital-scale target and scales the coupling up
+## to match). A battlecruiser gets the satellite's baseline numbers.
+func _ori_behavior(player_class) {
+    let b = _base_behavior("ori")
+    let charge = ENEMY.ori.charge_time
+    let dps = ENEMY.ori.beam_dps
+    let note = "a fair fight for a battlecruiser-scale hull"
+    if player_class == "fighter" {
+        charge = charge * 0.92
+        note = "charges 8% faster -- you have less time to break the lock"
+    }
+    if player_class == "capital" {
+        dps = dps * 1.12
+        note = "hits 12% harder -- its fire-control assumes a capital-scale target"
+    }
+    b.charge_time = charge
+    b.fire_time = ENEMY.ori.fire_time
+    b.beam_dps = dps
+    b.beam_cooldown = ENEMY.ori.fire_cd
+    b.tactical_role = "Beam Satellite: " + note
+    return b
+}
+
+
+## The one entry point ai_bridge.gd calls. Returns null for an unrecognised
+## kind, the same way ship() does for an unrecognised hull in Stage 1.
+export func get_behavior(kind, player_class, player_hardened) {
+    let k = resolve_kind(kind)
+    if k == "fighter"    { return _fighter_behavior(player_class) }
+    if k == "capital"    { return _capital_behavior(player_class) }
+    if k == "dart"       { return _dart_behavior(player_class, player_hardened) }
+    if k == "hive"       { return _hive_behavior() }
+    if k == "replicator" { return _replicator_behavior(player_hardened) }
+    if k == "ori"        { return _ori_behavior(player_class) }
+    return null
+}

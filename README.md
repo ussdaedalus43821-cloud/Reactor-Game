@@ -145,12 +145,15 @@ godot/                          the Godot project — open this
   scripts/
     control_room.gd             fixed-step loop, state fan-out
     nova_bridge.gd              NovaLang <-> reactor physics + UI
-    daedalus_bridge.gd          NovaLang -> Daedalus balance tables
+    daedalus_bridge.gd          NovaLang -> Daedalus ship/power/sector data
+    ai_bridge.gd                NovaLang -> Daedalus enemy AI behavior
     reactor_physics.gd          RK4 six-group core
     reactor_theme.gd            shared palette
     reactor_rules.nova          >>> the reactor's control policy <<<
     daedalus_rules.nova         >>> Daedalus ship stats, damage scaling,
                                     power budget, sectors, advisor <<<
+    daedalus_ai.nova            >>> enemy AI: six archetypes, tuning,
+                                    reactions to player ship class <<<
     lib/combat.nova             a NovaLang module
     nova/
       nova_lexer.gd             tokenizer

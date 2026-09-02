@@ -1904,7 +1904,8 @@
     "gun_dmg": 4.7,
     "rocket_dmg": 74.2,
     "homing_dmg": 55.3,
-    "beam_dmg": 0.0
+    "beam_dmg": 0.0,
+    "hardened": false
    },
    "daedalus": {
     "name": "Daedalus  (BC-304)",
@@ -1916,7 +1917,8 @@
     "gun_dmg": 12.3,
     "rocket_dmg": 117.5,
     "homing_dmg": 89.1,
-    "beam_dmg": 2431.0
+    "beam_dmg": 2431.0,
+    "hardened": false
    },
    "phoenix": {
     "name": "Phoenix  (BC-305)",
@@ -1928,7 +1930,8 @@
     "gun_dmg": 14.1,
     "rocket_dmg": 163.0,
     "homing_dmg": 114.6,
-    "beam_dmg": 3422.0
+    "beam_dmg": 3422.0,
+    "hardened": false
    },
    "aurora": {
     "name": "Aurora-class Warship",
@@ -1940,7 +1943,8 @@
     "gun_dmg": 11.8,
     "rocket_dmg": 138.4,
     "homing_dmg": 122.7,
-    "beam_dmg": 0.0
+    "beam_dmg": 0.0,
+    "hardened": true
    },
    "destiny": {
     "name": "Destiny",
@@ -1952,7 +1956,8 @@
     "gun_dmg": 11.1,
     "rocket_dmg": 134.8,
     "homing_dmg": 94.2,
-    "beam_dmg": 0.0
+    "beam_dmg": 0.0,
+    "hardened": false
    },
    "atlantis": {
     "name": "Atlantis  (City-Ship)",
@@ -1964,7 +1969,8 @@
     "gun_dmg": 16.3,
     "rocket_dmg": 186.5,
     "homing_dmg": 131.9,
-    "beam_dmg": 0.0
+    "beam_dmg": 0.0,
+    "hardened": true
    }
   },
   "damage_pairs": [
@@ -2129,6 +2135,2900 @@
     "cloak": true,
     "shields": true,
     "net": -106.0
+   }
+  ]
+ },
+ "ai_data": {
+  "enemy_order": [
+   "fighter",
+   "capital",
+   "dart",
+   "hive",
+   "replicator",
+   "ori"
+  ],
+  "enemy": {
+   "fighter": {
+    "name": "Hostile Fighter",
+    "class": "fighter",
+    "role": "Skirmisher",
+    "shield": 438.2,
+    "hull": 307.5,
+    "score": 104.0,
+    "max_speed": 312.7,
+    "turn_rate": 204.8,
+    "gun_dmg": 6.2,
+    "keep_dist": [
+     286.0,
+     412.0
+    ],
+    "engage_range": [
+     783.0,
+     912.0
+    ],
+    "fire_cd": [
+     1.13,
+     1.67
+    ]
+   },
+   "capital": {
+    "name": "Hostile Cruiser",
+    "class": "capital",
+    "role": "Brawler",
+    "shield": 1538.4,
+    "hull": 3172.8,
+    "score": 3184.0,
+    "max_speed": 58.4,
+    "turn_rate": 19.4,
+    "gun_dmg": 17.3,
+    "keep_dist": [
+     516.0,
+     638.0
+    ],
+    "engage_range": [
+     947.0,
+     1138.0
+    ],
+    "fire_cd": [
+     1.82,
+     2.41
+    ]
+   },
+   "dart": {
+    "name": "Wraith Dart",
+    "class": "fighter",
+    "role": "Dive-Bomber",
+    "shield": 92.7,
+    "hull": 68.3,
+    "score": 126.0,
+    "max_speed": 587.2,
+    "turn_rate": 386.1,
+    "gun_dmg": 5.1,
+    "keep_dist": [
+     194.0,
+     273.0
+    ],
+    "engage_range": [
+     704.0,
+     831.0
+    ],
+    "fire_cd": [
+     0.48,
+     0.73
+    ]
+   },
+   "hive": {
+    "name": "Wraith Hive",
+    "class": "capital",
+    "role": "Carrier",
+    "shield": 2417.6,
+    "hull": 5283.7,
+    "score": 6273.0,
+    "max_speed": 42.3,
+    "turn_rate": 14.7,
+    "gun_dmg": 18.7,
+    "keep_dist": [
+     614.0,
+     748.0
+    ],
+    "engage_range": [
+     1184.0,
+     1372.0
+    ],
+    "fire_cd": [
+     2.21,
+     2.89
+    ]
+   },
+   "replicator": {
+    "name": "Replicator Seed Ship",
+    "class": "fighter",
+    "role": "Infestor",
+    "shield": 837.5,
+    "hull": 967.2,
+    "score": 3017.0,
+    "max_speed": 384.6,
+    "turn_rate": 226.3,
+    "gun_dmg": 0.0,
+    "keep_dist": [
+     372.0,
+     461.0
+    ],
+    "engage_range": [
+     873.0,
+     1014.0
+    ],
+    "fire_cd": [
+     1.72,
+     2.31
+    ]
+   },
+   "ori": {
+    "name": "Ori Beam Satellite",
+    "class": "capital",
+    "role": "Beam Satellite",
+    "shield": 3421.8,
+    "hull": 3618.4,
+    "score": 5817.0,
+    "max_speed": 18.2,
+    "turn_rate": 11.7,
+    "gun_dmg": 0.0,
+    "keep_dist": [
+     1024.0,
+     1318.0
+    ],
+    "engage_range": [
+     1147.0,
+     1284.0
+    ],
+    "fire_cd": [
+     2.14,
+     2.63
+    ]
+   }
+  },
+  "behaviors": [
+   {
+    "kind": "fighter",
+    "player_class": "fighter",
+    "hardened": false,
+    "behavior": {
+     "kind": "fighter",
+     "class": "fighter",
+     "name": "Hostile Fighter",
+     "role": "Skirmisher",
+     "shield": 438.2,
+     "hull": 307.5,
+     "score": 104.0,
+     "max_speed": 312.7,
+     "turn_rate": 204.8,
+     "gun_dmg": 6.2,
+     "keep_dist": [
+      328.9,
+      473.79999999999995
+     ],
+     "engage_range": [
+      783.0,
+      912.0
+     ],
+     "fire_cd": [
+      1.13,
+      1.67
+     ],
+     "burst_min": 2.0,
+     "burst_max": 4.0,
+     "strafe_interval": [
+      2.7,
+      4.3
+     ],
+     "flak_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_enabled": false,
+     "ram_dmg_base": 0.0,
+     "spawn_cd": [
+      0.0,
+      0.0
+     ],
+     "release_range": 0.0,
+     "max_stored": 0.0,
+     "prioritize_distance": false,
+     "flee_hull_frac": 0.0,
+     "flee_speed": 0.0,
+     "infect_blocked": false,
+     "hide_behind_allies": false,
+     "charge_time": 0.0,
+     "fire_time": 0.0,
+     "beam_dps": 0.0,
+     "beam_cooldown": [
+      0.0,
+      0.0
+     ],
+     "tactical_role": "Skirmisher: opens the range 15% -- an even fight favors whoever fires first"
+    }
+   },
+   {
+    "kind": "fighter",
+    "player_class": "fighter",
+    "hardened": true,
+    "behavior": {
+     "kind": "fighter",
+     "class": "fighter",
+     "name": "Hostile Fighter",
+     "role": "Skirmisher",
+     "shield": 438.2,
+     "hull": 307.5,
+     "score": 104.0,
+     "max_speed": 312.7,
+     "turn_rate": 204.8,
+     "gun_dmg": 6.2,
+     "keep_dist": [
+      328.9,
+      473.79999999999995
+     ],
+     "engage_range": [
+      783.0,
+      912.0
+     ],
+     "fire_cd": [
+      1.13,
+      1.67
+     ],
+     "burst_min": 2.0,
+     "burst_max": 4.0,
+     "strafe_interval": [
+      2.7,
+      4.3
+     ],
+     "flak_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_enabled": false,
+     "ram_dmg_base": 0.0,
+     "spawn_cd": [
+      0.0,
+      0.0
+     ],
+     "release_range": 0.0,
+     "max_stored": 0.0,
+     "prioritize_distance": false,
+     "flee_hull_frac": 0.0,
+     "flee_speed": 0.0,
+     "infect_blocked": false,
+     "hide_behind_allies": false,
+     "charge_time": 0.0,
+     "fire_time": 0.0,
+     "beam_dps": 0.0,
+     "beam_cooldown": [
+      0.0,
+      0.0
+     ],
+     "tactical_role": "Skirmisher: opens the range 15% -- an even fight favors whoever fires first"
+    }
+   },
+   {
+    "kind": "fighter",
+    "player_class": "battlecruiser",
+    "hardened": false,
+    "behavior": {
+     "kind": "fighter",
+     "class": "fighter",
+     "name": "Hostile Fighter",
+     "role": "Skirmisher",
+     "shield": 438.2,
+     "hull": 307.5,
+     "score": 104.0,
+     "max_speed": 312.7,
+     "turn_rate": 204.8,
+     "gun_dmg": 6.2,
+     "keep_dist": [
+      286.0,
+      412.0
+     ],
+     "engage_range": [
+      783.0,
+      912.0
+     ],
+     "fire_cd": [
+      1.13,
+      1.67
+     ],
+     "burst_min": 2.0,
+     "burst_max": 4.0,
+     "strafe_interval": [
+      2.7,
+      4.3
+     ],
+     "flak_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_enabled": false,
+     "ram_dmg_base": 0.0,
+     "spawn_cd": [
+      0.0,
+      0.0
+     ],
+     "release_range": 0.0,
+     "max_stored": 0.0,
+     "prioritize_distance": false,
+     "flee_hull_frac": 0.0,
+     "flee_speed": 0.0,
+     "infect_blocked": false,
+     "hide_behind_allies": false,
+     "charge_time": 0.0,
+     "fire_time": 0.0,
+     "beam_dps": 0.0,
+     "beam_cooldown": [
+      0.0,
+      0.0
+     ],
+     "tactical_role": "Skirmisher: holds its lane"
+    }
+   },
+   {
+    "kind": "fighter",
+    "player_class": "battlecruiser",
+    "hardened": true,
+    "behavior": {
+     "kind": "fighter",
+     "class": "fighter",
+     "name": "Hostile Fighter",
+     "role": "Skirmisher",
+     "shield": 438.2,
+     "hull": 307.5,
+     "score": 104.0,
+     "max_speed": 312.7,
+     "turn_rate": 204.8,
+     "gun_dmg": 6.2,
+     "keep_dist": [
+      286.0,
+      412.0
+     ],
+     "engage_range": [
+      783.0,
+      912.0
+     ],
+     "fire_cd": [
+      1.13,
+      1.67
+     ],
+     "burst_min": 2.0,
+     "burst_max": 4.0,
+     "strafe_interval": [
+      2.7,
+      4.3
+     ],
+     "flak_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_enabled": false,
+     "ram_dmg_base": 0.0,
+     "spawn_cd": [
+      0.0,
+      0.0
+     ],
+     "release_range": 0.0,
+     "max_stored": 0.0,
+     "prioritize_distance": false,
+     "flee_hull_frac": 0.0,
+     "flee_speed": 0.0,
+     "infect_blocked": false,
+     "hide_behind_allies": false,
+     "charge_time": 0.0,
+     "fire_time": 0.0,
+     "beam_dps": 0.0,
+     "beam_cooldown": [
+      0.0,
+      0.0
+     ],
+     "tactical_role": "Skirmisher: holds its lane"
+    }
+   },
+   {
+    "kind": "fighter",
+    "player_class": "capital",
+    "hardened": false,
+    "behavior": {
+     "kind": "fighter",
+     "class": "fighter",
+     "name": "Hostile Fighter",
+     "role": "Skirmisher",
+     "shield": 438.2,
+     "hull": 307.5,
+     "score": 104.0,
+     "max_speed": 312.7,
+     "turn_rate": 204.8,
+     "gun_dmg": 6.2,
+     "keep_dist": [
+      251.68,
+      362.56
+     ],
+     "engage_range": [
+      783.0,
+      912.0
+     ],
+     "fire_cd": [
+      1.13,
+      1.67
+     ],
+     "burst_min": 2.0,
+     "burst_max": 4.0,
+     "strafe_interval": [
+      2.7,
+      4.3
+     ],
+     "flak_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_enabled": false,
+     "ram_dmg_base": 0.0,
+     "spawn_cd": [
+      0.0,
+      0.0
+     ],
+     "release_range": 0.0,
+     "max_stored": 0.0,
+     "prioritize_distance": false,
+     "flee_hull_frac": 0.0,
+     "flee_speed": 0.0,
+     "infect_blocked": false,
+     "hide_behind_allies": false,
+     "charge_time": 0.0,
+     "fire_time": 0.0,
+     "beam_dps": 0.0,
+     "beam_cooldown": [
+      0.0,
+      0.0
+     ],
+     "tactical_role": "Skirmisher: presses 12% closer -- your point defense needs time to track it"
+    }
+   },
+   {
+    "kind": "fighter",
+    "player_class": "capital",
+    "hardened": true,
+    "behavior": {
+     "kind": "fighter",
+     "class": "fighter",
+     "name": "Hostile Fighter",
+     "role": "Skirmisher",
+     "shield": 438.2,
+     "hull": 307.5,
+     "score": 104.0,
+     "max_speed": 312.7,
+     "turn_rate": 204.8,
+     "gun_dmg": 6.2,
+     "keep_dist": [
+      251.68,
+      362.56
+     ],
+     "engage_range": [
+      783.0,
+      912.0
+     ],
+     "fire_cd": [
+      1.13,
+      1.67
+     ],
+     "burst_min": 2.0,
+     "burst_max": 4.0,
+     "strafe_interval": [
+      2.7,
+      4.3
+     ],
+     "flak_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_enabled": false,
+     "ram_dmg_base": 0.0,
+     "spawn_cd": [
+      0.0,
+      0.0
+     ],
+     "release_range": 0.0,
+     "max_stored": 0.0,
+     "prioritize_distance": false,
+     "flee_hull_frac": 0.0,
+     "flee_speed": 0.0,
+     "infect_blocked": false,
+     "hide_behind_allies": false,
+     "charge_time": 0.0,
+     "fire_time": 0.0,
+     "beam_dps": 0.0,
+     "beam_cooldown": [
+      0.0,
+      0.0
+     ],
+     "tactical_role": "Skirmisher: presses 12% closer -- your point defense needs time to track it"
+    }
+   },
+   {
+    "kind": "capital",
+    "player_class": "fighter",
+    "hardened": false,
+    "behavior": {
+     "kind": "capital",
+     "class": "capital",
+     "name": "Hostile Cruiser",
+     "role": "Brawler",
+     "shield": 1538.4,
+     "hull": 3172.8,
+     "score": 3184.0,
+     "max_speed": 58.4,
+     "turn_rate": 19.4,
+     "gun_dmg": 17.3,
+     "keep_dist": [
+      516.0,
+      638.0
+     ],
+     "engage_range": [
+      947.0,
+      1138.0
+     ],
+     "fire_cd": [
+      1.82,
+      2.41
+     ],
+     "burst_min": 3.0,
+     "burst_max": 3.0,
+     "strafe_interval": [
+      0.0,
+      0.0
+     ],
+     "flak_cd": [
+      2.214,
+      3.3619999999999997
+     ],
+     "dive_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_enabled": false,
+     "ram_dmg_base": 0.0,
+     "spawn_cd": [
+      0.0,
+      0.0
+     ],
+     "release_range": 0.0,
+     "max_stored": 0.0,
+     "prioritize_distance": false,
+     "flee_hull_frac": 0.0,
+     "flee_speed": 0.0,
+     "infect_blocked": false,
+     "hide_behind_allies": false,
+     "charge_time": 0.0,
+     "fire_time": 0.0,
+     "beam_dps": 0.0,
+     "beam_cooldown": [
+      0.0,
+      0.0
+     ],
+     "tactical_role": "Brawler: tightens flak cadence 18% -- point defense never stands down on you"
+    }
+   },
+   {
+    "kind": "capital",
+    "player_class": "fighter",
+    "hardened": true,
+    "behavior": {
+     "kind": "capital",
+     "class": "capital",
+     "name": "Hostile Cruiser",
+     "role": "Brawler",
+     "shield": 1538.4,
+     "hull": 3172.8,
+     "score": 3184.0,
+     "max_speed": 58.4,
+     "turn_rate": 19.4,
+     "gun_dmg": 17.3,
+     "keep_dist": [
+      516.0,
+      638.0
+     ],
+     "engage_range": [
+      947.0,
+      1138.0
+     ],
+     "fire_cd": [
+      1.82,
+      2.41
+     ],
+     "burst_min": 3.0,
+     "burst_max": 3.0,
+     "strafe_interval": [
+      0.0,
+      0.0
+     ],
+     "flak_cd": [
+      2.214,
+      3.3619999999999997
+     ],
+     "dive_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_enabled": false,
+     "ram_dmg_base": 0.0,
+     "spawn_cd": [
+      0.0,
+      0.0
+     ],
+     "release_range": 0.0,
+     "max_stored": 0.0,
+     "prioritize_distance": false,
+     "flee_hull_frac": 0.0,
+     "flee_speed": 0.0,
+     "infect_blocked": false,
+     "hide_behind_allies": false,
+     "charge_time": 0.0,
+     "fire_time": 0.0,
+     "beam_dps": 0.0,
+     "beam_cooldown": [
+      0.0,
+      0.0
+     ],
+     "tactical_role": "Brawler: tightens flak cadence 18% -- point defense never stands down on you"
+    }
+   },
+   {
+    "kind": "capital",
+    "player_class": "battlecruiser",
+    "hardened": false,
+    "behavior": {
+     "kind": "capital",
+     "class": "capital",
+     "name": "Hostile Cruiser",
+     "role": "Brawler",
+     "shield": 1538.4,
+     "hull": 3172.8,
+     "score": 3184.0,
+     "max_speed": 58.4,
+     "turn_rate": 19.4,
+     "gun_dmg": 17.3,
+     "keep_dist": [
+      516.0,
+      638.0
+     ],
+     "engage_range": [
+      947.0,
+      1138.0
+     ],
+     "fire_cd": [
+      1.82,
+      2.41
+     ],
+     "burst_min": 3.0,
+     "burst_max": 3.0,
+     "strafe_interval": [
+      0.0,
+      0.0
+     ],
+     "flak_cd": [
+      2.7,
+      4.1
+     ],
+     "dive_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_enabled": false,
+     "ram_dmg_base": 0.0,
+     "spawn_cd": [
+      0.0,
+      0.0
+     ],
+     "release_range": 0.0,
+     "max_stored": 0.0,
+     "prioritize_distance": false,
+     "flee_hull_frac": 0.0,
+     "flee_speed": 0.0,
+     "infect_blocked": false,
+     "hide_behind_allies": false,
+     "charge_time": 0.0,
+     "fire_time": 0.0,
+     "beam_dps": 0.0,
+     "beam_cooldown": [
+      0.0,
+      0.0
+     ],
+     "tactical_role": "Brawler: alternates 3-round bursts with baseline anti-fighter flak"
+    }
+   },
+   {
+    "kind": "capital",
+    "player_class": "battlecruiser",
+    "hardened": true,
+    "behavior": {
+     "kind": "capital",
+     "class": "capital",
+     "name": "Hostile Cruiser",
+     "role": "Brawler",
+     "shield": 1538.4,
+     "hull": 3172.8,
+     "score": 3184.0,
+     "max_speed": 58.4,
+     "turn_rate": 19.4,
+     "gun_dmg": 17.3,
+     "keep_dist": [
+      516.0,
+      638.0
+     ],
+     "engage_range": [
+      947.0,
+      1138.0
+     ],
+     "fire_cd": [
+      1.82,
+      2.41
+     ],
+     "burst_min": 3.0,
+     "burst_max": 3.0,
+     "strafe_interval": [
+      0.0,
+      0.0
+     ],
+     "flak_cd": [
+      2.7,
+      4.1
+     ],
+     "dive_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_enabled": false,
+     "ram_dmg_base": 0.0,
+     "spawn_cd": [
+      0.0,
+      0.0
+     ],
+     "release_range": 0.0,
+     "max_stored": 0.0,
+     "prioritize_distance": false,
+     "flee_hull_frac": 0.0,
+     "flee_speed": 0.0,
+     "infect_blocked": false,
+     "hide_behind_allies": false,
+     "charge_time": 0.0,
+     "fire_time": 0.0,
+     "beam_dps": 0.0,
+     "beam_cooldown": [
+      0.0,
+      0.0
+     ],
+     "tactical_role": "Brawler: alternates 3-round bursts with baseline anti-fighter flak"
+    }
+   },
+   {
+    "kind": "capital",
+    "player_class": "capital",
+    "hardened": false,
+    "behavior": {
+     "kind": "capital",
+     "class": "capital",
+     "name": "Hostile Cruiser",
+     "role": "Brawler",
+     "shield": 1538.4,
+     "hull": 3172.8,
+     "score": 3184.0,
+     "max_speed": 58.4,
+     "turn_rate": 19.4,
+     "gun_dmg": 17.3,
+     "keep_dist": [
+      516.0,
+      638.0
+     ],
+     "engage_range": [
+      947.0,
+      1138.0
+     ],
+     "fire_cd": [
+      1.6016000000000001,
+      2.1208
+     ],
+     "burst_min": 3.0,
+     "burst_max": 3.0,
+     "strafe_interval": [
+      0.0,
+      0.0
+     ],
+     "flak_cd": [
+      2.7,
+      4.1
+     ],
+     "dive_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_enabled": false,
+     "ram_dmg_base": 0.0,
+     "spawn_cd": [
+      0.0,
+      0.0
+     ],
+     "release_range": 0.0,
+     "max_stored": 0.0,
+     "prioritize_distance": false,
+     "flee_hull_frac": 0.0,
+     "flee_speed": 0.0,
+     "infect_blocked": false,
+     "hide_behind_allies": false,
+     "charge_time": 0.0,
+     "fire_time": 0.0,
+     "beam_dps": 0.0,
+     "beam_cooldown": [
+      0.0,
+      0.0
+     ],
+     "tactical_role": "Brawler: shortens its burst cycle 12% -- this is direct fire, not point defense"
+    }
+   },
+   {
+    "kind": "capital",
+    "player_class": "capital",
+    "hardened": true,
+    "behavior": {
+     "kind": "capital",
+     "class": "capital",
+     "name": "Hostile Cruiser",
+     "role": "Brawler",
+     "shield": 1538.4,
+     "hull": 3172.8,
+     "score": 3184.0,
+     "max_speed": 58.4,
+     "turn_rate": 19.4,
+     "gun_dmg": 17.3,
+     "keep_dist": [
+      516.0,
+      638.0
+     ],
+     "engage_range": [
+      947.0,
+      1138.0
+     ],
+     "fire_cd": [
+      1.6016000000000001,
+      2.1208
+     ],
+     "burst_min": 3.0,
+     "burst_max": 3.0,
+     "strafe_interval": [
+      0.0,
+      0.0
+     ],
+     "flak_cd": [
+      2.7,
+      4.1
+     ],
+     "dive_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_enabled": false,
+     "ram_dmg_base": 0.0,
+     "spawn_cd": [
+      0.0,
+      0.0
+     ],
+     "release_range": 0.0,
+     "max_stored": 0.0,
+     "prioritize_distance": false,
+     "flee_hull_frac": 0.0,
+     "flee_speed": 0.0,
+     "infect_blocked": false,
+     "hide_behind_allies": false,
+     "charge_time": 0.0,
+     "fire_time": 0.0,
+     "beam_dps": 0.0,
+     "beam_cooldown": [
+      0.0,
+      0.0
+     ],
+     "tactical_role": "Brawler: shortens its burst cycle 12% -- this is direct fire, not point defense"
+    }
+   },
+   {
+    "kind": "dart",
+    "player_class": "fighter",
+    "hardened": false,
+    "behavior": {
+     "kind": "dart",
+     "class": "fighter",
+     "name": "Wraith Dart",
+     "role": "Dive-Bomber",
+     "shield": 92.7,
+     "hull": 68.3,
+     "score": 126.0,
+     "max_speed": 587.2,
+     "turn_rate": 386.1,
+     "gun_dmg": 5.1,
+     "keep_dist": [
+      194.0,
+      273.0
+     ],
+     "engage_range": [
+      704.0,
+      831.0
+     ],
+     "fire_cd": [
+      0.48,
+      0.73
+     ],
+     "burst_min": 0.0,
+     "burst_max": 0.0,
+     "strafe_interval": [
+      0.0,
+      0.0
+     ],
+     "flak_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_cd": [
+      3.1,
+      5.4
+     ],
+     "dive_enabled": true,
+     "ram_dmg_base": 26.4,
+     "spawn_cd": [
+      0.0,
+      0.0
+     ],
+     "release_range": 0.0,
+     "max_stored": 0.0,
+     "prioritize_distance": false,
+     "flee_hull_frac": 0.0,
+     "flee_speed": 0.0,
+     "infect_blocked": false,
+     "hide_behind_allies": false,
+     "charge_time": 0.0,
+     "fire_time": 0.0,
+     "beam_dps": 0.0,
+     "beam_cooldown": [
+      0.0,
+      0.0
+     ],
+     "tactical_role": "Dive-Bomber: commits to a ram pass every 3.1-5.4s"
+    }
+   },
+   {
+    "kind": "dart",
+    "player_class": "fighter",
+    "hardened": true,
+    "behavior": {
+     "kind": "dart",
+     "class": "fighter",
+     "name": "Wraith Dart",
+     "role": "Dive-Bomber",
+     "shield": 92.7,
+     "hull": 68.3,
+     "score": 126.0,
+     "max_speed": 587.2,
+     "turn_rate": 386.1,
+     "gun_dmg": 5.1,
+     "keep_dist": [
+      194.0,
+      273.0
+     ],
+     "engage_range": [
+      704.0,
+      831.0
+     ],
+     "fire_cd": [
+      0.48,
+      0.73
+     ],
+     "burst_min": 0.0,
+     "burst_max": 0.0,
+     "strafe_interval": [
+      0.0,
+      0.0
+     ],
+     "flak_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_enabled": false,
+     "ram_dmg_base": 26.4,
+     "spawn_cd": [
+      0.0,
+      0.0
+     ],
+     "release_range": 0.0,
+     "max_stored": 0.0,
+     "prioritize_distance": false,
+     "flee_hull_frac": 0.0,
+     "flee_speed": 0.0,
+     "infect_blocked": false,
+     "hide_behind_allies": false,
+     "charge_time": 0.0,
+     "fire_time": 0.0,
+     "beam_dps": 0.0,
+     "beam_cooldown": [
+      0.0,
+      0.0
+     ],
+     "tactical_role": "Dive-Bomber: hardened shielding turns away every run -- circles at standoff and works the cannon instead"
+    }
+   },
+   {
+    "kind": "dart",
+    "player_class": "battlecruiser",
+    "hardened": false,
+    "behavior": {
+     "kind": "dart",
+     "class": "fighter",
+     "name": "Wraith Dart",
+     "role": "Dive-Bomber",
+     "shield": 92.7,
+     "hull": 68.3,
+     "score": 126.0,
+     "max_speed": 587.2,
+     "turn_rate": 386.1,
+     "gun_dmg": 5.1,
+     "keep_dist": [
+      194.0,
+      273.0
+     ],
+     "engage_range": [
+      704.0,
+      831.0
+     ],
+     "fire_cd": [
+      0.48,
+      0.73
+     ],
+     "burst_min": 0.0,
+     "burst_max": 0.0,
+     "strafe_interval": [
+      0.0,
+      0.0
+     ],
+     "flak_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_cd": [
+      3.1,
+      5.4
+     ],
+     "dive_enabled": true,
+     "ram_dmg_base": 26.4,
+     "spawn_cd": [
+      0.0,
+      0.0
+     ],
+     "release_range": 0.0,
+     "max_stored": 0.0,
+     "prioritize_distance": false,
+     "flee_hull_frac": 0.0,
+     "flee_speed": 0.0,
+     "infect_blocked": false,
+     "hide_behind_allies": false,
+     "charge_time": 0.0,
+     "fire_time": 0.0,
+     "beam_dps": 0.0,
+     "beam_cooldown": [
+      0.0,
+      0.0
+     ],
+     "tactical_role": "Dive-Bomber: commits to a ram pass every 3.1-5.4s"
+    }
+   },
+   {
+    "kind": "dart",
+    "player_class": "battlecruiser",
+    "hardened": true,
+    "behavior": {
+     "kind": "dart",
+     "class": "fighter",
+     "name": "Wraith Dart",
+     "role": "Dive-Bomber",
+     "shield": 92.7,
+     "hull": 68.3,
+     "score": 126.0,
+     "max_speed": 587.2,
+     "turn_rate": 386.1,
+     "gun_dmg": 5.1,
+     "keep_dist": [
+      194.0,
+      273.0
+     ],
+     "engage_range": [
+      704.0,
+      831.0
+     ],
+     "fire_cd": [
+      0.48,
+      0.73
+     ],
+     "burst_min": 0.0,
+     "burst_max": 0.0,
+     "strafe_interval": [
+      0.0,
+      0.0
+     ],
+     "flak_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_enabled": false,
+     "ram_dmg_base": 26.4,
+     "spawn_cd": [
+      0.0,
+      0.0
+     ],
+     "release_range": 0.0,
+     "max_stored": 0.0,
+     "prioritize_distance": false,
+     "flee_hull_frac": 0.0,
+     "flee_speed": 0.0,
+     "infect_blocked": false,
+     "hide_behind_allies": false,
+     "charge_time": 0.0,
+     "fire_time": 0.0,
+     "beam_dps": 0.0,
+     "beam_cooldown": [
+      0.0,
+      0.0
+     ],
+     "tactical_role": "Dive-Bomber: hardened shielding turns away every run -- circles at standoff and works the cannon instead"
+    }
+   },
+   {
+    "kind": "dart",
+    "player_class": "capital",
+    "hardened": false,
+    "behavior": {
+     "kind": "dart",
+     "class": "fighter",
+     "name": "Wraith Dart",
+     "role": "Dive-Bomber",
+     "shield": 92.7,
+     "hull": 68.3,
+     "score": 126.0,
+     "max_speed": 587.2,
+     "turn_rate": 386.1,
+     "gun_dmg": 5.1,
+     "keep_dist": [
+      194.0,
+      273.0
+     ],
+     "engage_range": [
+      704.0,
+      831.0
+     ],
+     "fire_cd": [
+      0.48,
+      0.73
+     ],
+     "burst_min": 0.0,
+     "burst_max": 0.0,
+     "strafe_interval": [
+      0.0,
+      0.0
+     ],
+     "flak_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_cd": [
+      3.1,
+      5.4
+     ],
+     "dive_enabled": true,
+     "ram_dmg_base": 26.4,
+     "spawn_cd": [
+      0.0,
+      0.0
+     ],
+     "release_range": 0.0,
+     "max_stored": 0.0,
+     "prioritize_distance": false,
+     "flee_hull_frac": 0.0,
+     "flee_speed": 0.0,
+     "infect_blocked": false,
+     "hide_behind_allies": false,
+     "charge_time": 0.0,
+     "fire_time": 0.0,
+     "beam_dps": 0.0,
+     "beam_cooldown": [
+      0.0,
+      0.0
+     ],
+     "tactical_role": "Dive-Bomber: commits to a ram pass every 3.1-5.4s"
+    }
+   },
+   {
+    "kind": "dart",
+    "player_class": "capital",
+    "hardened": true,
+    "behavior": {
+     "kind": "dart",
+     "class": "fighter",
+     "name": "Wraith Dart",
+     "role": "Dive-Bomber",
+     "shield": 92.7,
+     "hull": 68.3,
+     "score": 126.0,
+     "max_speed": 587.2,
+     "turn_rate": 386.1,
+     "gun_dmg": 5.1,
+     "keep_dist": [
+      194.0,
+      273.0
+     ],
+     "engage_range": [
+      704.0,
+      831.0
+     ],
+     "fire_cd": [
+      0.48,
+      0.73
+     ],
+     "burst_min": 0.0,
+     "burst_max": 0.0,
+     "strafe_interval": [
+      0.0,
+      0.0
+     ],
+     "flak_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_enabled": false,
+     "ram_dmg_base": 26.4,
+     "spawn_cd": [
+      0.0,
+      0.0
+     ],
+     "release_range": 0.0,
+     "max_stored": 0.0,
+     "prioritize_distance": false,
+     "flee_hull_frac": 0.0,
+     "flee_speed": 0.0,
+     "infect_blocked": false,
+     "hide_behind_allies": false,
+     "charge_time": 0.0,
+     "fire_time": 0.0,
+     "beam_dps": 0.0,
+     "beam_cooldown": [
+      0.0,
+      0.0
+     ],
+     "tactical_role": "Dive-Bomber: hardened shielding turns away every run -- circles at standoff and works the cannon instead"
+    }
+   },
+   {
+    "kind": "hive",
+    "player_class": "fighter",
+    "hardened": false,
+    "behavior": {
+     "kind": "hive",
+     "class": "capital",
+     "name": "Wraith Hive",
+     "role": "Carrier",
+     "shield": 2417.6,
+     "hull": 5283.7,
+     "score": 6273.0,
+     "max_speed": 42.3,
+     "turn_rate": 14.7,
+     "gun_dmg": 18.7,
+     "keep_dist": [
+      614.0,
+      748.0
+     ],
+     "engage_range": [
+      1184.0,
+      1372.0
+     ],
+     "fire_cd": [
+      2.21,
+      2.89
+     ],
+     "burst_min": 0.0,
+     "burst_max": 0.0,
+     "strafe_interval": [
+      0.0,
+      0.0
+     ],
+     "flak_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_enabled": false,
+     "ram_dmg_base": 0.0,
+     "spawn_cd": [
+      5.7,
+      9.2
+     ],
+     "release_range": 307.0,
+     "max_stored": 6.0,
+     "prioritize_distance": true,
+     "flee_hull_frac": 0.0,
+     "flee_speed": 0.0,
+     "infect_blocked": false,
+     "hide_behind_allies": false,
+     "charge_time": 0.0,
+     "fire_time": 0.0,
+     "beam_dps": 0.0,
+     "beam_cooldown": [
+      0.0,
+      0.0
+     ],
+     "tactical_role": "Carrier: holds 614-748u, launches a Dart every 5.7-9.2s, dumps the bay inside 307u"
+    }
+   },
+   {
+    "kind": "hive",
+    "player_class": "fighter",
+    "hardened": true,
+    "behavior": {
+     "kind": "hive",
+     "class": "capital",
+     "name": "Wraith Hive",
+     "role": "Carrier",
+     "shield": 2417.6,
+     "hull": 5283.7,
+     "score": 6273.0,
+     "max_speed": 42.3,
+     "turn_rate": 14.7,
+     "gun_dmg": 18.7,
+     "keep_dist": [
+      614.0,
+      748.0
+     ],
+     "engage_range": [
+      1184.0,
+      1372.0
+     ],
+     "fire_cd": [
+      2.21,
+      2.89
+     ],
+     "burst_min": 0.0,
+     "burst_max": 0.0,
+     "strafe_interval": [
+      0.0,
+      0.0
+     ],
+     "flak_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_enabled": false,
+     "ram_dmg_base": 0.0,
+     "spawn_cd": [
+      5.7,
+      9.2
+     ],
+     "release_range": 307.0,
+     "max_stored": 6.0,
+     "prioritize_distance": true,
+     "flee_hull_frac": 0.0,
+     "flee_speed": 0.0,
+     "infect_blocked": false,
+     "hide_behind_allies": false,
+     "charge_time": 0.0,
+     "fire_time": 0.0,
+     "beam_dps": 0.0,
+     "beam_cooldown": [
+      0.0,
+      0.0
+     ],
+     "tactical_role": "Carrier: holds 614-748u, launches a Dart every 5.7-9.2s, dumps the bay inside 307u"
+    }
+   },
+   {
+    "kind": "hive",
+    "player_class": "battlecruiser",
+    "hardened": false,
+    "behavior": {
+     "kind": "hive",
+     "class": "capital",
+     "name": "Wraith Hive",
+     "role": "Carrier",
+     "shield": 2417.6,
+     "hull": 5283.7,
+     "score": 6273.0,
+     "max_speed": 42.3,
+     "turn_rate": 14.7,
+     "gun_dmg": 18.7,
+     "keep_dist": [
+      614.0,
+      748.0
+     ],
+     "engage_range": [
+      1184.0,
+      1372.0
+     ],
+     "fire_cd": [
+      2.21,
+      2.89
+     ],
+     "burst_min": 0.0,
+     "burst_max": 0.0,
+     "strafe_interval": [
+      0.0,
+      0.0
+     ],
+     "flak_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_enabled": false,
+     "ram_dmg_base": 0.0,
+     "spawn_cd": [
+      5.7,
+      9.2
+     ],
+     "release_range": 307.0,
+     "max_stored": 6.0,
+     "prioritize_distance": true,
+     "flee_hull_frac": 0.0,
+     "flee_speed": 0.0,
+     "infect_blocked": false,
+     "hide_behind_allies": false,
+     "charge_time": 0.0,
+     "fire_time": 0.0,
+     "beam_dps": 0.0,
+     "beam_cooldown": [
+      0.0,
+      0.0
+     ],
+     "tactical_role": "Carrier: holds 614-748u, launches a Dart every 5.7-9.2s, dumps the bay inside 307u"
+    }
+   },
+   {
+    "kind": "hive",
+    "player_class": "battlecruiser",
+    "hardened": true,
+    "behavior": {
+     "kind": "hive",
+     "class": "capital",
+     "name": "Wraith Hive",
+     "role": "Carrier",
+     "shield": 2417.6,
+     "hull": 5283.7,
+     "score": 6273.0,
+     "max_speed": 42.3,
+     "turn_rate": 14.7,
+     "gun_dmg": 18.7,
+     "keep_dist": [
+      614.0,
+      748.0
+     ],
+     "engage_range": [
+      1184.0,
+      1372.0
+     ],
+     "fire_cd": [
+      2.21,
+      2.89
+     ],
+     "burst_min": 0.0,
+     "burst_max": 0.0,
+     "strafe_interval": [
+      0.0,
+      0.0
+     ],
+     "flak_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_enabled": false,
+     "ram_dmg_base": 0.0,
+     "spawn_cd": [
+      5.7,
+      9.2
+     ],
+     "release_range": 307.0,
+     "max_stored": 6.0,
+     "prioritize_distance": true,
+     "flee_hull_frac": 0.0,
+     "flee_speed": 0.0,
+     "infect_blocked": false,
+     "hide_behind_allies": false,
+     "charge_time": 0.0,
+     "fire_time": 0.0,
+     "beam_dps": 0.0,
+     "beam_cooldown": [
+      0.0,
+      0.0
+     ],
+     "tactical_role": "Carrier: holds 614-748u, launches a Dart every 5.7-9.2s, dumps the bay inside 307u"
+    }
+   },
+   {
+    "kind": "hive",
+    "player_class": "capital",
+    "hardened": false,
+    "behavior": {
+     "kind": "hive",
+     "class": "capital",
+     "name": "Wraith Hive",
+     "role": "Carrier",
+     "shield": 2417.6,
+     "hull": 5283.7,
+     "score": 6273.0,
+     "max_speed": 42.3,
+     "turn_rate": 14.7,
+     "gun_dmg": 18.7,
+     "keep_dist": [
+      614.0,
+      748.0
+     ],
+     "engage_range": [
+      1184.0,
+      1372.0
+     ],
+     "fire_cd": [
+      2.21,
+      2.89
+     ],
+     "burst_min": 0.0,
+     "burst_max": 0.0,
+     "strafe_interval": [
+      0.0,
+      0.0
+     ],
+     "flak_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_enabled": false,
+     "ram_dmg_base": 0.0,
+     "spawn_cd": [
+      5.7,
+      9.2
+     ],
+     "release_range": 307.0,
+     "max_stored": 6.0,
+     "prioritize_distance": true,
+     "flee_hull_frac": 0.0,
+     "flee_speed": 0.0,
+     "infect_blocked": false,
+     "hide_behind_allies": false,
+     "charge_time": 0.0,
+     "fire_time": 0.0,
+     "beam_dps": 0.0,
+     "beam_cooldown": [
+      0.0,
+      0.0
+     ],
+     "tactical_role": "Carrier: holds 614-748u, launches a Dart every 5.7-9.2s, dumps the bay inside 307u"
+    }
+   },
+   {
+    "kind": "hive",
+    "player_class": "capital",
+    "hardened": true,
+    "behavior": {
+     "kind": "hive",
+     "class": "capital",
+     "name": "Wraith Hive",
+     "role": "Carrier",
+     "shield": 2417.6,
+     "hull": 5283.7,
+     "score": 6273.0,
+     "max_speed": 42.3,
+     "turn_rate": 14.7,
+     "gun_dmg": 18.7,
+     "keep_dist": [
+      614.0,
+      748.0
+     ],
+     "engage_range": [
+      1184.0,
+      1372.0
+     ],
+     "fire_cd": [
+      2.21,
+      2.89
+     ],
+     "burst_min": 0.0,
+     "burst_max": 0.0,
+     "strafe_interval": [
+      0.0,
+      0.0
+     ],
+     "flak_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_enabled": false,
+     "ram_dmg_base": 0.0,
+     "spawn_cd": [
+      5.7,
+      9.2
+     ],
+     "release_range": 307.0,
+     "max_stored": 6.0,
+     "prioritize_distance": true,
+     "flee_hull_frac": 0.0,
+     "flee_speed": 0.0,
+     "infect_blocked": false,
+     "hide_behind_allies": false,
+     "charge_time": 0.0,
+     "fire_time": 0.0,
+     "beam_dps": 0.0,
+     "beam_cooldown": [
+      0.0,
+      0.0
+     ],
+     "tactical_role": "Carrier: holds 614-748u, launches a Dart every 5.7-9.2s, dumps the bay inside 307u"
+    }
+   },
+   {
+    "kind": "replicator",
+    "player_class": "fighter",
+    "hardened": false,
+    "behavior": {
+     "kind": "replicator",
+     "class": "fighter",
+     "name": "Replicator Seed Ship",
+     "role": "Infestor",
+     "shield": 837.5,
+     "hull": 967.2,
+     "score": 3017.0,
+     "max_speed": 384.6,
+     "turn_rate": 226.3,
+     "gun_dmg": 0.0,
+     "keep_dist": [
+      372.0,
+      461.0
+     ],
+     "engage_range": [
+      873.0,
+      1014.0
+     ],
+     "fire_cd": [
+      1.72,
+      2.31
+     ],
+     "burst_min": 0.0,
+     "burst_max": 0.0,
+     "strafe_interval": [
+      0.0,
+      0.0
+     ],
+     "flak_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_enabled": false,
+     "ram_dmg_base": 0.0,
+     "spawn_cd": [
+      0.0,
+      0.0
+     ],
+     "release_range": 0.0,
+     "max_stored": 0.0,
+     "prioritize_distance": false,
+     "flee_hull_frac": 0.3,
+     "flee_speed": 512.0,
+     "infect_blocked": false,
+     "hide_behind_allies": true,
+     "charge_time": 0.0,
+     "fire_time": 0.0,
+     "beam_dps": 0.0,
+     "beam_cooldown": [
+      0.0,
+      0.0
+     ],
+     "tactical_role": "Infestor: seeds a bolt every 1.72-2.31s, bolts at 512u/s under 30% hull"
+    }
+   },
+   {
+    "kind": "replicator",
+    "player_class": "fighter",
+    "hardened": true,
+    "behavior": {
+     "kind": "replicator",
+     "class": "fighter",
+     "name": "Replicator Seed Ship",
+     "role": "Infestor",
+     "shield": 837.5,
+     "hull": 967.2,
+     "score": 3017.0,
+     "max_speed": 384.6,
+     "turn_rate": 226.3,
+     "gun_dmg": 0.0,
+     "keep_dist": [
+      372.0,
+      461.0
+     ],
+     "engage_range": [
+      873.0,
+      1014.0
+     ],
+     "fire_cd": [
+      1.72,
+      2.31
+     ],
+     "burst_min": 0.0,
+     "burst_max": 0.0,
+     "strafe_interval": [
+      0.0,
+      0.0
+     ],
+     "flak_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_enabled": false,
+     "ram_dmg_base": 0.0,
+     "spawn_cd": [
+      0.0,
+      0.0
+     ],
+     "release_range": 0.0,
+     "max_stored": 0.0,
+     "prioritize_distance": false,
+     "flee_hull_frac": 0.3,
+     "flee_speed": 512.0,
+     "infect_blocked": true,
+     "hide_behind_allies": true,
+     "charge_time": 0.0,
+     "fire_time": 0.0,
+     "beam_dps": 0.0,
+     "beam_cooldown": [
+      0.0,
+      0.0
+     ],
+     "tactical_role": "Infestor: hardened shielding blocks its bolts outright -- it keeps its distance and lets its allies take the fire"
+    }
+   },
+   {
+    "kind": "replicator",
+    "player_class": "battlecruiser",
+    "hardened": false,
+    "behavior": {
+     "kind": "replicator",
+     "class": "fighter",
+     "name": "Replicator Seed Ship",
+     "role": "Infestor",
+     "shield": 837.5,
+     "hull": 967.2,
+     "score": 3017.0,
+     "max_speed": 384.6,
+     "turn_rate": 226.3,
+     "gun_dmg": 0.0,
+     "keep_dist": [
+      372.0,
+      461.0
+     ],
+     "engage_range": [
+      873.0,
+      1014.0
+     ],
+     "fire_cd": [
+      1.72,
+      2.31
+     ],
+     "burst_min": 0.0,
+     "burst_max": 0.0,
+     "strafe_interval": [
+      0.0,
+      0.0
+     ],
+     "flak_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_enabled": false,
+     "ram_dmg_base": 0.0,
+     "spawn_cd": [
+      0.0,
+      0.0
+     ],
+     "release_range": 0.0,
+     "max_stored": 0.0,
+     "prioritize_distance": false,
+     "flee_hull_frac": 0.3,
+     "flee_speed": 512.0,
+     "infect_blocked": false,
+     "hide_behind_allies": true,
+     "charge_time": 0.0,
+     "fire_time": 0.0,
+     "beam_dps": 0.0,
+     "beam_cooldown": [
+      0.0,
+      0.0
+     ],
+     "tactical_role": "Infestor: seeds a bolt every 1.72-2.31s, bolts at 512u/s under 30% hull"
+    }
+   },
+   {
+    "kind": "replicator",
+    "player_class": "battlecruiser",
+    "hardened": true,
+    "behavior": {
+     "kind": "replicator",
+     "class": "fighter",
+     "name": "Replicator Seed Ship",
+     "role": "Infestor",
+     "shield": 837.5,
+     "hull": 967.2,
+     "score": 3017.0,
+     "max_speed": 384.6,
+     "turn_rate": 226.3,
+     "gun_dmg": 0.0,
+     "keep_dist": [
+      372.0,
+      461.0
+     ],
+     "engage_range": [
+      873.0,
+      1014.0
+     ],
+     "fire_cd": [
+      1.72,
+      2.31
+     ],
+     "burst_min": 0.0,
+     "burst_max": 0.0,
+     "strafe_interval": [
+      0.0,
+      0.0
+     ],
+     "flak_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_enabled": false,
+     "ram_dmg_base": 0.0,
+     "spawn_cd": [
+      0.0,
+      0.0
+     ],
+     "release_range": 0.0,
+     "max_stored": 0.0,
+     "prioritize_distance": false,
+     "flee_hull_frac": 0.3,
+     "flee_speed": 512.0,
+     "infect_blocked": true,
+     "hide_behind_allies": true,
+     "charge_time": 0.0,
+     "fire_time": 0.0,
+     "beam_dps": 0.0,
+     "beam_cooldown": [
+      0.0,
+      0.0
+     ],
+     "tactical_role": "Infestor: hardened shielding blocks its bolts outright -- it keeps its distance and lets its allies take the fire"
+    }
+   },
+   {
+    "kind": "replicator",
+    "player_class": "capital",
+    "hardened": false,
+    "behavior": {
+     "kind": "replicator",
+     "class": "fighter",
+     "name": "Replicator Seed Ship",
+     "role": "Infestor",
+     "shield": 837.5,
+     "hull": 967.2,
+     "score": 3017.0,
+     "max_speed": 384.6,
+     "turn_rate": 226.3,
+     "gun_dmg": 0.0,
+     "keep_dist": [
+      372.0,
+      461.0
+     ],
+     "engage_range": [
+      873.0,
+      1014.0
+     ],
+     "fire_cd": [
+      1.72,
+      2.31
+     ],
+     "burst_min": 0.0,
+     "burst_max": 0.0,
+     "strafe_interval": [
+      0.0,
+      0.0
+     ],
+     "flak_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_enabled": false,
+     "ram_dmg_base": 0.0,
+     "spawn_cd": [
+      0.0,
+      0.0
+     ],
+     "release_range": 0.0,
+     "max_stored": 0.0,
+     "prioritize_distance": false,
+     "flee_hull_frac": 0.3,
+     "flee_speed": 512.0,
+     "infect_blocked": false,
+     "hide_behind_allies": true,
+     "charge_time": 0.0,
+     "fire_time": 0.0,
+     "beam_dps": 0.0,
+     "beam_cooldown": [
+      0.0,
+      0.0
+     ],
+     "tactical_role": "Infestor: seeds a bolt every 1.72-2.31s, bolts at 512u/s under 30% hull"
+    }
+   },
+   {
+    "kind": "replicator",
+    "player_class": "capital",
+    "hardened": true,
+    "behavior": {
+     "kind": "replicator",
+     "class": "fighter",
+     "name": "Replicator Seed Ship",
+     "role": "Infestor",
+     "shield": 837.5,
+     "hull": 967.2,
+     "score": 3017.0,
+     "max_speed": 384.6,
+     "turn_rate": 226.3,
+     "gun_dmg": 0.0,
+     "keep_dist": [
+      372.0,
+      461.0
+     ],
+     "engage_range": [
+      873.0,
+      1014.0
+     ],
+     "fire_cd": [
+      1.72,
+      2.31
+     ],
+     "burst_min": 0.0,
+     "burst_max": 0.0,
+     "strafe_interval": [
+      0.0,
+      0.0
+     ],
+     "flak_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_enabled": false,
+     "ram_dmg_base": 0.0,
+     "spawn_cd": [
+      0.0,
+      0.0
+     ],
+     "release_range": 0.0,
+     "max_stored": 0.0,
+     "prioritize_distance": false,
+     "flee_hull_frac": 0.3,
+     "flee_speed": 512.0,
+     "infect_blocked": true,
+     "hide_behind_allies": true,
+     "charge_time": 0.0,
+     "fire_time": 0.0,
+     "beam_dps": 0.0,
+     "beam_cooldown": [
+      0.0,
+      0.0
+     ],
+     "tactical_role": "Infestor: hardened shielding blocks its bolts outright -- it keeps its distance and lets its allies take the fire"
+    }
+   },
+   {
+    "kind": "ori",
+    "player_class": "fighter",
+    "hardened": false,
+    "behavior": {
+     "kind": "ori",
+     "class": "capital",
+     "name": "Ori Beam Satellite",
+     "role": "Beam Satellite",
+     "shield": 3421.8,
+     "hull": 3618.4,
+     "score": 5817.0,
+     "max_speed": 18.2,
+     "turn_rate": 11.7,
+     "gun_dmg": 0.0,
+     "keep_dist": [
+      1024.0,
+      1318.0
+     ],
+     "engage_range": [
+      1147.0,
+      1284.0
+     ],
+     "fire_cd": [
+      2.14,
+      2.63
+     ],
+     "burst_min": 0.0,
+     "burst_max": 0.0,
+     "strafe_interval": [
+      0.0,
+      0.0
+     ],
+     "flak_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_enabled": false,
+     "ram_dmg_base": 0.0,
+     "spawn_cd": [
+      0.0,
+      0.0
+     ],
+     "release_range": 0.0,
+     "max_stored": 0.0,
+     "prioritize_distance": false,
+     "flee_hull_frac": 0.0,
+     "flee_speed": 0.0,
+     "infect_blocked": false,
+     "hide_behind_allies": false,
+     "charge_time": 1.0488,
+     "fire_time": 1.52,
+     "beam_dps": 1547.0,
+     "beam_cooldown": [
+      2.14,
+      2.63
+     ],
+     "tactical_role": "Beam Satellite: charges 8% faster -- you have less time to break the lock"
+    }
+   },
+   {
+    "kind": "ori",
+    "player_class": "fighter",
+    "hardened": true,
+    "behavior": {
+     "kind": "ori",
+     "class": "capital",
+     "name": "Ori Beam Satellite",
+     "role": "Beam Satellite",
+     "shield": 3421.8,
+     "hull": 3618.4,
+     "score": 5817.0,
+     "max_speed": 18.2,
+     "turn_rate": 11.7,
+     "gun_dmg": 0.0,
+     "keep_dist": [
+      1024.0,
+      1318.0
+     ],
+     "engage_range": [
+      1147.0,
+      1284.0
+     ],
+     "fire_cd": [
+      2.14,
+      2.63
+     ],
+     "burst_min": 0.0,
+     "burst_max": 0.0,
+     "strafe_interval": [
+      0.0,
+      0.0
+     ],
+     "flak_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_enabled": false,
+     "ram_dmg_base": 0.0,
+     "spawn_cd": [
+      0.0,
+      0.0
+     ],
+     "release_range": 0.0,
+     "max_stored": 0.0,
+     "prioritize_distance": false,
+     "flee_hull_frac": 0.0,
+     "flee_speed": 0.0,
+     "infect_blocked": false,
+     "hide_behind_allies": false,
+     "charge_time": 1.0488,
+     "fire_time": 1.52,
+     "beam_dps": 1547.0,
+     "beam_cooldown": [
+      2.14,
+      2.63
+     ],
+     "tactical_role": "Beam Satellite: charges 8% faster -- you have less time to break the lock"
+    }
+   },
+   {
+    "kind": "ori",
+    "player_class": "battlecruiser",
+    "hardened": false,
+    "behavior": {
+     "kind": "ori",
+     "class": "capital",
+     "name": "Ori Beam Satellite",
+     "role": "Beam Satellite",
+     "shield": 3421.8,
+     "hull": 3618.4,
+     "score": 5817.0,
+     "max_speed": 18.2,
+     "turn_rate": 11.7,
+     "gun_dmg": 0.0,
+     "keep_dist": [
+      1024.0,
+      1318.0
+     ],
+     "engage_range": [
+      1147.0,
+      1284.0
+     ],
+     "fire_cd": [
+      2.14,
+      2.63
+     ],
+     "burst_min": 0.0,
+     "burst_max": 0.0,
+     "strafe_interval": [
+      0.0,
+      0.0
+     ],
+     "flak_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_enabled": false,
+     "ram_dmg_base": 0.0,
+     "spawn_cd": [
+      0.0,
+      0.0
+     ],
+     "release_range": 0.0,
+     "max_stored": 0.0,
+     "prioritize_distance": false,
+     "flee_hull_frac": 0.0,
+     "flee_speed": 0.0,
+     "infect_blocked": false,
+     "hide_behind_allies": false,
+     "charge_time": 1.14,
+     "fire_time": 1.52,
+     "beam_dps": 1547.0,
+     "beam_cooldown": [
+      2.14,
+      2.63
+     ],
+     "tactical_role": "Beam Satellite: a fair fight for a battlecruiser-scale hull"
+    }
+   },
+   {
+    "kind": "ori",
+    "player_class": "battlecruiser",
+    "hardened": true,
+    "behavior": {
+     "kind": "ori",
+     "class": "capital",
+     "name": "Ori Beam Satellite",
+     "role": "Beam Satellite",
+     "shield": 3421.8,
+     "hull": 3618.4,
+     "score": 5817.0,
+     "max_speed": 18.2,
+     "turn_rate": 11.7,
+     "gun_dmg": 0.0,
+     "keep_dist": [
+      1024.0,
+      1318.0
+     ],
+     "engage_range": [
+      1147.0,
+      1284.0
+     ],
+     "fire_cd": [
+      2.14,
+      2.63
+     ],
+     "burst_min": 0.0,
+     "burst_max": 0.0,
+     "strafe_interval": [
+      0.0,
+      0.0
+     ],
+     "flak_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_enabled": false,
+     "ram_dmg_base": 0.0,
+     "spawn_cd": [
+      0.0,
+      0.0
+     ],
+     "release_range": 0.0,
+     "max_stored": 0.0,
+     "prioritize_distance": false,
+     "flee_hull_frac": 0.0,
+     "flee_speed": 0.0,
+     "infect_blocked": false,
+     "hide_behind_allies": false,
+     "charge_time": 1.14,
+     "fire_time": 1.52,
+     "beam_dps": 1547.0,
+     "beam_cooldown": [
+      2.14,
+      2.63
+     ],
+     "tactical_role": "Beam Satellite: a fair fight for a battlecruiser-scale hull"
+    }
+   },
+   {
+    "kind": "ori",
+    "player_class": "capital",
+    "hardened": false,
+    "behavior": {
+     "kind": "ori",
+     "class": "capital",
+     "name": "Ori Beam Satellite",
+     "role": "Beam Satellite",
+     "shield": 3421.8,
+     "hull": 3618.4,
+     "score": 5817.0,
+     "max_speed": 18.2,
+     "turn_rate": 11.7,
+     "gun_dmg": 0.0,
+     "keep_dist": [
+      1024.0,
+      1318.0
+     ],
+     "engage_range": [
+      1147.0,
+      1284.0
+     ],
+     "fire_cd": [
+      2.14,
+      2.63
+     ],
+     "burst_min": 0.0,
+     "burst_max": 0.0,
+     "strafe_interval": [
+      0.0,
+      0.0
+     ],
+     "flak_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_enabled": false,
+     "ram_dmg_base": 0.0,
+     "spawn_cd": [
+      0.0,
+      0.0
+     ],
+     "release_range": 0.0,
+     "max_stored": 0.0,
+     "prioritize_distance": false,
+     "flee_hull_frac": 0.0,
+     "flee_speed": 0.0,
+     "infect_blocked": false,
+     "hide_behind_allies": false,
+     "charge_time": 1.14,
+     "fire_time": 1.52,
+     "beam_dps": 1732.64,
+     "beam_cooldown": [
+      2.14,
+      2.63
+     ],
+     "tactical_role": "Beam Satellite: hits 12% harder -- its fire-control assumes a capital-scale target"
+    }
+   },
+   {
+    "kind": "ori",
+    "player_class": "capital",
+    "hardened": true,
+    "behavior": {
+     "kind": "ori",
+     "class": "capital",
+     "name": "Ori Beam Satellite",
+     "role": "Beam Satellite",
+     "shield": 3421.8,
+     "hull": 3618.4,
+     "score": 5817.0,
+     "max_speed": 18.2,
+     "turn_rate": 11.7,
+     "gun_dmg": 0.0,
+     "keep_dist": [
+      1024.0,
+      1318.0
+     ],
+     "engage_range": [
+      1147.0,
+      1284.0
+     ],
+     "fire_cd": [
+      2.14,
+      2.63
+     ],
+     "burst_min": 0.0,
+     "burst_max": 0.0,
+     "strafe_interval": [
+      0.0,
+      0.0
+     ],
+     "flak_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_enabled": false,
+     "ram_dmg_base": 0.0,
+     "spawn_cd": [
+      0.0,
+      0.0
+     ],
+     "release_range": 0.0,
+     "max_stored": 0.0,
+     "prioritize_distance": false,
+     "flee_hull_frac": 0.0,
+     "flee_speed": 0.0,
+     "infect_blocked": false,
+     "hide_behind_allies": false,
+     "charge_time": 1.14,
+     "fire_time": 1.52,
+     "beam_dps": 1732.64,
+     "beam_cooldown": [
+      2.14,
+      2.63
+     ],
+     "tactical_role": "Beam Satellite: hits 12% harder -- its fire-control assumes a capital-scale target"
+    }
+   }
+  ],
+  "ram_samples": [
+   {
+    "speed": 0.0,
+    "damage": 0.0
+   },
+   {
+    "speed": 293.6,
+    "damage": 6.6
+   },
+   {
+    "speed": 587.2,
+    "damage": 26.4
+   },
+   {
+    "speed": 5872.0,
+    "damage": 39.599999999999994
+   }
+  ],
+  "enemy_damage": [
+   {
+    "kind": "dart",
+    "defender": "atlantis",
+    "damage": 0.2397
+   },
+   {
+    "kind": "capital",
+    "defender": "x302",
+    "damage": 54.322
+   },
+   {
+    "kind": "ori",
+    "defender": "x302",
+    "damage": 0.0
+   },
+   {
+    "kind": "fighter",
+    "defender": "daedalus",
+    "damage": 0.5084000000000001
+   },
+   {
+    "kind": "hive",
+    "defender": "phoenix",
+    "damage": 20.944000000000003
+   },
+   {
+    "kind": "replicator",
+    "defender": "destiny",
+    "damage": 0.0
+   }
+  ],
+  "player_damage": [
+   {
+    "attacker": "x302",
+    "weapon": "gun_dmg",
+    "kind": "hive",
+    "damage": 0.2209
+   }
+  ],
+  "resolved_behaviors": [
+   {
+    "kind": "dart",
+    "player_key": "atlantis",
+    "behavior": {
+     "kind": "dart",
+     "class": "fighter",
+     "name": "Wraith Dart",
+     "role": "Dive-Bomber",
+     "shield": 92.7,
+     "hull": 68.3,
+     "score": 126.0,
+     "max_speed": 587.2,
+     "turn_rate": 386.1,
+     "gun_dmg": 5.1,
+     "keep_dist": [
+      194.0,
+      273.0
+     ],
+     "engage_range": [
+      704.0,
+      831.0
+     ],
+     "fire_cd": [
+      0.48,
+      0.73
+     ],
+     "burst_min": 0.0,
+     "burst_max": 0.0,
+     "strafe_interval": [
+      0.0,
+      0.0
+     ],
+     "flak_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_enabled": false,
+     "ram_dmg_base": 26.4,
+     "spawn_cd": [
+      0.0,
+      0.0
+     ],
+     "release_range": 0.0,
+     "max_stored": 0.0,
+     "prioritize_distance": false,
+     "flee_hull_frac": 0.0,
+     "flee_speed": 0.0,
+     "infect_blocked": false,
+     "hide_behind_allies": false,
+     "charge_time": 0.0,
+     "fire_time": 0.0,
+     "beam_dps": 0.0,
+     "beam_cooldown": [
+      0.0,
+      0.0
+     ],
+     "tactical_role": "Dive-Bomber: hardened shielding turns away every run -- circles at standoff and works the cannon instead"
+    }
+   },
+   {
+    "kind": "dart",
+    "player_key": "destiny",
+    "behavior": {
+     "kind": "dart",
+     "class": "fighter",
+     "name": "Wraith Dart",
+     "role": "Dive-Bomber",
+     "shield": 92.7,
+     "hull": 68.3,
+     "score": 126.0,
+     "max_speed": 587.2,
+     "turn_rate": 386.1,
+     "gun_dmg": 5.1,
+     "keep_dist": [
+      194.0,
+      273.0
+     ],
+     "engage_range": [
+      704.0,
+      831.0
+     ],
+     "fire_cd": [
+      0.48,
+      0.73
+     ],
+     "burst_min": 0.0,
+     "burst_max": 0.0,
+     "strafe_interval": [
+      0.0,
+      0.0
+     ],
+     "flak_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_cd": [
+      3.1,
+      5.4
+     ],
+     "dive_enabled": true,
+     "ram_dmg_base": 26.4,
+     "spawn_cd": [
+      0.0,
+      0.0
+     ],
+     "release_range": 0.0,
+     "max_stored": 0.0,
+     "prioritize_distance": false,
+     "flee_hull_frac": 0.0,
+     "flee_speed": 0.0,
+     "infect_blocked": false,
+     "hide_behind_allies": false,
+     "charge_time": 0.0,
+     "fire_time": 0.0,
+     "beam_dps": 0.0,
+     "beam_cooldown": [
+      0.0,
+      0.0
+     ],
+     "tactical_role": "Dive-Bomber: commits to a ram pass every 3.1-5.4s"
+    }
+   },
+   {
+    "kind": "dart",
+    "player_key": "daedalus",
+    "behavior": {
+     "kind": "dart",
+     "class": "fighter",
+     "name": "Wraith Dart",
+     "role": "Dive-Bomber",
+     "shield": 92.7,
+     "hull": 68.3,
+     "score": 126.0,
+     "max_speed": 587.2,
+     "turn_rate": 386.1,
+     "gun_dmg": 5.1,
+     "keep_dist": [
+      194.0,
+      273.0
+     ],
+     "engage_range": [
+      704.0,
+      831.0
+     ],
+     "fire_cd": [
+      0.48,
+      0.73
+     ],
+     "burst_min": 0.0,
+     "burst_max": 0.0,
+     "strafe_interval": [
+      0.0,
+      0.0
+     ],
+     "flak_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_cd": [
+      3.1,
+      5.4
+     ],
+     "dive_enabled": true,
+     "ram_dmg_base": 26.4,
+     "spawn_cd": [
+      0.0,
+      0.0
+     ],
+     "release_range": 0.0,
+     "max_stored": 0.0,
+     "prioritize_distance": false,
+     "flee_hull_frac": 0.0,
+     "flee_speed": 0.0,
+     "infect_blocked": false,
+     "hide_behind_allies": false,
+     "charge_time": 0.0,
+     "fire_time": 0.0,
+     "beam_dps": 0.0,
+     "beam_cooldown": [
+      0.0,
+      0.0
+     ],
+     "tactical_role": "Dive-Bomber: commits to a ram pass every 3.1-5.4s"
+    }
+   },
+   {
+    "kind": "replicator",
+    "player_key": "aurora",
+    "behavior": {
+     "kind": "replicator",
+     "class": "fighter",
+     "name": "Replicator Seed Ship",
+     "role": "Infestor",
+     "shield": 837.5,
+     "hull": 967.2,
+     "score": 3017.0,
+     "max_speed": 384.6,
+     "turn_rate": 226.3,
+     "gun_dmg": 0.0,
+     "keep_dist": [
+      372.0,
+      461.0
+     ],
+     "engage_range": [
+      873.0,
+      1014.0
+     ],
+     "fire_cd": [
+      1.72,
+      2.31
+     ],
+     "burst_min": 0.0,
+     "burst_max": 0.0,
+     "strafe_interval": [
+      0.0,
+      0.0
+     ],
+     "flak_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_enabled": false,
+     "ram_dmg_base": 0.0,
+     "spawn_cd": [
+      0.0,
+      0.0
+     ],
+     "release_range": 0.0,
+     "max_stored": 0.0,
+     "prioritize_distance": false,
+     "flee_hull_frac": 0.3,
+     "flee_speed": 512.0,
+     "infect_blocked": true,
+     "hide_behind_allies": true,
+     "charge_time": 0.0,
+     "fire_time": 0.0,
+     "beam_dps": 0.0,
+     "beam_cooldown": [
+      0.0,
+      0.0
+     ],
+     "tactical_role": "Infestor: hardened shielding blocks its bolts outright -- it keeps its distance and lets its allies take the fire"
+    }
+   },
+   {
+    "kind": "replicator",
+    "player_key": "phoenix",
+    "behavior": {
+     "kind": "replicator",
+     "class": "fighter",
+     "name": "Replicator Seed Ship",
+     "role": "Infestor",
+     "shield": 837.5,
+     "hull": 967.2,
+     "score": 3017.0,
+     "max_speed": 384.6,
+     "turn_rate": 226.3,
+     "gun_dmg": 0.0,
+     "keep_dist": [
+      372.0,
+      461.0
+     ],
+     "engage_range": [
+      873.0,
+      1014.0
+     ],
+     "fire_cd": [
+      1.72,
+      2.31
+     ],
+     "burst_min": 0.0,
+     "burst_max": 0.0,
+     "strafe_interval": [
+      0.0,
+      0.0
+     ],
+     "flak_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_enabled": false,
+     "ram_dmg_base": 0.0,
+     "spawn_cd": [
+      0.0,
+      0.0
+     ],
+     "release_range": 0.0,
+     "max_stored": 0.0,
+     "prioritize_distance": false,
+     "flee_hull_frac": 0.3,
+     "flee_speed": 512.0,
+     "infect_blocked": false,
+     "hide_behind_allies": true,
+     "charge_time": 0.0,
+     "fire_time": 0.0,
+     "beam_dps": 0.0,
+     "beam_cooldown": [
+      0.0,
+      0.0
+     ],
+     "tactical_role": "Infestor: seeds a bolt every 1.72-2.31s, bolts at 512u/s under 30% hull"
+    }
+   },
+   {
+    "kind": "fighter",
+    "player_key": "aurora",
+    "behavior": {
+     "kind": "fighter",
+     "class": "fighter",
+     "name": "Hostile Fighter",
+     "role": "Skirmisher",
+     "shield": 438.2,
+     "hull": 307.5,
+     "score": 104.0,
+     "max_speed": 312.7,
+     "turn_rate": 204.8,
+     "gun_dmg": 6.2,
+     "keep_dist": [
+      251.68,
+      362.56
+     ],
+     "engage_range": [
+      783.0,
+      912.0
+     ],
+     "fire_cd": [
+      1.13,
+      1.67
+     ],
+     "burst_min": 2.0,
+     "burst_max": 4.0,
+     "strafe_interval": [
+      2.7,
+      4.3
+     ],
+     "flak_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_cd": [
+      0.0,
+      0.0
+     ],
+     "dive_enabled": false,
+     "ram_dmg_base": 0.0,
+     "spawn_cd": [
+      0.0,
+      0.0
+     ],
+     "release_range": 0.0,
+     "max_stored": 0.0,
+     "prioritize_distance": false,
+     "flee_hull_frac": 0.0,
+     "flee_speed": 0.0,
+     "infect_blocked": false,
+     "hide_behind_allies": false,
+     "charge_time": 0.0,
+     "fire_time": 0.0,
+     "beam_dps": 0.0,
+     "beam_cooldown": [
+      0.0,
+      0.0
+     ],
+     "tactical_role": "Skirmisher: presses 12% closer -- your point defense needs time to track it"
+    }
    }
   ]
  }

@@ -15,9 +15,10 @@
 # holdover from the first program ever written in NovaLang.
 # ==========================================================================
 
-reactor "DAEDALUS  BC-304" version 2
+reactor "DAEDALUS  BC-304" version 3
 
 import "lib/combat.nova" as combat
+import "daedalus_ai.nova" as ai
 
 
 # ==========================================================================
@@ -36,9 +37,13 @@ let CLASS_CAPITAL = "capital"
 # ==========================================================================
 # SHIP REGISTRY
 #
-# Eight measured figures per hull. Shield and hull are absolute points;
-# speed is the sublight cap in u/s; turn is degrees/sec of yaw authority;
-# the four damage figures are per-round (per-second for the beam).
+# Eight measured figures per hull, plus one boolean. Shield and hull are
+# absolute points; speed is the sublight cap in u/s; turn is degrees/sec of
+# yaw authority; the four damage figures are per-round (per-second for the
+# beam); `hardened` marks a distributed Lantean/Ancient shield lattice with
+# no single saturation point -- Aurora and Atlantis only. It is what makes
+# a Wraith Dart decline to dive on you and a Replicator's infection bolts
+# do nothing at all; see daedalus_ai.nova.
 #
 # None of these are round numbers because none of them are design choices --
 # each is where a physical limit actually falls.
@@ -86,6 +91,9 @@ let SHIPS = {
         # 0: no Asgard beam. There is nowhere on the airframe to put the
         # power plant one needs.
         beam_dmg: 0,
+
+        # false: an ordinary emitter ring, cratered like anything else.
+        hardened: false,
     },
 
     # -- Daedalus (BC-304) -------------------------------------------------
@@ -127,6 +135,10 @@ let SHIPS = {
         # is thermal coupling into the target, not beam output -- a beam
         # that misses its resonance couples far less.
         beam_dmg: 2431,
+
+        # false: Asgard emitters, not Ancient ones. A hard enough hit still
+        # crates the ring.
+        hardened: false,
     },
 
     # -- Phoenix (BC-305) --------------------------------------------------
@@ -167,6 +179,9 @@ let SHIPS = {
         # coupling for 1.56x the shield -- beam scaling lags shield scaling,
         # which is why beam ships stop being the answer at capital scale.
         beam_dmg: 3422,
+
+        # false: same emitter lineage as the Daedalus, just more of it.
+        hardened: false,
     },
 
     # -- Aurora-class ------------------------------------------------------
@@ -204,6 +219,11 @@ let SHIPS = {
 
         # 0: no Asgard beam. The drones are the answer.
         beam_dmg: 0,
+
+        # true: the distributed Lantean lattice has no single point to
+        # crater. Overwhelm the power bus and the whole field drops at
+        # once -- nothing gets through it a piece at a time.
+        hardened: true,
     },
 
     # -- Destiny -----------------------------------------------------------
@@ -240,6 +260,11 @@ let SHIPS = {
 
         # 0: no beam, five automated dorsal cannons instead.
         beam_dmg: 0,
+
+        # false: the shield is Ancient in *origin*, not in the Lantean
+        # warship sense -- it is tuned for micrometeorites over
+        # millennia, not for shrugging off a sustained weapons pass.
+        hardened: false,
     },
 
     # -- Atlantis ----------------------------------------------------------
@@ -277,6 +302,10 @@ let SHIPS = {
 
         # 0: no beam. Six drones a volley makes the point adequately.
         beam_dmg: 0,
+
+        # true: a ZPM-fed instance of the same distributed lattice as the
+        # Aurora, scaled up to city size. Nothing gets through it either.
+        hardened: true,
     },
 }
 
@@ -300,6 +329,14 @@ func ship_stat(key, stat, fallback) {
 
 func ship_class(key) {
     return ship_stat(key, "class", CLASS_FIGHTER)
+}
+
+## Whether `key` carries a distributed Lantean/Ancient shield lattice with
+## no single saturation point -- Aurora and Atlantis only. This is what a
+## Wraith Dart checks before it commits to a dive and what a Replicator
+## checks before it bothers firing at all; see daedalus_ai.nova.
+func ship_hardened(key) {
+    return ship_stat(key, "hardened", false)
 }
 
 
@@ -375,6 +412,60 @@ func weapon_damage(attacker_key, weapon, defender_key) {
     let raw = ship_stat(attacker_key, weapon, 0)
     return effective_damage(raw, ship_class(attacker_key),
                             ship_class(defender_key))
+}
+
+
+# ==========================================================================
+# ENEMY REGISTRY (STAGE 2)
+#
+# daedalus_ai.nova owns the enemy stat table and every reaction to player
+# class; the accessors below are that module's data, reached through the
+# same door as everything else in this file. Reusing the matrix above
+# rather than declaring a second one is the whole reason ai.nova and
+# rules.nova stay two files instead of one: enemy behavior tuning changes
+# often (Stage 3 will iterate on it constantly), the class damage matrix
+# essentially never does.
+# ==========================================================================
+
+let ENEMY_ORDER = ai.ENEMY_ORDER
+
+func enemy_stat(kind, stat, fallback) {
+    return ai.enemy_stat(kind, stat, fallback)
+}
+
+func enemy_class(kind) {
+    return ai.enemy_class(kind)
+}
+
+func enemy_name(kind) {
+    return ai.enemy_name(kind)
+}
+
+## What one hostile's gun actually does to a named player hull -- the raw
+## table figure in daedalus_ai.nova, run through the same fighter /
+## battlecruiser / capital matrix a player weapon uses. Ram and infestation
+## damage are deliberately NOT routed through here: a collision and an
+## infestation tick do not care what frequency a shield rejects, only a
+## directed-energy or kinetic-round weapon does.
+func enemy_weapon_damage(kind, defender_key) {
+    let raw = enemy_stat(kind, "gun_dmg", 0)
+    return effective_damage(raw, enemy_class(kind), ship_class(defender_key))
+}
+
+## What a named player hull's weapon does to a hostile -- the mirror image
+## of enemy_weapon_damage(), for when the player is the attacker.
+func player_weapon_vs_enemy(attacker_key, weapon, kind) {
+    let raw = ship_stat(attacker_key, weapon, 0)
+    return effective_damage(raw, ship_class(attacker_key), enemy_class(kind))
+}
+
+## The fully-resolved behavior for one hostile against a *named player
+## ship* -- resolves class and the hardened-shield flag from the ship
+## registry so the caller never has to know either exists. This is the
+## one call daedalus_ai.nova cannot make itself: it has no access to
+## SHIPS, by design, so it cannot look up what the player is flying.
+func enemy_behavior(kind, player_key) {
+    return ai.get_behavior(kind, ship_class(player_key), ship_hardened(player_key))
 }
 
 
