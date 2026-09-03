@@ -235,3 +235,12 @@ control policy. `check_project.py` fails the build if a preset loses it.
   `InputEventScreenTouch`.
 * **Web** — serve over HTTP, not `file://`. GL Compatibility renderer, so
   no `SharedArrayBuffer` or cross-origin isolation headers needed.
+
+## Daedalus — the other game built on this language
+
+`daedalus_godot/` is a separate, standalone Godot 4 project: a
+space-combat game whose ship stats, enemy AI and weapons logic are all
+written in NovaLang, using the same interpreter (`scripts/nova/`, copied
+in unmodified) that runs the reactor above. It has its own
+`project.godot` and its own README; open `daedalus_godot/` directly in
+Godot rather than this repository's root.

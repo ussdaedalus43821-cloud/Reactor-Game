@@ -1,0 +1,1016 @@
+# ==========================================================================
+# daedalus_rules.nova -- DAEDALUS ship registry, combat scaling, power
+#                        budget, sector table, and the tactical advisor.
+#
+# STAGE 1 of the Godot + NovaLang conversion: everything below the advisor
+# section is *data*, lifted out of daedalus.py so it can be tuned without
+# touching engine code, on any platform, with no rebuild.
+#
+# Loaded by daedalus_bridge.gd, which caches the tables into typed GDScript
+# structures for the hot paths and cross-checks its fast paths against the
+# NovaLang functions here at load time -- so this file stays the authority
+# even where the engine does not read it per-frame.
+#
+# `reactor "..."` is just the program-title declaration; the keyword is a
+# holdover from the first program ever written in NovaLang.
+# ==========================================================================
+
+reactor "DAEDALUS  BC-304" version 4
+
+import "lib/combat.nova" as combat
+import "daedalus_ai.nova" as ai
+import "daedalus_weapons.nova" as weapons
+
+
+# ==========================================================================
+# HULL CLASSES
+#
+# Three displacement bands. Everything about survivability, weapon coupling
+# and handling follows from which band a hull sits in, so the class is
+# declared once here and referenced everywhere else.
+# ==========================================================================
+
+let CLASS_FIGHTER = "fighter"
+let CLASS_BATTLECRUISER = "battlecruiser"
+let CLASS_CAPITAL = "capital"
+
+
+# ==========================================================================
+# SHIP REGISTRY
+#
+# Eight measured figures per hull, plus one boolean. Shield and hull are
+# absolute points; speed is the sublight cap in u/s; turn is degrees/sec of
+# yaw authority; the four damage figures are per-round (per-second for the
+# beam); `hardened` marks a distributed Lantean/Ancient shield lattice with
+# no single saturation point -- Aurora and Atlantis only. It is what makes
+# a Wraith Dart decline to dive on you and a Replicator's infection bolts
+# do nothing at all; see daedalus_ai.nova.
+#
+# None of these are round numbers because none of them are design choices --
+# each is where a physical limit actually falls.
+# ==========================================================================
+
+let SHIP_ORDER = ["x302", "daedalus", "phoenix", "aurora", "destiny", "atlantis"]
+
+let SHIPS = {
+
+    # -- F-302 -------------------------------------------------------------
+    # Interceptor. One Goa'uld-derived emitter ring, an airframe, and enough
+    # thrust to embarrass anything bigger. Survives by not being hit.
+    x302: {
+        name: "F-302 Fighter",
+        class: "fighter",
+
+        # 397: a single emitter ring saturates at 397 MJ of absorbed flux.
+        # There is no second ring to hand off to, so this is a hard ceiling,
+        # not a budget.
+        shield: 397,
+
+        # 228: the trinium-titanium airframe's structural reserve after the
+        # mass budget went to engines and the hyperspace window generator.
+        hull: 228,
+
+        # 1142: where the inertial dampeners lose authority over the
+        # airframe. The engines will go faster; the pilot will not.
+        speed: 1142,
+
+        # 348: RCS authority at full tank. Falls off as reaction mass burns,
+        # which the sim ignores -- the figure is the fresh-launch number.
+        turn: 348,
+
+        # 4.7: one 30 mm railgun round. Individually trivial; the F-302's
+        # 0.055 s cycle time is where the damage actually comes from.
+        gun_dmg: 4.7,
+
+        # 74.2: naquadah-enhanced warhead, sized to fit the internal bay.
+        rocket_dmg: 74.2,
+
+        # 55.3: the same warhead chemistry, minus the volume the seeker head
+        # takes up. That volume costs exactly 18.9 points.
+        homing_dmg: 55.3,
+
+        # 0: no Asgard beam. There is nowhere on the airframe to put the
+        # power plant one needs.
+        beam_dmg: 0,
+
+        # false: an ordinary emitter ring, cratered like anything else.
+        hardened: false,
+    },
+
+    # -- Daedalus (BC-304) -------------------------------------------------
+    # The baseline everything else is measured against.
+    daedalus: {
+        name: "Daedalus  (BC-304)",
+        class: "battlecruiser",
+
+        # 1583: the resonant frequency tolerance of the naquadah-alloy hull
+        # lattice. Push the shield harder than this and the lattice itself
+        # starts absorbing the overflow, which is how BC-304s die.
+        shield: 1583,
+
+        # 1049: pressurised-volume structural rating, eight decks plus the
+        # F-302 bays. The bays are why it is not higher.
+        hull: 1049,
+
+        # 917: sublight cap with the sublight engines trimmed for a hull
+        # this size. Deliberately below the F-302 -- a battlecruiser that
+        # outruns its own fighters has the wrong doctrine.
+        speed: 917,
+
+        # 218: yaw authority from four manoeuvring clusters against roughly
+        # 60,000 tonnes. Ponderous on purpose.
+        turn: 218,
+
+        # 12.3: 60 mm railgun battery, per round. 2.6x the F-302's round for
+        # roughly 2.6x the barrel mass -- the scaling here is honest.
+        gun_dmg: 12.3,
+
+        # 117.5: Mark VIII tactical warhead, no yield limiter fitted.
+        rocket_dmg: 117.5,
+
+        # 89.1: Mark VIII airframe with the seeker package. Same 18.9-point
+        # seeker penalty per launcher tube, applied twice for the dual rail.
+        homing_dmg: 89.1,
+
+        # 2431: Asgard plasma beam, damage per second of contact. The figure
+        # is thermal coupling into the target, not beam output -- a beam
+        # that misses its resonance couples far less.
+        beam_dmg: 2431,
+
+        # false: Asgard emitters, not Ancient ones. A hard enough hit still
+        # crates the ring.
+        hardened: false,
+    },
+
+    # -- Phoenix (BC-305) --------------------------------------------------
+    # Post-Asgard-archive refit. Same doctrine, better everything.
+    phoenix: {
+        name: "Phoenix  (BC-305)",
+        class: "battlecruiser",
+
+        # 2471: second-generation emitters running the Asgard interference
+        # pattern. 1.561x the BC-304 -- the archive's own quoted improvement
+        # figure, applied to the measured 1583.
+        shield: 2471,
+
+        # 1654: same hull geometry, Asgard-derived lattice bonding. The
+        # 1.577x on structure tracks the shield gain almost exactly, which
+        # is what you would expect from one metallurgical change.
+        hull: 1654,
+
+        # 1035: retuned sublight, but still under the F-302. Doctrine holds.
+        speed: 1035,
+
+        # 241: 10.6% more yaw for 57.7% more mass. The clusters got better;
+        # the mass got worse faster.
+        turn: 241,
+
+        # 14.1: 60 mm battery with the improved accelerator coils.
+        gun_dmg: 14.1,
+
+        # 163.0: Mark IX warhead. The one round number in the table, and
+        # only because the yield limiter is set at a round figure.
+        rocket_dmg: 163.0,
+
+        # 114.6: Mark IX with seeker. The seeker penalty has grown to 48.4 --
+        # a better seeker is a bigger seeker.
+        homing_dmg: 114.6,
+
+        # 3422: Asgard beam off a larger reactor bus. 1.408x the BC-304's
+        # coupling for 1.56x the shield -- beam scaling lags shield scaling,
+        # which is why beam ships stop being the answer at capital scale.
+        beam_dmg: 3422,
+
+        # false: same emitter lineage as the Daedalus, just more of it.
+        hardened: false,
+    },
+
+    # -- Aurora-class ------------------------------------------------------
+    # Lantean warship. No Asgard tech aboard; it does not need any.
+    aurora: {
+        name: "Aurora-class Warship",
+        class: "capital",
+
+        # 3682: Lantean shield geometry -- a distributed lattice rather than
+        # emitter rings, so there is no single saturation point. 3682 is
+        # where the *power bus* gives out, not the shield.
+        shield: 3682,
+
+        # 2183: Lantean structural alloy. Lower than the tonnage suggests
+        # because the design assumes the shield never fails.
+        hull: 2183,
+
+        # 948: Lantean sublight. Faster than a BC-304 despite being larger,
+        # which is the whole argument for inertial-field propulsion.
+        speed: 948,
+
+        # 184: turning a distributed-mass hull with no reaction thrusters.
+        turn: 184,
+
+        # 11.8: Lantean energy cannon. Slightly under the BC-304's railgun
+        # round, and nobody flies an Aurora for its guns.
+        gun_dmg: 11.8,
+
+        # 138.4: Lantean ordnance, unguided.
+        rocket_dmg: 138.4,
+
+        # 122.7: drone weapon, per drone. Nearly the unguided figure because
+        # a drone *is* the seeker -- there is no penalty to pay.
+        homing_dmg: 122.7,
+
+        # 0: no Asgard beam. The drones are the answer.
+        beam_dmg: 0,
+
+        # true: the distributed Lantean lattice has no single point to
+        # crater. Overwhelm the power bus and the whole field drops at
+        # once -- nothing gets through it a piece at a time.
+        hardened: true,
+    },
+
+    # -- Destiny -----------------------------------------------------------
+    # Ancient seed ship. Built to survive millions of years, not a fight.
+    destiny: {
+        name: "Destiny",
+        class: "capital",
+
+        # 1762: a shield tuned for interstellar dust at relativistic speed,
+        # not for weapons fire. It is the weakest capital shield in the
+        # table by a wide margin and that is not a mistake.
+        shield: 1762,
+
+        # 3517: two kilometres of hull built to outlast its own crew. The
+        # highest hull-to-shield ratio here, by design -- Destiny takes hits
+        # rather than stopping them.
+        hull: 3517,
+
+        # 806: FTL-optimised, sublight-neglected.
+        speed: 806,
+
+        # 139: it was never expected to manoeuvre.
+        turn: 139,
+
+        # 11.1: main cannon, per round.
+        gun_dmg: 11.1,
+
+        # 134.8: Ancient ordnance from a magazine nobody has restocked.
+        rocket_dmg: 134.8,
+
+        # 94.2: the seeker penalty here is 40.6, because the seekers are
+        # older than the rest of the ship.
+        homing_dmg: 94.2,
+
+        # 0: no beam, five automated dorsal cannons instead.
+        beam_dmg: 0,
+
+        # false: the shield is Ancient in *origin*, not in the Lantean
+        # warship sense -- it is tuned for micrometeorites over
+        # millennia, not for shrugging off a sustained weapons pass.
+        hardened: false,
+    },
+
+    # -- Atlantis ----------------------------------------------------------
+    # City-ship. A capital ship the way a continent is a landmass.
+    atlantis: {
+        name: "Atlantis  (City-Ship)",
+        class: "capital",
+
+        # 7124: the ZPM-fed city shield. 1.93x the Aurora's, because it is
+        # drawing on a zero-point module rather than a reactor bus. This is
+        # the number that makes Atlantis a different kind of thing.
+        shield: 7124,
+
+        # 5843: the city itself. Six piers and a central tower, all of it
+        # structural.
+        hull: 5843,
+
+        # 753: slowest hull in the registry. It is a city.
+        speed: 753,
+
+        # 108: and cities do not turn. 108 deg/s is the stardrive gimballing
+        # the whole structure.
+        turn: 108,
+
+        # 16.3: rim defence cannon, per bolt -- the highest single-round
+        # figure here, fired from eight ports at once.
+        gun_dmg: 16.3,
+
+        # 186.5: city-scale ordnance.
+        rocket_dmg: 186.5,
+
+        # 131.9: drone weapon. 7.5% over the Aurora's drone, from a larger
+        # drone bay and a shorter launch rail.
+        homing_dmg: 131.9,
+
+        # 0: no beam. Six drones a volley makes the point adequately.
+        beam_dmg: 0,
+
+        # true: a ZPM-fed instance of the same distributed lattice as the
+        # Aurora, scaled up to city size. Nothing gets through it either.
+        hardened: true,
+    },
+}
+
+
+## Look up one hull. Returns null for an unknown key, so callers can tell
+## "no such ship" from "ship with zero shields".
+func ship(key) {
+    return get(SHIPS, key, null)
+}
+
+
+## One stat, with a caller-supplied fallback.
+func ship_stat(key, stat, fallback) {
+    let s = get(SHIPS, key, null)
+    if s == null {
+        return fallback
+    }
+    return get(s, stat, fallback)
+}
+
+
+func ship_class(key) {
+    return ship_stat(key, "class", CLASS_FIGHTER)
+}
+
+## Whether `key` carries a distributed Lantean/Ancient shield lattice with
+## no single saturation point -- Aurora and Atlantis only. This is what a
+## Wraith Dart checks before it commits to a dive and what a Replicator
+## checks before it bothers firing at all; see daedalus_ai.nova.
+func ship_hardened(key) {
+    return ship_stat(key, "hardened", false)
+}
+
+
+# ==========================================================================
+# CLASS-VS-CLASS DAMAGE SCALING
+#
+# Weapons are tuned to a displacement band. Fire outside your band and the
+# coupling falls off a cliff -- a railgun round that would gut a fighter
+# barely registers on capital shielding, and capital ordnance overkills a
+# fighter so badly that most of the yield is wasted on vacuum.
+#
+# Read as DAMAGE_SCALING[attacker_class][defender_class]. Any pair not
+# listed is 1.0: same-band engagements are what the weapons were designed
+# for, so they need no correction.
+# ==========================================================================
+
+let DAMAGE_SCALING = {
+
+    fighter: {
+        # 0.082: 8.2% of a 30 mm round's energy couples into a BC-304
+        # shield. The rest is shed as the shield's own frequency rejects it.
+        # This is why fighters carry warheads.
+        battlecruiser: 0.082,
+
+        # 0.047: worse still against Lantean and city-scale lattices, which
+        # reject a wider band. A 302 cannot meaningfully hurt Atlantis.
+        capital: 0.047,
+    },
+
+    battlecruiser: {
+        # 2.37: capital-grade ordnance against a fighter's single emitter
+        # ring. Overmatch -- the ring saturates before it can shed anything.
+        fighter: 2.37,
+
+        # 0.74: capital shields are specifically tuned against the
+        # battlecruiser weapon band, because that is what shoots at them.
+        # A BC-304 loses about a quarter of its output to that tuning.
+        capital: 0.74,
+    },
+
+    capital: {
+        # 3.14: worse for the fighter than a battlecruiser hit, by the ratio
+        # of the two weapon bands. A single capital round is a kill.
+        fighter: 3.14,
+
+        # 1.12: slight overmatch. Capital weapons sit just above the band
+        # battlecruiser shields reject best.
+        battlecruiser: 1.12,
+    },
+}
+
+
+## The multiplier for one engagement. Unlisted pairs -- and anything with an
+## unrecognised class -- fall through to 1.0, so a new hull class added to
+## SHIPS degrades to neutral scaling rather than to zero damage.
+func damage_multiplier(attacker_class, defender_class) {
+    let row = get(DAMAGE_SCALING, attacker_class, null)
+    if row == null {
+        return 1.0
+    }
+    return get(row, defender_class, 1.0)
+}
+
+
+## Convenience: raw weapon damage put through the class matrix.
+func effective_damage(raw, attacker_class, defender_class) {
+    return raw * damage_multiplier(attacker_class, defender_class)
+}
+
+
+## What one hull's named weapon actually does to another hull.
+func weapon_damage(attacker_key, weapon, defender_key) {
+    let raw = ship_stat(attacker_key, weapon, 0)
+    return effective_damage(raw, ship_class(attacker_key),
+                            ship_class(defender_key))
+}
+
+
+# ==========================================================================
+# ENEMY REGISTRY (STAGE 2)
+#
+# daedalus_ai.nova owns the enemy stat table and every reaction to player
+# class; the accessors below are that module's data, reached through the
+# same door as everything else in this file. Reusing the matrix above
+# rather than declaring a second one is the whole reason ai.nova and
+# rules.nova stay two files instead of one: enemy behavior tuning changes
+# often (Stage 3 will iterate on it constantly), the class damage matrix
+# essentially never does.
+# ==========================================================================
+
+let ENEMY_ORDER = ai.ENEMY_ORDER
+
+# Stage 4 addition: the full raw table, re-exported alongside the order list
+# above. Aliasing an imported dict under a local name does not copy it or
+# change how any existing accessor behaves -- it only gives the Godot-side
+# bridge a single vm.get_global("ENEMY") it can read once at load, instead
+# of a per-kind interpreter call for every raw stat a spawner needs (shield,
+# hull, max_speed, ...). enemy_stat()/enemy_class()/enemy_name() below are
+# unaffected and still go through ai.nova exactly as before.
+let ENEMY = ai.ENEMY
+
+func enemy_stat(kind, stat, fallback) {
+    return ai.enemy_stat(kind, stat, fallback)
+}
+
+func enemy_class(kind) {
+    return ai.enemy_class(kind)
+}
+
+func enemy_name(kind) {
+    return ai.enemy_name(kind)
+}
+
+## What one hostile's gun actually does to a named player hull -- the raw
+## table figure in daedalus_ai.nova, run through the same fighter /
+## battlecruiser / capital matrix a player weapon uses. Ram and infestation
+## damage are deliberately NOT routed through here: a collision and an
+## infestation tick do not care what frequency a shield rejects, only a
+## directed-energy or kinetic-round weapon does.
+func enemy_weapon_damage(kind, defender_key) {
+    let raw = enemy_stat(kind, "gun_dmg", 0)
+    return effective_damage(raw, enemy_class(kind), ship_class(defender_key))
+}
+
+## What a named player hull's weapon does to a hostile -- the mirror image
+## of enemy_weapon_damage(), for when the player is the attacker.
+func player_weapon_vs_enemy(attacker_key, weapon, kind) {
+    let raw = ship_stat(attacker_key, weapon, 0)
+    return effective_damage(raw, ship_class(attacker_key), enemy_class(kind))
+}
+
+## The fully-resolved behavior for one hostile against a *named player
+## ship* -- resolves class and the hardened-shield flag from the ship
+## registry so the caller never has to know either exists. This is the
+## one call daedalus_ai.nova cannot make itself: it has no access to
+## SHIPS, by design, so it cannot look up what the player is flying.
+func enemy_behavior(kind, player_key) {
+    return ai.get_behavior(kind, ship_class(player_key), ship_hardened(player_key))
+}
+
+## Stage 4 addition: a direct passthrough. Ram damage is deliberately never
+## routed through DAMAGE_SCALING (see daedalus_ai.nova's own note -- a
+## collision does not care what frequency a shield rejects), so there is
+## nothing for rules.nova to compose here; the wrapper exists only so the
+## engine has one bridge and one loaded VM to call, instead of a second
+## NovaVM instance just for this one function.
+func dart_ram_damage(dive_speed) {
+    return ai.dart_ram_damage(dive_speed)
+}
+
+
+# ==========================================================================
+# WEAPONS (STAGE 3)
+#
+# daedalus_weapons.nova owns ballistics, energy cost and every damage-
+# shaping curve (blast falloff, splash falloff, beam ramp); it knows
+# nothing about SHIPS or DAMAGE_SCALING by design (see its own header).
+# fire_weapon() is the one function that needs both: it resolves a ship
+# key down to a raw per-shot damage figure and a class, decides whether
+# that ship is even allowed to fire the requested weapon, and then hands
+# off to weapons.fire_ballistic() or weapons.fire_beam() to shape the
+# result. This is "reference the weapon definitions" -- nothing about a
+# weapon's tuning is re-declared here, only composed.
+# ==========================================================================
+
+let WEAPON_ORDER = weapons.WEAPON_ORDER
+
+# Stage 4 addition, same reasoning as ENEMY above: the full raw WEAPONS
+# table, re-exported so the bridge can cache ballistics/energy/falloff
+# fields for every weapon in one vm.get_global() at load time rather than
+# one weapon_stat() interpreter call per field per weapon.
+let WEAPONS = weapons.WEAPONS
+
+func weapon_stat(weapon_type, stat, fallback) {
+    return weapons.weapon_stat(weapon_type, stat, fallback)
+}
+
+func weapon_name(weapon_type) {
+    return weapons.weapon_name(weapon_type)
+}
+
+# Stage 4 additions: three more thin wrappers, exactly the same shape as
+# weapon_stat()/weapon_name() above -- daedalus_bridge.gd's self-check
+# cross-checks its cached GDScript formulas (effective range, blast/splash
+# falloff, beam ramp-and-class-scaling) against these at load time, the
+# same way it already did for fire_weapon() and homing_turn_rate().
+func effective_range(weapon_type) {
+    return weapons.effective_range(weapon_type)
+}
+
+func falloff_damage(base_dmg, distance, radius, falloff) {
+    return weapons.falloff_damage(base_dmg, distance, radius, falloff)
+}
+
+func beam_damage_per_second(base_dps, elapsed, target_class) {
+    return weapons.beam_damage_per_second(base_dps, elapsed, target_class)
+}
+
+## The one entry point Godot actually calls to resolve a weapon discharge.
+## `attacker_key` is a player SHIP key (Stage 1's SHIP_ORDER); `target_class`
+## is "fighter" / "battlecruiser" / "capital" ("" for no target);
+## `distance` is the range to the target in world units; `elapsed` is
+## seconds of continuous fire so far and is only read by the beam.
+##
+## Returns {hit, damage_dealt, effect} -- always these three keys, whatever
+## the weapon type or outcome, so a caller never has to branch on which
+## weapon it asked about before reading the result.
+func fire_weapon(weapon_type, attacker_key, target_class, distance, elapsed) {
+    let attacker_class = ship_class(attacker_key)
+
+    if weapon_type == "beam" {
+        let base_dps = ship_stat(attacker_key, "beam_dmg", 0)
+        return weapons.fire_beam(base_dps, target_class, distance, elapsed)
+    }
+
+    if weapon_type == "omni" {
+        if attacker_key != "atlantis" {
+            return { hit: false, damage_dealt: 0.0, effect: "no omni ports" }
+        }
+        let raw = ship_stat(attacker_key, "gun_dmg", 0)
+        let mult = damage_multiplier(attacker_class, target_class)
+        return weapons.fire_ballistic("omni", raw, mult, distance)
+    }
+
+    if weapon_type == "turret" {
+        if attacker_key != "destiny" {
+            return { hit: false, damage_dealt: 0.0, effect: "no turrets" }
+        }
+        let raw = weapons.weapon_stat("turret", "damage", 0)
+        let mult = damage_multiplier(attacker_class, target_class)
+        return weapons.fire_ballistic("turret", raw, mult, distance)
+    }
+
+    let stat_name = ""
+    if weapon_type == "primary" { stat_name = "gun_dmg" }
+    if weapon_type == "rocket"  { stat_name = "rocket_dmg" }
+    if weapon_type == "homing" { stat_name = "homing_dmg" }
+    if stat_name == "" {
+        return { hit: false, damage_dealt: 0.0, effect: "unknown weapon" }
+    }
+
+    let raw = ship_stat(attacker_key, stat_name, 0)
+    let mult = damage_multiplier(attacker_class, target_class)
+    return weapons.fire_ballistic(weapon_type, raw, mult, distance)
+}
+
+## Missile turn authority for a launch that just acquired `target_class`,
+## resolved once at lock-on -- see daedalus_weapons.nova's own note on why
+## this is not a per-frame call.
+func homing_turn_rate(target_class) {
+    return weapons.homing_turn_rate(target_class)
+}
+
+func homing_salvo_size(ship_key) {
+    return weapons.homing_salvo_size(ship_key)
+}
+
+
+# ==========================================================================
+# POWER BUDGET
+#
+# One reactor bus feeds shields, engines, the cloak and every weapon. The
+# numbers below are chosen so that the interesting decisions are forced:
+#
+#   recharge          112 /s
+#   shield draw       143 /s   <- 31/s MORE than the bus makes
+#   thrust drain       48 /s
+#   cloak drain        27 /s
+#
+# Rebuilding shields is therefore never free: shields alone put you 31/s in
+# the red, and shields while manoeuvring cost 79/s net. Cloak plus thrust
+# (75/s) is the one combination the bus sustains indefinitely, which is why
+# running away works and standing and regenerating does not.
+# ==========================================================================
+
+let POWER = {
+
+    # 1047: usable capacity of the naquadah reactor's capacitor bank. Not
+    # 1000, because the bank is eleven cells of 95.2 and one of the twelve
+    # slots holds the regulator.
+    max: 1047,
+
+    # 112: sustained bus output. Peak is higher; this is what the reactor
+    # holds without the containment field drifting.
+    recharge: 112,
+
+    # 143: what the shield emitters draw while rebuilding. Deliberately
+    # above `recharge` -- see the note above.
+    shield_draw: 143,
+
+    # 48: sublight engines at full thrust.
+    thrust_drain: 48,
+
+    # 27: the cloak field. Cheap to hold, which is the point: it is an
+    # escape tool, not a combat tool.
+    cloak_drain: 27,
+
+    # 9.4: one primary cannon cycle. At the Daedalus's 0.09 s cycle that is
+    # 104/s sustained -- just under the bus output, so holding the trigger
+    # is almost, but not quite, free.
+    primary_cost: 9.4,
+
+    # 31.2: one rocket, mostly rail acceleration rather than the warhead.
+    rocket_cost: 31.2,
+
+    # 22.7: one homing round. Cheaper to launch than a rocket because the
+    # drone flies itself off the rail.
+    homing_cost: 22.7,
+}
+
+
+## Net power per second for a given loadout. Negative means the bank is
+## draining and the pilot is on a clock.
+func power_balance(thrusting, cloaked, shields_charging) {
+    let net = POWER.recharge
+    if thrusting {
+        net = net - POWER.thrust_drain
+    }
+    if cloaked {
+        net = net - POWER.cloak_drain
+    }
+    if shields_charging {
+        net = net - POWER.shield_draw
+    }
+    return net
+}
+
+
+## Cost of one shot of a named weapon.
+func weapon_cost(weapon) {
+    if weapon == "primary" { return POWER.primary_cost }
+    if weapon == "rocket"  { return POWER.rocket_cost }
+    if weapon == "homing"  { return POWER.homing_cost }
+    return 0.0
+}
+
+
+func can_fire(reserve, weapon) {
+    return reserve >= weapon_cost(weapon)
+}
+
+
+## Seconds of continuous fire a full bank supports, accounting for recharge.
+## Returns -1 for a weapon the bus can sustain forever.
+func sustained_fire_seconds(weapon, cycle_time) {
+    let drain = weapon_cost(weapon) / cycle_time
+    let net = drain - POWER.recharge
+    if net <= 0 {
+        return -1
+    }
+    return POWER.max / net
+}
+
+
+# ==========================================================================
+# SECTOR DANGER SCALING
+#
+# Ambient hostile count as a function of danger band and `gen` -- minutes
+# survived in the current sector. The linear term is the pressure: a
+# danger-3 sector adds a hostile every 28.6 seconds and does not stop.
+#
+# With the engine's 26-hostile ceiling, danger 3 saturates at gen 5.24
+# minutes, danger 2 at 13.08, danger 1 at 27.5. That is the shape of the
+# game: extreme sectors are a five-minute window, quiet ones are a shift.
+# ==========================================================================
+
+let DANGER = [
+    # Index 0: home and safe sectors. No ambient spawning at all, ever --
+    # the base and the rate are both zero so the formula needs no special
+    # case for "somewhere safe".
+    { base: 0,  per_gen: 0 },
+
+    # Danger 1: patrol density. Four on arrival, one more every 75 seconds.
+    { base: 4,  per_gen: 0.8 },
+
+    # Danger 2: contested space. Nine on arrival, one more every 46 seconds.
+    { base: 9,  per_gen: 1.3 },
+
+    # Danger 3: hostile territory. Fifteen on arrival, one more every 28.6
+    # seconds. Nothing about this band is survivable indefinitely.
+    { base: 15, per_gen: 2.1 },
+]
+
+
+## Ambient hostiles a sector wants at `gen` minutes survived. Floored,
+## because there is no such thing as 0.8 of a hostile.
+func hostiles_for(danger, gen) {
+    let band = DANGER[clamp(danger, 0, 3)]
+    return floor(band.base + gen * band.per_gen)
+}
+
+
+## Minutes until a danger band saturates the engine's hostile ceiling.
+## Returns -1 for a band that never gets there.
+func saturation_minutes(danger, ceiling) {
+    let band = DANGER[clamp(danger, 0, 3)]
+    if band.per_gen <= 0 {
+        return -1
+    }
+    return (ceiling - band.base) / band.per_gen
+}
+
+
+# ==========================================================================
+# SECTOR TABLE
+#
+# `key` is the digit that jumps there. `charge` is hyperdrive spool-up and
+# `travel` is time in transit -- both in seconds, both deliberately
+# non-uniform: the far sectors cost more to reach and more to leave, which
+# is what makes a bad jump destination a real mistake.
+# ==========================================================================
+
+let SECTORS = [
+    {
+        key: 1, name: "Terra Nova Orbit  //  HOME",
+        danger: 0, spawns: false, capital_chance: 0.0,
+        # Home orbit: the drive is pre-spooled at the shipyard.
+        charge: 1.2, travel: 2.0,
+        fighter_cd: [6.0, 11.0], mix: [],
+    },
+    {
+        key: 2, name: "Pegasus Gate",
+        danger: 2, spawns: true, capital_chance: 0.22,
+        charge: 2.5, travel: 5.0,
+        fighter_cd: [2.2, 4.6], mix: [],
+    },
+    {
+        key: 3, name: "Deep Void",
+        danger: 1, spawns: true, capital_chance: 0.35,
+        # Nothing to navigate around, so the transit is long but the
+        # capital-encounter odds are high: what is out here is big.
+        charge: 3.0, travel: 8.0,
+        fighter_cd: [5.0, 9.5], mix: [],
+    },
+    {
+        key: 4, name: "Asuran Frontier  //  EXTREME",
+        danger: 3, spawns: true, capital_chance: 0.50,
+        charge: 2.2, travel: 6.0,
+        fighter_cd: [1.3, 2.8], mix: [["fighter", 3], ["capital", 2]],
+        unique: "replicator",
+    },
+    {
+        key: 5, name: "Lantea Orbit  //  LOW DANGER",
+        danger: 1, spawns: true, capital_chance: 0.05,
+        charge: 1.8, travel: 3.2,
+        fighter_cd: [4.5, 8.0], mix: [],
+    },
+    {
+        key: 6, name: "Chulak Approach  //  MEDIUM",
+        danger: 2, spawns: true, capital_chance: 0.18,
+        charge: 2.4, travel: 4.6,
+        fighter_cd: [2.4, 5.0], mix: [],
+    },
+    {
+        key: 7, name: "Dakara Sands  //  HIGH DANGER",
+        danger: 3, spawns: true, capital_chance: 0.30,
+        charge: 2.6, travel: 5.4,
+        fighter_cd: [1.5, 3.2], mix: [],
+    },
+    {
+        key: 8, name: "The Supergate  //  ORI",
+        danger: 3, spawns: true, capital_chance: 0.40,
+        # The longest spool-up in the table: the Supergate's own field
+        # fights the drive.
+        charge: 3.2, travel: 6.6,
+        fighter_cd: [2.0, 4.0], mix: [["fighter", 3], ["ori", 2]],
+    },
+    {
+        key: 9, name: "Hive Territory  //  WRAITH",
+        danger: 3, spawns: true, capital_chance: 0.55,
+        # Highest capital odds anywhere. Hives travel in company.
+        charge: 2.4, travel: 6.2,
+        fighter_cd: [1.4, 3.0],
+        mix: [["wdart", 7], ["wcruiser", 3], ["whive", 1]],
+    },
+    {
+        key: 0, name: "The Black Rift  //  DEEP VOID",
+        danger: 1, spawns: true, capital_chance: 0.45,
+        # Nine seconds in transit, the longest jump in the game. The rift
+        # bends the window.
+        charge: 3.4, travel: 9.0,
+        fighter_cd: [5.5, 10.0], mix: [],
+    },
+]
+
+
+func sector_by_key(key) {
+    let i = 0
+    while i < len(SECTORS) {
+        if SECTORS[i].key == key {
+            return SECTORS[i]
+        }
+        i = i + 1
+    }
+    return null
+}
+
+
+## Expected ambient hostiles in a sector at `gen` minutes -- zero for a
+## sector that does not spawn at all, whatever its danger band says.
+func sector_hostiles(key, gen) {
+    let s = sector_by_key(key)
+    if s == null {
+        return 0
+    }
+    if not s.spawns {
+        return 0
+    }
+    return hostiles_for(s.danger, gen)
+}
+
+
+# ==========================================================================
+# TACTICAL ADVISOR
+#
+# Everything above is data. Everything below is the live rule set, run once
+# per tick by the bridge.
+#
+# Read each tick from the host:
+#   t, dt                    seconds, step size
+#   hull, hull_max           player hull points
+#   shield, shield_max       player shield points
+#   cloaked, cloak_energy    invincibility cloak
+#   infested                 replicator infestation, 0..1.6 (>=1 = failure)
+#   contacts                 list of enemy kind strings on the scope
+#   ally_count               live wingmen
+#   sector_danger            0 safe .. 3 extreme
+#   rockets, homing          remaining ordnance
+#   hyper_state              "idle" / "charging" / "travel"
+# ==========================================================================
+
+params {
+    hull_critical_frac   = 0.30
+    hull_warn_frac       = 0.55
+    shield_warn_frac     = 0.25
+    cloak_reserve        = 25.0     # advise decloaking below this
+    infest_warn          = 0.35
+    infest_critical      = 0.80
+    ordnance_low         = 4
+    wingman_floor        = 1        # call another below this
+    overwhelm_score      = 34
+
+    # Encounter scheduling, reusing the fault engine as an event director.
+    fault_first_min_s    = 25.0
+    fault_first_max_s    = 55.0
+    fault_gap_min_s      = 40.0
+    fault_gap_max_s      = 90.0
+}
+
+effects {
+    alert_level     = 0
+    recommend       = ""
+    encounter_bonus = 0
+    threat_peak     = 0   persistent
+}
+
+signals {
+    hull_frac    = combat.frac(hull, hull_max)
+    shield_frac  = combat.frac(shield, shield_max)
+    threat       = combat.threat_score(contacts)
+    threat_tier  = combat.tier_name(threat)
+    focus        = combat.priority_target(contacts)
+    exposed      = shield_frac < shield_warn_frac and not cloaked
+    can_jump     = hyper_state == "idle"
+}
+
+# ---- survival ------------------------------------------------------------
+
+rule hull_critical priority 300 {
+    when  hull_frac < hull_critical_frac
+    then  alarm(3, "HULL CRITICAL")
+          set recommend = "DISENGAGE -- JUMP OUT"
+}
+
+rule hull_damaged priority 290 edge {
+    when  hull_frac < hull_warn_frac and hull_frac >= hull_critical_frac
+    then  alarm(2, "HULL DAMAGED")
+          log("HULL AT " + round(hull_frac * 100) + "%  --  drones deploying")
+}
+
+rule shields_down priority 280 {
+    when  exposed and threat > 0
+    then  alarm(2, "SHIELDS DOWN, HOSTILES ENGAGED")
+          set recommend = "CLOAK OR BREAK OFF"
+}
+
+# ---- replicator infestation ----------------------------------------------
+
+rule infestation_detected priority 270 edge {
+    when  infested > 0
+    then  alarm(2, "REPLICATOR INFESTATION")
+          log("BLOCKS ON THE HULL  --  destroy the source ship")
+}
+
+rule infestation_spreading priority 265 {
+    when  infested >= infest_warn and infested < infest_critical
+    then  alarm(2, "INFESTATION " + round(infested * 100) + "%")
+          set recommend = "KILL THE REPLICATOR SHIP"
+}
+
+rule infestation_terminal priority 264 {
+    when  infested >= infest_critical
+    then  alarm(3, "SYSTEMS FAILING")
+          set recommend = "HYPERDRIVE NOW -- THE JUMP SCRAMBLES IT"
+}
+
+# ---- tactical advice -----------------------------------------------------
+
+rule overwhelmed priority 200 {
+    when  threat >= overwhelm_score and can_jump
+    then  alarm(3, threat_tier + " RESISTANCE")
+          set recommend = "JUMP OUT -- you cannot win this one"
+}
+
+rule focus_fire priority 150 edge {
+    when  focus != "" and threat >= 8
+    then  log("PRIORITY TARGET: " + upper(focus) + "   (" + threat_tier + ")")
+}
+
+rule call_wingman priority 140 edge {
+    when  ally_count < wingman_floor and threat >= 8
+    then  log("OUTNUMBERED  --  press G for a wingman")
+}
+
+rule cloak_reserve_low priority 130 edge {
+    when  cloaked and cloak_energy < cloak_reserve
+    then  alarm(1, "CLOAK RESERVE LOW")
+          log("DECLOAK SOON  --  shields restart from zero")
+}
+
+rule ordnance_low priority 120 edge {
+    when  rockets < ordnance_low and homing < ordnance_low
+    then  log("ORDNANCE LOW  --  guns and beam only")
+}
+
+# Track the worst the scope has ever looked this run; `threat_peak` is a
+# persistent effect, so it survives the per-tick reset.
+rule record_peak priority 60 {
+    when  threat > threat_peak
+    then  set threat_peak = threat
+          set encounter_bonus = round(threat * 10)
+}
+
+rule all_clear priority 50 edge {
+    when  threat == 0 and hull_frac > hull_warn_frac and infested == 0
+    then  alarm(0, "")
+          set recommend = ""
+          log("SCOPE CLEAR")
+}
+
+# ==========================================================================
+# ENCOUNTER DIRECTOR
+#
+# The same fault engine reactor_rules.nova uses for equipment failures,
+# repurposed: each "fault" here is a scripted encounter that runs for a
+# while and then clears.
+# ==========================================================================
+
+fault wraith_ambush weight 2.0 duration 45.0 label "WRAITH DARTS INBOUND" {
+    set encounter_bonus = 250
+    set alert_level = 2
+}
+
+fault ori_satellite weight 1.0 duration 60.0 label "ORI SATELLITE CHARGING" {
+    set encounter_bonus = 600
+    set alert_level = 3
+}
+
+fault replicator_incursion weight 1.0 duration 55.0 label "REPLICATOR INCURSION" {
+    set encounter_bonus = 400
+    set alert_level = 3
+}
+
+fault sensor_ghost weight 1.5 duration 20.0 label "SENSOR GHOSTS" {
+    set alert_level = 1
+}

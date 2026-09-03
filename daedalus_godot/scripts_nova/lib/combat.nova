@@ -1,0 +1,69 @@
+# ==========================================================================
+# lib/combat.nova -- shared combat helpers.
+#
+# A NovaLang module: only the names marked `export` are visible to whoever
+# imports it, so `SCALE` below stays private. Imported as
+#     import "lib/combat.nova" as combat
+# ==========================================================================
+
+# Per-hull threat weights, keyed by the enemy kind the game reports.
+export let THREAT = {
+    fighter: 1,
+    wdart: 1,
+    wcruiser: 3,
+    replicator: 9,
+    capital: 8,
+    whive: 14,
+    ori: 12,
+}
+
+let SCALE = 1.0          # private: not exported, invisible to importers
+
+export func clamp01(x) {
+    return clamp(x, 0.0, 1.0)
+}
+
+export func frac(value, maximum) {
+    if maximum <= 0 {
+        return 0.0
+    }
+    return clamp01(value / maximum)
+}
+
+# Sum the threat weight of every contact on the scope. Unknown hulls count
+# as 1 rather than erroring, so a new enemy type in the game does not need a
+# policy change to be counted.
+export func threat_score(contacts) {
+    let total = 0
+    let i = 0
+    while i < len(contacts) {
+        total = total + get(THREAT, contacts[i], 1) * SCALE
+        i = i + 1
+    }
+    return total
+}
+
+export func tier_name(score) {
+    if score >= 34 { return "OVERWHELMING" }
+    if score >= 18 { return "HEAVY" }
+    if score >= 8  { return "MODERATE" }
+    if score > 0   { return "LIGHT" }
+    return "CLEAR"
+}
+
+# The highest-weight contact on the scope -- what the pilot should shoot at
+# first. Returns "" for an empty scope.
+export func priority_target(contacts) {
+    let best = ""
+    let best_w = -1
+    let i = 0
+    while i < len(contacts) {
+        let w = get(THREAT, contacts[i], 1)
+        if w > best_w {
+            best_w = w
+            best = contacts[i]
+        }
+        i = i + 1
+    }
+    return best
+}

@@ -1,0 +1,52 @@
+; Engine configuration file.
+; Daedalus -- a space-combat game whose ship stats, enemy AI and weapons
+; logic all live in NovaLang (see scripts_nova/), the same interpreter
+; and language built for Reactor Sim, embedded here as plain GDScript
+; (scripts/nova/) with no Python and no OS.execute anywhere.
+
+config_version=5
+
+[application]
+
+config/name="Daedalus"
+config/description="Space-combat sim: ship stats, enemy AI and weapons logic all written in NovaLang, flown from a Godot 4 CharacterBody2D shell."
+run/main_scene="res://scenes/ui/menu.tscn"
+config/features=PackedStringArray("4.4", "GL Compatibility")
+boot_splash/bg_color=Color(0.03, 0.04, 0.07, 1)
+boot_splash/show_image=false
+
+[autoload]
+
+InputMapSetup="*res://scripts/input_map_setup.gd"
+Daedalus="*res://scripts/daedalus_bridge.gd"
+GameState="*res://scripts/game_state.gd"
+AudioBus="*res://scripts/audio_bus.gd"
+
+[audio]
+
+driver/enable_input=false
+
+[display]
+
+window/size/viewport_width=1600
+window/size/viewport_height=900
+window/size/window_width_override=1280
+window/size/window_height_override=720
+window/stretch/mode="canvas_items"
+window/stretch/aspect="keep"
+window/handheld/orientation=1
+
+[layer_names]
+
+2d_physics/layer_1="player_hull"
+2d_physics/layer_2="enemy_hull"
+2d_physics/layer_3="player_shot"
+2d_physics/layer_4="enemy_shot"
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+textures/vram_compression/import_etc2_astc=true
+anti_aliasing/quality/msaa_2d=1
+environment/defaults/default_clear_color=Color(0.03, 0.04, 0.07, 1)
