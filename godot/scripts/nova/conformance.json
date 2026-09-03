@@ -5031,5 +5031,456 @@
     }
    }
   ]
+ },
+ "weapons_data": {
+  "weapon_order": [
+   "primary",
+   "rocket",
+   "homing",
+   "beam",
+   "omni",
+   "turret"
+  ],
+  "weapons": {
+   "primary": {
+    "name": "Primary Guns",
+    "role": "Direct Fire",
+    "velocity": 1024.3,
+    "lifetime": 1.28,
+    "cooldown": 0.073,
+    "spread_deg": 1.9,
+    "energy_cost": 9.4,
+    "projectile_radius": 2.7
+   },
+   "rocket": {
+    "name": "Rockets",
+    "role": "Area Denial (dumb-fire)",
+    "velocity": 617.8,
+    "lifetime": 3.14,
+    "cooldown": 0.82,
+    "energy_cost": 31.2,
+    "blast_radius": 97.4,
+    "blast_falloff": 0.37,
+    "projectile_radius": 5.2
+   },
+   "homing": {
+    "name": "Homing Missiles",
+    "role": "Guided (Ancient drone tech)",
+    "velocity": 468.2,
+    "lifetime": 5.47,
+    "cooldown": 1.13,
+    "turn_rate": 212.4,
+    "acquire_range": 1482.6,
+    "energy_cost": 22.7,
+    "splash_radius": 78.3,
+    "splash_falloff": 0.28,
+    "projectile_radius": 4.8,
+    "salvo_overrides": {
+     "aurora": 3.0,
+     "atlantis": 6.0
+    }
+   },
+   "beam": {
+    "name": "Asgard Beam",
+    "role": "Directed Energy",
+    "ramp_time": 1.42,
+    "max_range": 942.7,
+    "beam_width": 6.3,
+    "energy_drain": 26.4,
+    "min_energy": 5.2,
+    "class_multiplier": {
+     "fighter": 2.8,
+     "battlecruiser": 1.0,
+     "capital": 0.64
+    }
+   },
+   "omni": {
+    "name": "Omni-Broadsides",
+    "role": "Area Denial (broadside)",
+    "port_count": 8.0,
+    "twin_bolts": true,
+    "velocity": 1187.4,
+    "lifetime": 1.13,
+    "cooldown": 0.11,
+    "spread_deg": 4.3,
+    "energy_cost_per_bolt": 8.7,
+    "projectile_radius": 2.7
+   },
+   "turret": {
+    "name": "Auto-Turrets",
+    "role": "Point Defense (automated)",
+    "turret_count": 5.0,
+    "velocity": 938.6,
+    "lifetime": 1.08,
+    "cooldown": 0.47,
+    "range": 642.8,
+    "damage": 14.7,
+    "energy_cost": 4.2
+   }
+  },
+  "formulas": {
+   "falloff_damage": [
+    {
+     "args": [
+      100.0,
+      0.0,
+      97.4,
+      0.37
+     ],
+     "result": 100.0
+    },
+    {
+     "args": [
+      100.0,
+      48.7,
+      97.4,
+      0.37
+     ],
+     "result": 81.5
+    },
+    {
+     "args": [
+      100.0,
+      97.4,
+      97.4,
+      0.37
+     ],
+     "result": 63.0
+    },
+    {
+     "args": [
+      100.0,
+      200.0,
+      97.4,
+      0.37
+     ],
+     "result": 0.0
+    }
+   ],
+   "beam_ramp_frac": [
+    {
+     "args": [
+      0.0
+     ],
+     "result": 0.6
+    },
+    {
+     "args": [
+      0.71
+     ],
+     "result": 0.8
+    },
+    {
+     "args": [
+      1.42
+     ],
+     "result": 1.0
+    },
+    {
+     "args": [
+      10.0
+     ],
+     "result": 1.0
+    }
+   ],
+   "homing_turn_rate": [
+    {
+     "args": [
+      "fighter"
+     ],
+     "result": 242.136
+    },
+    {
+     "args": [
+      "capital"
+     ],
+     "result": 189.036
+    },
+    {
+     "args": [
+      "battlecruiser"
+     ],
+     "result": 212.4
+    }
+   ],
+   "homing_salvo_size": [
+    {
+     "args": [
+      "aurora"
+     ],
+     "result": 3.0
+    },
+    {
+     "args": [
+      "atlantis"
+     ],
+     "result": 6.0
+    },
+    {
+     "args": [
+      "daedalus"
+     ],
+     "result": 1.0
+    }
+   ],
+   "effective_range": [
+    {
+     "args": [
+      "primary"
+     ],
+     "result": 1311.104
+    },
+    {
+     "args": [
+      "rocket"
+     ],
+     "result": 1939.8919999999998
+    },
+    {
+     "args": [
+      "homing"
+     ],
+     "result": 1482.6
+    },
+    {
+     "args": [
+      "beam"
+     ],
+     "result": 942.7
+    },
+    {
+     "args": [
+      "turret"
+     ],
+     "result": 642.8
+    }
+   ]
+  },
+  "fires": [
+   {
+    "args": [
+     "primary",
+     "x302",
+     "fighter",
+     0.0,
+     0.0
+    ],
+    "result": {
+     "hit": true,
+     "damage_dealt": 4.7,
+     "effect": "direct hit"
+    }
+   },
+   {
+    "args": [
+     "primary",
+     "x302",
+     "capital",
+     0.0,
+     0.0
+    ],
+    "result": {
+     "hit": true,
+     "damage_dealt": 0.2209,
+     "effect": "direct hit"
+    }
+   },
+   {
+    "args": [
+     "primary",
+     "atlantis",
+     "battlecruiser",
+     0.0,
+     0.0
+    ],
+    "result": {
+     "hit": true,
+     "damage_dealt": 18.256000000000004,
+     "effect": "direct hit"
+    }
+   },
+   {
+    "args": [
+     "primary",
+     "daedalus",
+     "battlecruiser",
+     5000.0,
+     0.0
+    ],
+    "result": {
+     "hit": false,
+     "damage_dealt": 0.0,
+     "effect": "out of range"
+    }
+   },
+   {
+    "args": [
+     "rocket",
+     "daedalus",
+     "fighter",
+     0.0,
+     0.0
+    ],
+    "result": {
+     "hit": true,
+     "damage_dealt": 278.475,
+     "effect": "direct hit"
+    }
+   },
+   {
+    "args": [
+     "rocket",
+     "daedalus",
+     "fighter",
+     97.4,
+     0.0
+    ],
+    "result": {
+     "hit": true,
+     "damage_dealt": 175.43925000000002,
+     "effect": "blast hit"
+    }
+   },
+   {
+    "args": [
+     "rocket",
+     "daedalus",
+     "fighter",
+     200.0,
+     0.0
+    ],
+    "result": {
+     "hit": false,
+     "damage_dealt": 0.0,
+     "effect": "out of blast radius"
+    }
+   },
+   {
+    "args": [
+     "homing",
+     "phoenix",
+     "capital",
+     40.0,
+     0.0
+    ],
+    "result": {
+     "hit": true,
+     "damage_dealt": 72.67367049808428,
+     "effect": "splash hit"
+    }
+   },
+   {
+    "args": [
+     "beam",
+     "daedalus",
+     "fighter",
+     100.0,
+     1.42
+    ],
+    "result": {
+     "hit": true,
+     "damage_dealt": 6806.799999999999,
+     "effect": "vaporized"
+    }
+   },
+   {
+    "args": [
+     "beam",
+     "daedalus",
+     "capital",
+     100.0,
+     0.0
+    ],
+    "result": {
+     "hit": true,
+     "damage_dealt": 933.5039999999999,
+     "effect": "absorbed"
+    }
+   },
+   {
+    "args": [
+     "beam",
+     "phoenix",
+     "battlecruiser",
+     100.0,
+     1.42
+    ],
+    "result": {
+     "hit": true,
+     "damage_dealt": 3422.0,
+     "effect": "burned through"
+    }
+   },
+   {
+    "args": [
+     "beam",
+     "x302",
+     "fighter",
+     100.0,
+     1.42
+    ],
+    "result": {
+     "hit": false,
+     "damage_dealt": 0.0,
+     "effect": "no beam emitter"
+    }
+   },
+   {
+    "args": [
+     "omni",
+     "atlantis",
+     "fighter",
+     50.0,
+     0.0
+    ],
+    "result": {
+     "hit": true,
+     "damage_dealt": 51.182,
+     "effect": "direct hit"
+    }
+   },
+   {
+    "args": [
+     "omni",
+     "daedalus",
+     "fighter",
+     50.0,
+     0.0
+    ],
+    "result": {
+     "hit": false,
+     "damage_dealt": 0.0,
+     "effect": "no omni ports"
+    }
+   },
+   {
+    "args": [
+     "turret",
+     "destiny",
+     "battlecruiser",
+     300.0,
+     0.0
+    ],
+    "result": {
+     "hit": true,
+     "damage_dealt": 16.464000000000002,
+     "effect": "direct hit"
+    }
+   },
+   {
+    "args": [
+     "turret",
+     "atlantis",
+     "battlecruiser",
+     300.0,
+     0.0
+    ],
+    "result": {
+     "hit": false,
+     "damage_dealt": 0.0,
+     "effect": "no turrets"
+    }
+   }
+  ]
  }
 }

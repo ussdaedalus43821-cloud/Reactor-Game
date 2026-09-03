@@ -1190,5 +1190,328 @@ class TestDaedalusRulesEnemyBridge(unittest.TestCase):
         self.assertEqual(direct, via_rules)
 
 
+# ==========================================================================
+# DAEDALUS Stage 3 weapons
+# ==========================================================================
+
+class TestDaedalusWeapons(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.vm = NovaVM(random.Random(7), base_dir=host.RULES_DIR)
+        assert cls.vm.load_file("daedalus_weapons.nova"), cls.vm.error
+
+    def test_weapon_order(self):
+        self.assertEqual(self.vm.get_global("WEAPON_ORDER"),
+                         ["primary", "rocket", "homing", "beam", "omni",
+                          "turret"])
+
+    def test_primary_gun_table(self):
+        p = self.vm.get_global("WEAPONS")["primary"]
+        self.assertAlmostEqual(p["velocity"], 1024.3, places=9)
+        self.assertAlmostEqual(p["lifetime"], 1.28, places=9)
+        self.assertAlmostEqual(p["cooldown"], 0.073, places=9)
+        self.assertAlmostEqual(p["spread_deg"], 1.9, places=9)
+        self.assertAlmostEqual(p["energy_cost"], 9.4, places=9)
+        self.assertAlmostEqual(p["projectile_radius"], 2.7, places=9)
+
+    def test_rocket_table(self):
+        r = self.vm.get_global("WEAPONS")["rocket"]
+        self.assertAlmostEqual(r["velocity"], 617.8, places=9)
+        self.assertAlmostEqual(r["lifetime"], 3.14, places=9)
+        self.assertAlmostEqual(r["cooldown"], 0.82, places=9)
+        self.assertAlmostEqual(r["energy_cost"], 31.2, places=9)
+        self.assertAlmostEqual(r["blast_radius"], 97.4, places=9)
+        self.assertAlmostEqual(r["blast_falloff"], 0.37, places=9)
+        self.assertAlmostEqual(r["projectile_radius"], 5.2, places=9)
+
+    def test_homing_table(self):
+        h = self.vm.get_global("WEAPONS")["homing"]
+        self.assertAlmostEqual(h["velocity"], 468.2, places=9)
+        self.assertAlmostEqual(h["lifetime"], 5.47, places=9)
+        self.assertAlmostEqual(h["cooldown"], 1.13, places=9)
+        self.assertAlmostEqual(h["turn_rate"], 212.4, places=9)
+        self.assertAlmostEqual(h["acquire_range"], 1482.6, places=9)
+        self.assertAlmostEqual(h["energy_cost"], 22.7, places=9)
+        self.assertAlmostEqual(h["splash_radius"], 78.3, places=9)
+        self.assertAlmostEqual(h["splash_falloff"], 0.28, places=9)
+        self.assertAlmostEqual(h["projectile_radius"], 4.8, places=9)
+        self.assertEqual(h["salvo_overrides"], {"aurora": 3, "atlantis": 6})
+
+    def test_beam_table(self):
+        b = self.vm.get_global("WEAPONS")["beam"]
+        self.assertAlmostEqual(b["ramp_time"], 1.42, places=9)
+        self.assertAlmostEqual(b["max_range"], 942.7, places=9)
+        self.assertAlmostEqual(b["beam_width"], 6.3, places=9)
+        self.assertAlmostEqual(b["energy_drain"], 26.4, places=9)
+        self.assertAlmostEqual(b["min_energy"], 5.2, places=9)
+        self.assertEqual(b["class_multiplier"],
+                         {"fighter": 2.8, "battlecruiser": 1.0, "capital": 0.64})
+
+    def test_omni_table(self):
+        o = self.vm.get_global("WEAPONS")["omni"]
+        self.assertEqual(o["port_count"], 8)
+        self.assertTrue(o["twin_bolts"])
+        self.assertAlmostEqual(o["velocity"], 1187.4, places=9)
+        self.assertAlmostEqual(o["lifetime"], 1.13, places=9)
+        self.assertAlmostEqual(o["cooldown"], 0.11, places=9)
+        self.assertAlmostEqual(o["spread_deg"], 4.3, places=9)
+        self.assertAlmostEqual(o["energy_cost_per_bolt"], 8.7, places=9)
+        self.assertAlmostEqual(o["projectile_radius"], 2.7, places=9)
+
+    def test_turret_table(self):
+        t = self.vm.get_global("WEAPONS")["turret"]
+        self.assertEqual(t["turret_count"], 5)
+        self.assertAlmostEqual(t["velocity"], 938.6, places=9)
+        self.assertAlmostEqual(t["lifetime"], 1.08, places=9)
+        self.assertAlmostEqual(t["cooldown"], 0.47, places=9)
+        self.assertAlmostEqual(t["range"], 642.8, places=9)
+        self.assertAlmostEqual(t["damage"], 14.7, places=9)
+        self.assertAlmostEqual(t["energy_cost"], 4.2, places=9)
+
+    def test_effective_range(self):
+        f = self.vm.call_function
+        self.assertAlmostEqual(f("effective_range", ["primary"]),
+                               1024.3 * 1.28, places=6)
+        self.assertAlmostEqual(f("effective_range", ["rocket"]),
+                               617.8 * 3.14, places=6)
+        self.assertEqual(f("effective_range", ["homing"]), 1482.6)
+        self.assertEqual(f("effective_range", ["beam"]), 942.7)
+        self.assertEqual(f("effective_range", ["turret"]), 642.8)
+
+    def test_falloff_damage_is_linear_within_radius_and_zero_beyond(self):
+        f = lambda d: self.vm.call_function("falloff_damage",
+                                            [100.0, d, 97.4, 0.37])
+        self.assertEqual(f(0.0), 100.0)
+        self.assertAlmostEqual(f(48.7), 100.0 * (1 - 0.5 * 0.37), places=9)
+        # The documented edge behavior: AT the radius, damage is the
+        # continuous limit (63%), not a discontinuous drop to zero --
+        # only distances beyond the radius are zero.
+        self.assertAlmostEqual(f(97.4), 63.0, places=9)
+        self.assertEqual(f(97.40001), 0.0)
+        self.assertEqual(f(500.0), 0.0)
+
+    def test_falloff_damage_handles_a_zero_radius_without_dividing_by_it(self):
+        self.assertEqual(
+            self.vm.call_function("falloff_damage", [50.0, 0.0, 0.0, 0.5]),
+            50.0)
+
+    def test_beam_ramp_curve(self):
+        f = lambda t: self.vm.call_function("beam_ramp_frac", [t])
+        self.assertEqual(f(0.0), 0.6)
+        self.assertEqual(f(-1.0), 0.6)
+        self.assertAlmostEqual(f(0.71), 0.8, places=9)
+        self.assertEqual(f(1.42), 1.0)
+        self.assertEqual(f(10.0), 1.0)
+
+    def test_beam_class_multiplier_is_not_the_general_matrix(self):
+        """The beam exception: its own table, not Stage 1's."""
+        self.assertEqual(
+            self.vm.call_function("beam_class_multiplier", ["fighter"]), 2.8)
+        self.assertEqual(
+            self.vm.call_function("beam_class_multiplier", ["battlecruiser"]), 1.0)
+        self.assertEqual(
+            self.vm.call_function("beam_class_multiplier", ["capital"]), 0.64)
+        # Nothing in Stage 1's DAMAGE_SCALING is 2.8 or 0.64 for these
+        # pairs -- confirms the beam is genuinely not reusing that table.
+        self.assertNotIn(2.8, (0.082, 0.047, 2.37, 3.14, 0.74, 1.12))
+        self.assertNotIn(0.64, (0.082, 0.047, 2.37, 3.14, 0.74, 1.12))
+
+    def test_beam_damage_per_second(self):
+        f = self.vm.call_function
+        self.assertAlmostEqual(f("beam_damage_per_second", [2431.0, 1.42, "fighter"]),
+                               2431.0 * 2.8, places=6)
+        self.assertAlmostEqual(f("beam_damage_per_second", [2431.0, 0.0, "capital"]),
+                               2431.0 * 0.6 * 0.64, places=6)
+        self.assertAlmostEqual(f("beam_damage_per_second", [3422.0, 1.42, "battlecruiser"]),
+                               3422.0, places=6)
+
+    def test_homing_turn_rate_reacts_to_target_class(self):
+        f = self.vm.call_function
+        self.assertAlmostEqual(f("homing_turn_rate", ["fighter"]),
+                               212.4 * 1.14, places=9)
+        self.assertAlmostEqual(f("homing_turn_rate", ["capital"]),
+                               212.4 * 0.89, places=9)
+        self.assertEqual(f("homing_turn_rate", ["battlecruiser"]), 212.4)
+
+    def test_homing_salvo_size(self):
+        f = self.vm.call_function
+        self.assertEqual(f("homing_salvo_size", ["aurora"]), 3)
+        self.assertEqual(f("homing_salvo_size", ["atlantis"]), 6)
+        for key in ("x302", "daedalus", "phoenix", "destiny"):
+            self.assertEqual(f("homing_salvo_size", [key]), 1, key)
+
+    def test_fire_ballistic_direct_hit(self):
+        r = self.vm.call_function("fire_ballistic", ["primary", 12.3, 1.0, 0.0])
+        self.assertTrue(r["hit"])
+        self.assertAlmostEqual(r["damage_dealt"], 12.3, places=9)
+        self.assertEqual(r["effect"], "direct hit")
+
+    def test_fire_ballistic_not_equipped(self):
+        r = self.vm.call_function("fire_ballistic", ["primary", 0.0, 1.0, 0.0])
+        self.assertFalse(r["hit"])
+        self.assertEqual(r["effect"], "not equipped")
+
+    def test_fire_ballistic_out_of_range(self):
+        r = self.vm.call_function("fire_ballistic", ["primary", 12.3, 1.0, 5000.0])
+        self.assertFalse(r["hit"])
+        self.assertEqual(r["effect"], "out of range")
+
+    def test_fire_ballistic_rocket_blast(self):
+        direct = self.vm.call_function("fire_ballistic", ["rocket", 117.5, 1.0, 0.0])
+        edge = self.vm.call_function("fire_ballistic", ["rocket", 117.5, 1.0, 97.4])
+        beyond = self.vm.call_function("fire_ballistic", ["rocket", 117.5, 1.0, 200.0])
+        self.assertEqual(direct["effect"], "direct hit")
+        self.assertAlmostEqual(direct["damage_dealt"], 117.5, places=9)
+        self.assertEqual(edge["effect"], "blast hit")
+        self.assertAlmostEqual(edge["damage_dealt"], 117.5 * 0.63, places=6)
+        self.assertFalse(beyond["hit"])
+        self.assertEqual(beyond["effect"], "out of blast radius")
+
+    def test_fire_ballistic_homing_splash(self):
+        r = self.vm.call_function("fire_ballistic", ["homing", 89.1, 1.0, 40.0])
+        self.assertTrue(r["hit"])
+        self.assertEqual(r["effect"], "splash hit")
+        want = 89.1 * (1.0 - (40.0 / 78.3) * 0.28)
+        self.assertAlmostEqual(r["damage_dealt"], want, places=6)
+
+    def test_fire_ballistic_omni_and_turret_have_no_falloff(self):
+        far_but_in_range = self.vm.call_function("fire_ballistic",
+                                                  ["omni", 16.3, 1.0, 500.0])
+        self.assertTrue(far_but_in_range["hit"])
+        self.assertAlmostEqual(far_but_in_range["damage_dealt"], 16.3, places=9)
+        self.assertEqual(far_but_in_range["effect"], "direct hit")
+
+    def test_fire_beam_outcomes(self):
+        f = self.vm.call_function
+        vaporized = f("fire_beam", [2431.0, "fighter", 100.0, 1.42])
+        absorbed = f("fire_beam", [2431.0, "capital", 100.0, 1.42])
+        burned = f("fire_beam", [2431.0, "battlecruiser", 100.0, 1.42])
+        no_emitter = f("fire_beam", [0.0, "fighter", 100.0, 1.0])
+        no_target = f("fire_beam", [2431.0, "", 100.0, 1.0])
+        out_of_range = f("fire_beam", [2431.0, "fighter", 5000.0, 1.42])
+        self.assertEqual(vaporized["effect"], "vaporized")
+        self.assertEqual(absorbed["effect"], "absorbed")
+        self.assertEqual(burned["effect"], "burned through")
+        self.assertFalse(no_emitter["hit"])
+        self.assertEqual(no_emitter["effect"], "no beam emitter")
+        self.assertFalse(no_target["hit"])
+        self.assertEqual(no_target["effect"], "no target")
+        self.assertFalse(out_of_range["hit"])
+        self.assertEqual(out_of_range["effect"], "out of range")
+
+    def test_unknown_weapon_type_degrades_safely(self):
+        self.assertEqual(
+            self.vm.call_function("weapon_stat", ["not_a_weapon", "velocity", -1.0]),
+            -1.0)
+        self.assertEqual(
+            self.vm.call_function("effective_range", ["not_a_weapon"]), 0.0)
+
+
+class TestDaedalusRulesWeaponsBridge(unittest.TestCase):
+    """The seam between rules.nova (SHIPS, DAMAGE_SCALING) and
+    weapons.nova (WEAPONS, fire_ballistic/fire_beam), exercised through
+    daedalus_rules.nova's fire_weapon()."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.vm = NovaVM(random.Random(7), base_dir=host.RULES_DIR)
+        for name in host.HOST_FUNCTIONS:
+            cls.vm.register_function(name, lambda args: None)
+        assert cls.vm.load_file("daedalus_rules.nova"), cls.vm.error
+
+    CLASS_OF = {"x302": "fighter", "daedalus": "battlecruiser",
+               "phoenix": "battlecruiser", "aurora": "capital",
+               "destiny": "capital", "atlantis": "capital"}
+
+    def test_weapon_order_and_stats_reachable_through_the_import(self):
+        self.assertEqual(self.vm.get_global("WEAPON_ORDER"),
+                         ["primary", "rocket", "homing", "beam", "omni",
+                          "turret"])
+        self.assertEqual(
+            self.vm.call_function("weapon_stat", ["rocket", "blast_radius", -1.0]),
+            97.4)
+
+    def test_per_ship_primary_damage_at_same_class_is_unscaled(self):
+        for key, want in {"x302": 4.7, "daedalus": 12.3, "phoenix": 14.1,
+                          "aurora": 11.8, "destiny": 11.1,
+                          "atlantis": 16.3}.items():
+            r = self.vm.call_function("fire_weapon",
+                                      ["primary", key, self.CLASS_OF[key], 0.0, 0.0])
+            self.assertAlmostEqual(r["damage_dealt"], want, places=9, msg=key)
+
+    def test_stage1_energy_costs_still_match_weapons_nova(self):
+        """Independently declared in two files on purpose (weapons.nova
+        must be importable standalone) -- this is the test that catches
+        them drifting apart."""
+        power = self.vm.get_global("POWER")
+        self.assertEqual(
+            self.vm.call_function("weapon_stat", ["primary", "energy_cost", -1.0]),
+            power["primary_cost"])
+        self.assertEqual(
+            self.vm.call_function("weapon_stat", ["rocket", "energy_cost", -1.0]),
+            power["rocket_cost"])
+        self.assertEqual(
+            self.vm.call_function("weapon_stat", ["homing", "energy_cost", -1.0]),
+            power["homing_cost"])
+
+    def test_beam_only_daedalus_and_phoenix(self):
+        for key in ("daedalus", "phoenix"):
+            r = self.vm.call_function("fire_weapon",
+                                      ["beam", key, "fighter", 100.0, 1.42])
+            self.assertTrue(r["hit"], key)
+            self.assertEqual(r["effect"], "vaporized", key)
+        for key in ("x302", "aurora", "destiny", "atlantis"):
+            r = self.vm.call_function("fire_weapon",
+                                      ["beam", key, "fighter", 100.0, 1.42])
+            self.assertFalse(r["hit"], key)
+            self.assertEqual(r["effect"], "no beam emitter", key)
+
+    def test_omni_only_atlantis(self):
+        ok = self.vm.call_function("fire_weapon",
+                                   ["omni", "atlantis", "fighter", 50.0, 0.0])
+        self.assertTrue(ok["hit"])
+        self.assertAlmostEqual(ok["damage_dealt"], 16.3 * 3.14, places=6)
+        for key in ("x302", "daedalus", "phoenix", "aurora", "destiny"):
+            refused = self.vm.call_function("fire_weapon",
+                                            ["omni", key, "fighter", 50.0, 0.0])
+            self.assertFalse(refused["hit"], key)
+            self.assertEqual(refused["effect"], "no omni ports", key)
+
+    def test_turret_only_destiny(self):
+        ok = self.vm.call_function("fire_weapon",
+                                   ["turret", "destiny", "battlecruiser", 300.0, 0.0])
+        self.assertTrue(ok["hit"])
+        self.assertAlmostEqual(ok["damage_dealt"], 14.7 * 1.12, places=6)
+        for key in ("x302", "daedalus", "phoenix", "aurora", "atlantis"):
+            refused = self.vm.call_function("fire_weapon",
+                                            ["turret", key, "battlecruiser", 300.0, 0.0])
+            self.assertFalse(refused["hit"], key)
+            self.assertEqual(refused["effect"], "no turrets", key)
+
+    def test_damage_scaling_matrix_applies_inside_fire_weapon(self):
+        r = self.vm.call_function("fire_weapon",
+                                  ["primary", "x302", "capital", 0.0, 0.0])
+        self.assertAlmostEqual(r["damage_dealt"], 4.7 * 0.047, places=9)
+        r2 = self.vm.call_function("fire_weapon",
+                                   ["omni", "atlantis", "battlecruiser", 0.0, 0.0])
+        self.assertAlmostEqual(r2["damage_dealt"], 16.3 * 1.12, places=9)
+
+    def test_homing_helpers_reachable_through_rules(self):
+        self.assertEqual(self.vm.call_function("homing_salvo_size", ["aurora"]), 3)
+        self.assertAlmostEqual(
+            self.vm.call_function("homing_turn_rate", ["fighter"]),
+            212.4 * 1.14, places=9)
+
+    def test_weapons_nova_still_loads_standalone(self):
+        standalone = NovaVM(random.Random(7), base_dir=host.RULES_DIR)
+        assert standalone.load_file("daedalus_weapons.nova"), standalone.error
+        a = standalone.call_function("fire_ballistic",
+                                     ["primary", 12.3, 1.0, 0.0])
+        b = self.vm.call_function("fire_weapon",
+                                  ["primary", "daedalus", "battlecruiser", 0.0, 0.0])
+        self.assertEqual(a, b)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

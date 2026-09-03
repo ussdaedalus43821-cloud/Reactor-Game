@@ -53,6 +53,9 @@ func _initialize() -> void:
 	if doc.has("ai_data"):
 		_check_ai_data(doc["ai_data"])
 
+	if doc.has("weapons_data"):
+		_check_weapons_data(doc["weapons_data"])
+
 	print("")
 	if failures.is_empty():
 		print("parity OK -- %d checks, GDScript matches the reference" % checked)
@@ -435,6 +438,69 @@ func _dict_matches(want, got) -> bool:
 		TYPE_NIL:
 			return got == null
 	return want == got
+
+
+# ==========================================================================
+# Stage 3 weapons
+#
+# Loads daedalus_weapons.nova standalone and diffs the raw WEAPONS table
+# and every recorded formula sample, then loads daedalus_rules.nova and
+# diffs every recorded fire_weapon() call -- the same integration seam
+# pattern as _check_ai_data, one file down.
+# ==========================================================================
+
+func _check_weapons_data(data: Dictionary) -> void:
+	var vm := NovaVM.new()
+	checked += 1
+	if not vm.load_file("daedalus_weapons.nova"):
+		failures.append("daedalus_weapons.nova failed to load: " + vm.error)
+		return
+
+	checked += 1
+	var got_order = vm.get_global("WEAPON_ORDER", [])
+	if not _same_string_list(got_order, data["weapon_order"]):
+		_fail("weapons WEAPON_ORDER", "order", data["weapon_order"], got_order)
+
+	var want_weapons: Dictionary = data["weapons"]
+	var got_weapons = vm.get_global("WEAPONS", {})
+	for weapon_type in want_weapons:
+		checked += 1
+		if typeof(got_weapons) != TYPE_DICTIONARY or 				not (got_weapons as Dictionary).has(weapon_type):
+			failures.append("weapons WEAPONS is missing '%s'" % weapon_type)
+			continue
+		if not _dict_matches(want_weapons[weapon_type],
+				(got_weapons as Dictionary)[weapon_type]):
+			_fail("weapons WEAPONS.%s" % weapon_type, "table",
+					want_weapons[weapon_type],
+					(got_weapons as Dictionary)[weapon_type])
+
+	var formulas: Dictionary = data["formulas"]
+	for fn_name in formulas:
+		for entry in (formulas[fn_name] as Array):
+			var sample: Dictionary = entry
+			checked += 1
+			var got = vm.call_function(String(fn_name), sample["args"])
+			if not _dict_matches(sample["result"], got):
+				_fail("weapons %s(%s)" % [fn_name, sample["args"]], "result",
+						sample["result"], got)
+
+	var rules_vm := NovaVM.new()
+	for fn_name in ["log", "alarm", "scram", "reset_trip", "meltdown",
+			"victory", "inject_fault", "clear_fault"]:
+		rules_vm.register_function(String(fn_name), func(_args: Array): return null)
+	checked += 1
+	if not rules_vm.load_file("daedalus_rules.nova"):
+		failures.append("daedalus_rules.nova (weapons import) failed to load: "
+				+ rules_vm.error)
+		return
+
+	for entry in data["fires"]:
+		var fire: Dictionary = entry
+		checked += 1
+		var got_fire = rules_vm.call_function("fire_weapon", fire["args"])
+		if not _dict_matches(fire["result"], got_fire):
+			_fail("weapons fire_weapon(%s)" % [fire["args"]], "result",
+					fire["result"], got_fire)
 
 
 static func _close(a: float, b: float) -> bool:

@@ -355,6 +355,16 @@ func _self_check() -> void:
 						% [kind, fast_dmg, slow_dmg])
 				return
 
+	if vm.get_global("WEAPON_ORDER", null) != null:
+		for key in ["x302", "daedalus", "atlantis", "destiny"]:
+			var fast_fire := fire_weapon("primary", key, ship_class(key), 0.0)
+			var slow_fire = vm.call_function("fire_weapon",
+					["primary", key, ship_class(key), 0.0, 0.0])
+			if not _dict_close(fast_fire, slow_fire):
+				_fail("fire_weapon(primary, %s): %s vs %s"
+						% [key, fast_fire, slow_fire])
+				return
+
 
 # ==========================================================================
 # Ships
@@ -463,6 +473,44 @@ func enemy_behavior(kind: String, player_key: String) -> Dictionary:
 
 
 # ==========================================================================
+# Weapons (Stage 3)
+#
+# daedalus_weapons.nova owns ballistics and every damage-shaping curve; it
+# is ship-registry-agnostic by design (see its own header) and cannot
+# resolve "which ship, therefore which raw damage and which class" on its
+# own. daedalus_rules.nova's fire_weapon() is the one function with access
+# to both SHIPS/DAMAGE_SCALING *and* the weapons module, so it is the
+# composition root -- exactly like enemy_weapon_damage() above -- and this
+# bridge is where a GDScript caller reaches it, since this bridge already
+# owns the one loaded daedalus_rules.nova VM. For weapon *stats* alone
+# (ballistics, falloff curves, the raw shot resolvers with no ship
+# involved), see WeaponsBridge / daedalus_weapons.nova instead -- it is
+# fully standalone and does not need this class at all.
+# ==========================================================================
+
+## Resolve one weapon discharge. `attacker_key` is a player ship key (Stage
+## 1's SHIP_ORDER); `target_class` is "fighter" / "battlecruiser" /
+## "capital" (or "" for no target); `distance` is world units to the
+## target; `elapsed` is seconds of continuous fire so far and is only read
+## by the beam. Always returns {hit, damage_dealt, effect}.
+func fire_weapon(weapon_type: String, attacker_key: String,
+		target_class: String, distance: float, elapsed: float = 0.0) -> Dictionary:
+	var result = vm.call_function("fire_weapon",
+			[weapon_type, attacker_key, target_class, distance, elapsed])
+	return result if typeof(result) == TYPE_DICTIONARY else 			{"hit": false, "damage_dealt": 0.0, "effect": "bridge error"}
+
+
+## Missile turn authority for a launch that just acquired `target_class`.
+## Resolved once at lock-on, not per frame -- see daedalus_weapons.nova.
+func homing_turn_rate(target_class: String) -> float:
+	return float(vm.call_function("homing_turn_rate", [target_class]))
+
+
+func homing_salvo_size(ship_key: String) -> int:
+	return int(vm.call_function("homing_salvo_size", [ship_key]))
+
+
+# ==========================================================================
 # Power
 # ==========================================================================
 
@@ -535,6 +583,25 @@ func sector_hostiles(key: int, gen: float) -> int:
 # ==========================================================================
 # Reporting
 # ==========================================================================
+
+static func _dict_close(a: Dictionary, b) -> bool:
+	if typeof(b) != TYPE_DICTIONARY:
+		return false
+	var bd: Dictionary = b
+	if a.size() != bd.size():
+		return false
+	for key in a:
+		if not bd.has(key):
+			return false
+		var av = a[key]
+		var bv = bd[key]
+		if (typeof(av) == TYPE_FLOAT or typeof(av) == TYPE_INT) and 				(typeof(bv) == TYPE_FLOAT or typeof(bv) == TYPE_INT):
+			if not is_equal_approx(maxf(float(av), 1e-9), maxf(float(bv), 1e-9)):
+				return false
+		elif av != bv:
+			return false
+	return true
+
 
 func summary() -> Dictionary:
 	var d := vm.describe() if vm != null else {}

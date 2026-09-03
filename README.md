@@ -147,6 +147,7 @@ godot/                          the Godot project — open this
     nova_bridge.gd              NovaLang <-> reactor physics + UI
     daedalus_bridge.gd          NovaLang -> Daedalus ship/power/sector data
     ai_bridge.gd                NovaLang -> Daedalus enemy AI behavior
+    weapons_bridge.gd           NovaLang -> Daedalus weapon stats/ballistics
     reactor_physics.gd          RK4 six-group core
     reactor_theme.gd            shared palette
     reactor_rules.nova          >>> the reactor's control policy <<<
@@ -154,6 +155,8 @@ godot/                          the Godot project — open this
                                     power budget, sectors, advisor <<<
     daedalus_ai.nova            >>> enemy AI: six archetypes, tuning,
                                     reactions to player ship class <<<
+    daedalus_weapons.nova       >>> weapon ballistics, energy cost,
+                                    falloff, beam ramp, class effectiveness <<<
     lib/combat.nova             a NovaLang module
     nova/
       nova_lexer.gd             tokenizer

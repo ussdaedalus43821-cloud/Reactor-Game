@@ -15,10 +15,11 @@
 # holdover from the first program ever written in NovaLang.
 # ==========================================================================
 
-reactor "DAEDALUS  BC-304" version 3
+reactor "DAEDALUS  BC-304" version 4
 
 import "lib/combat.nova" as combat
 import "daedalus_ai.nova" as ai
+import "daedalus_weapons.nova" as weapons
 
 
 # ==========================================================================
@@ -466,6 +467,90 @@ func player_weapon_vs_enemy(attacker_key, weapon, kind) {
 ## SHIPS, by design, so it cannot look up what the player is flying.
 func enemy_behavior(kind, player_key) {
     return ai.get_behavior(kind, ship_class(player_key), ship_hardened(player_key))
+}
+
+
+# ==========================================================================
+# WEAPONS (STAGE 3)
+#
+# daedalus_weapons.nova owns ballistics, energy cost and every damage-
+# shaping curve (blast falloff, splash falloff, beam ramp); it knows
+# nothing about SHIPS or DAMAGE_SCALING by design (see its own header).
+# fire_weapon() is the one function that needs both: it resolves a ship
+# key down to a raw per-shot damage figure and a class, decides whether
+# that ship is even allowed to fire the requested weapon, and then hands
+# off to weapons.fire_ballistic() or weapons.fire_beam() to shape the
+# result. This is "reference the weapon definitions" -- nothing about a
+# weapon's tuning is re-declared here, only composed.
+# ==========================================================================
+
+let WEAPON_ORDER = weapons.WEAPON_ORDER
+
+func weapon_stat(weapon_type, stat, fallback) {
+    return weapons.weapon_stat(weapon_type, stat, fallback)
+}
+
+func weapon_name(weapon_type) {
+    return weapons.weapon_name(weapon_type)
+}
+
+## The one entry point Godot actually calls to resolve a weapon discharge.
+## `attacker_key` is a player SHIP key (Stage 1's SHIP_ORDER); `target_class`
+## is "fighter" / "battlecruiser" / "capital" ("" for no target);
+## `distance` is the range to the target in world units; `elapsed` is
+## seconds of continuous fire so far and is only read by the beam.
+##
+## Returns {hit, damage_dealt, effect} -- always these three keys, whatever
+## the weapon type or outcome, so a caller never has to branch on which
+## weapon it asked about before reading the result.
+func fire_weapon(weapon_type, attacker_key, target_class, distance, elapsed) {
+    let attacker_class = ship_class(attacker_key)
+
+    if weapon_type == "beam" {
+        let base_dps = ship_stat(attacker_key, "beam_dmg", 0)
+        return weapons.fire_beam(base_dps, target_class, distance, elapsed)
+    }
+
+    if weapon_type == "omni" {
+        if attacker_key != "atlantis" {
+            return { hit: false, damage_dealt: 0.0, effect: "no omni ports" }
+        }
+        let raw = ship_stat(attacker_key, "gun_dmg", 0)
+        let mult = damage_multiplier(attacker_class, target_class)
+        return weapons.fire_ballistic("omni", raw, mult, distance)
+    }
+
+    if weapon_type == "turret" {
+        if attacker_key != "destiny" {
+            return { hit: false, damage_dealt: 0.0, effect: "no turrets" }
+        }
+        let raw = weapons.weapon_stat("turret", "damage", 0)
+        let mult = damage_multiplier(attacker_class, target_class)
+        return weapons.fire_ballistic("turret", raw, mult, distance)
+    }
+
+    let stat_name = ""
+    if weapon_type == "primary" { stat_name = "gun_dmg" }
+    if weapon_type == "rocket"  { stat_name = "rocket_dmg" }
+    if weapon_type == "homing" { stat_name = "homing_dmg" }
+    if stat_name == "" {
+        return { hit: false, damage_dealt: 0.0, effect: "unknown weapon" }
+    }
+
+    let raw = ship_stat(attacker_key, stat_name, 0)
+    let mult = damage_multiplier(attacker_class, target_class)
+    return weapons.fire_ballistic(weapon_type, raw, mult, distance)
+}
+
+## Missile turn authority for a launch that just acquired `target_class`,
+## resolved once at lock-on -- see daedalus_weapons.nova's own note on why
+## this is not a per-frame call.
+func homing_turn_rate(target_class) {
+    return weapons.homing_turn_rate(target_class)
+}
+
+func homing_salvo_size(ship_key) {
+    return weapons.homing_salvo_size(ship_key)
 }
 
 
