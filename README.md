@@ -236,6 +236,23 @@ control policy. `check_project.py` fails the build if a preset loses it.
 * **Web** — serve over HTTP, not `file://`. GL Compatibility renderer, so
   no `SharedArrayBuffer` or cross-origin isolation headers needed.
 
+## Modding
+
+Every reactor policy is one text file, `godot/scripts/reactor_rules.nova` —
+edit it in any text editor, save, and relaunch to try your change. No
+compiler, no rebuild.
+
+* **[MODDING_REACTOR.md](MODDING_REACTOR.md)** — the full guide: what's
+  inside `reactor_rules.nova`, how to write a custom scenario (a
+  coolant leak, a scripted meltdown chain), how to retune trip setpoints
+  and fault behavior, worked example mods, and troubleshooting.
+* **[MODDING_QUICKREF.md](MODDING_QUICKREF.md)** — a one-page cheat
+  sheet of every moddable value in both this game and Daedalus.
+
+NovaLang is sandboxed: a `.nova` file has no file system or network
+access, so the worst a bad mod does is fail to load or unbalance the
+game.
+
 ## Daedalus — the other game built on this language
 
 `daedalus_godot/` is a separate, standalone Godot 4 project: a

@@ -149,6 +149,24 @@ something on the list needed it to actually work:
   ships `scripts_nova/*.nova` or an exported build has no ship stats, no
   enemy AI and no weapons at all.
 
+## Modding
+
+Ship stats, enemy AI and weapon ballistics all live in three text files
+under `scripts_nova/` — edit one in any text editor, save, and relaunch
+to try your change. No compiler, no rebuild.
+
+* **[MODDING_DAEDALUS.md](MODDING_DAEDALUS.md)** — the full guide: what's
+  inside `daedalus_rules.nova`, `daedalus_ai.nova` and
+  `daedalus_weapons.nova`, how to add a new ship or enemy archetype, how
+  to balance weapons, worked example mods (a playable Wraith Cruiser, a
+  Replicator Carrier, a new high-danger sector), and troubleshooting.
+* **[../MODDING_QUICKREF.md](../MODDING_QUICKREF.md)** — a one-page
+  cheat sheet of every moddable value in both this game and Reactor Sim.
+
+NovaLang is sandboxed: a `.nova` file has no file system or network
+access, so the worst a bad mod does is fail the boot-time self-check or
+unbalance the game.
+
 ## Verifying
 
 Every number `daedalus_bridge.gd` caches is cross-checked against a
