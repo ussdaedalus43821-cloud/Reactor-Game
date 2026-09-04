@@ -23,7 +23,6 @@ a text file, so the same code runs on macOS, iOS and Web.
 │              nova_vm.gd         load / eval / call    │
 │                    │                                  │
 │              res://scripts/reactor_rules.nova         │
-│              res://scripts/daedalus_rules.nova        │
 │              res://scripts/lib/combat.nova            │
 └───────────────────────────────────────────────────────┘
 ```
@@ -145,18 +144,14 @@ godot/                          the Godot project — open this
   scripts/
     control_room.gd             fixed-step loop, state fan-out
     nova_bridge.gd              NovaLang <-> reactor physics + UI
-    daedalus_bridge.gd          NovaLang -> Daedalus ship/power/sector data
-    ai_bridge.gd                NovaLang -> Daedalus enemy AI behavior
-    weapons_bridge.gd           NovaLang -> Daedalus weapon stats/ballistics
     reactor_physics.gd          RK4 six-group core
     reactor_theme.gd            shared palette
     reactor_rules.nova          >>> the reactor's control policy <<<
-    daedalus_rules.nova         >>> Daedalus ship stats, damage scaling,
-                                    power budget, sectors, advisor <<<
-    daedalus_ai.nova            >>> enemy AI: six archetypes, tuning,
-                                    reactions to player ship class <<<
-    daedalus_weapons.nova       >>> weapon ballistics, energy cost,
-                                    falloff, beam ramp, class effectiveness <<<
+    daedalus_rules.nova         a second NovaLang program, kept only as
+    daedalus_ai.nova            conformance-test fixtures for the interpreter
+    daedalus_weapons.nova       (parity_check.gd loads these three; the game
+                                 they were written for lives in its own repo,
+                                 github.com/ussdaedalus43821-cloud/DaedalusGodot)
     lib/combat.nova             a NovaLang module
     nova/
       nova_lexer.gd             tokenizer
@@ -247,7 +242,7 @@ compiler, no rebuild.
   coolant leak, a scripted meltdown chain), how to retune trip setpoints
   and fault behavior, worked example mods, and troubleshooting.
 * **[MODDING_QUICKREF.md](MODDING_QUICKREF.md)** — a one-page cheat
-  sheet of every moddable value in both this game and Daedalus.
+  sheet of every moddable value in this game.
 
 NovaLang is sandboxed: a `.nova` file has no file system or network
 access, so the worst a bad mod does is fail to load or unbalance the
@@ -255,9 +250,12 @@ game.
 
 ## Daedalus — the other game built on this language
 
-`daedalus_godot/` is a separate, standalone Godot 4 project: a
-space-combat game whose ship stats, enemy AI and weapons logic are all
-written in NovaLang, using the same interpreter (`scripts/nova/`, copied
-in unmodified) that runs the reactor above. It has its own
-`project.godot` and its own README; open `daedalus_godot/` directly in
-Godot rather than this repository's root.
+Daedalus is a separate, standalone Godot 4 space-combat game whose ship
+stats, enemy AI and weapons logic are all written in NovaLang, using the
+same interpreter (`scripts/nova/`) that runs the reactor above. It lives
+in its own repository — [DaedalusGodot](https://github.com/ussdaedalus43821-cloud/DaedalusGodot)
+— not in this one. This repo keeps only `daedalus_rules.nova`,
+`daedalus_ai.nova` and `daedalus_weapons.nova`, loaded by
+`parity_check.gd` purely as a second, larger NovaLang program to test
+the interpreter's module/import system against; nothing here depends on
+Daedalus, and nothing playable ships with this repo.

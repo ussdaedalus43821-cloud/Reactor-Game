@@ -1,14 +1,17 @@
 # NovaLang Modding — Quick Reference
 
-One page, both games. For explanations, worked examples, and the
-GDScript-touching edge cases, see the full guides:
+One page, Reactor Sim only. For explanations, worked examples, and
+troubleshooting in full, see the full guide:
 [`MODDING_REACTOR.md`](MODDING_REACTOR.md) ·
-[`daedalus_godot/MODDING_DAEDALUS.md`](daedalus_godot/MODDING_DAEDALUS.md) ·
 [`docs/NOVALANG.md`](docs/NOVALANG.md) (full language syntax).
 
-## Quick Start (both games)
+(Daedalus — the space-combat game also built on NovaLang — lives in its
+own repository, [DaedalusGodot](https://github.com/ussdaedalus43821-cloud/DaedalusGodot),
+with its own `MODDING_DAEDALUS.md`.)
 
-1. Open the `.nova` file in any text editor.
+## Quick Start
+
+1. Open `godot/scripts/reactor_rules.nova` in any text editor.
 2. Find the value you want to change.
 3. Change it and save.
 4. Launch the game — your mod is active immediately. No build step, ever.
@@ -20,27 +23,22 @@ game unbalanced.
 
 ---
 
-## File locations
+## File location
 
-| Game | File(s) | Path |
-|---|---|---|
-| Reactor Sim | `reactor_rules.nova` | `godot/scripts/reactor_rules.nova` |
-| Daedalus | `daedalus_rules.nova`, `daedalus_ai.nova`, `daedalus_weapons.nova` | `daedalus_godot/scripts_nova/` |
+| File | Path |
+|---|---|
+| `reactor_rules.nova` | `godot/scripts/reactor_rules.nova` |
 
 Validate a file before launching (catches syntax errors with a line
-number):
+number), run from the repository root:
 
 ```bash
 python3 reference/reactor_host.py --validate --rules reactor_rules.nova
 ```
 
-(Reactor Sim only — run from the repository root. Daedalus's files
-don't have a standalone validator; launch the game and read the
-console.)
-
 ---
 
-## Reactor Sim — `params { }`
+## `params { }`
 
 | Param | Default | Meaning |
 |---|---|---|
@@ -98,100 +96,7 @@ for the accurate alternative.
 
 ---
 
-## Daedalus — `daedalus_rules.nova`
-
-**SHIPS** (`SHIP_ORDER`: x302, daedalus, phoenix, aurora, destiny, atlantis):
-
-| Ship | Class | Shield | Hull | Speed | Turn | Gun | Rocket | Homing | Beam | Hardened |
-|---|---|--:|--:|--:|--:|--:|--:|--:|--:|:--:|
-| F-302 (x302) | fighter | 397 | 228 | 1142 | 348 | 4.7 | 74.2 | 55.3 | 0 | no |
-| Daedalus | battlecruiser | 1583 | 1049 | 917 | 218 | 12.3 | 117.5 | 89.1 | 2431 | no |
-| Phoenix | battlecruiser | 2471 | 1654 | 1035 | 241 | 14.1 | 163.0 | 114.6 | 3422 | no |
-| Aurora | capital | 3682 | 2183 | 948 | 184 | 11.8 | 138.4 | 122.7 | 0 | **yes** |
-| Destiny | capital | 1762 | 3517 | 806 | 139 | 11.1 | 134.8 | 94.2 | 0 | no |
-| Atlantis | capital | 7124 | 5843 | 753 | 108 | 16.3 | 186.5 | 131.9 | 0 | **yes** |
-
-Every ship needs all 9 fields (`name`, `class`, `shield`, `hull`,
-`speed`, `turn`, `gun_dmg`, `rocket_dmg`, `homing_dmg`, `beam_dmg`,
-`hardened`) or the self-check refuses to launch.
-
-**DAMAGE_SCALING** (`[attacker_class][defender_class]`, unlisted = 1.0):
-
-| Attacker \ Defender | fighter | battlecruiser | capital |
-|---|--:|--:|--:|
-| fighter | 1.0 | 0.082 | 0.047 |
-| battlecruiser | 2.37 | 1.0 | 0.74 |
-| capital | 3.14 | 1.12 | 1.0 |
-
-**POWER:** max 1047, recharge +112/s, shield_draw 143/s, thrust_drain
-48/s, cloak_drain 27/s, primary_cost 9.4, rocket_cost 31.2, homing_cost
-22.7.
-
-**DANGER bands** (`{base, per_gen}`, index = a sector's `danger` field):
-`0:` 0/0 (never spawns) · `1:` 4/0.8 · `2:` 9/1.3 · `3:` 15/2.1. Add a
-5th band (index 4) for an extreme sector — the game reads however many
-bands exist.
-
-**SECTORS:** 10 sectors, keys 0–9 (the digit that jumps there). Fields:
-`key`, `name`, `danger`, `spawns`, `capital_chance`, `charge` (hyperdrive
-spool-up, s), `travel` (transit time, s), `fighter_cd`, `mix` (optional
-weighted hostile list), `unique` (optional guaranteed-chance kind).
-
----
-
-## Daedalus — `daedalus_ai.nova`
-
-**ENEMY** (`ENEMY_ORDER`: fighter, capital, dart, hive, replicator, ori):
-
-| Kind | Role | Class | Shield | Hull | Speed | Turn | Gun | Score |
-|---|---|---|--:|--:|--:|--:|--:|--:|
-| fighter | Skirmisher | fighter | 438.2 | 307.5 | 312.7 | 204.8 | 6.2 | 104 |
-| capital | Brawler | capital | 1538.4 | 3172.8 | 58.4 | 19.4 | 17.3 | 3184 |
-| dart | Dive-Bomber | fighter | 92.7 | 68.3 | 587.2 | 386.1 | 5.1 | 126 |
-| hive | Carrier | capital | 2417.6 | 5283.7 | 42.3 | 14.7 | 18.7 | 6273 |
-| replicator | Infestor | fighter | 837.5 | 967.2 | 384.6 | 226.3 | 0 | 3017 |
-| ori | Beam Satellite | capital | 3421.8 | 3618.4 | 18.2 | 11.7 | 0 | 5817 |
-
-Kind-specific extras: dart has `ram_dmg_base` 26.4 (scaled by closing
-speed², never class-scaled); hive has `spawn_cd`/`release_range`
-307.0/`max_stored` 6; replicator has `flee_hull_frac` 0.30/`flee_speed`
-512.0 (infection bolts, `gun_dmg` 0, blocked outright by `hardened`);
-ori has `charge_time` 1.14s/`fire_time` 1.52s/`beam_dps` 1547.0 (its own
-class reaction, never the general matrix).
-
-`hardened` (Aurora, Atlantis only) blocks Replicator bolts and stops
-Dart dives — **not** implied by capital class (Destiny is capital,
-not hardened).
-
-Behavior pattern: `_<kind>_behavior(player_class[, player_hardened])`
-reads `ENEMY.<kind>`, reacts to the player, returns a dict;
-`get_behavior()` dispatches by kind name. A genuinely new, independently
--fireable kind needs one added line in `scripts/enemy.gd`'s
-`match kind:` — see `MODDING_DAEDALUS.md`.
-
----
-
-## Daedalus — `daedalus_weapons.nova`
-
-| Weapon | Velocity | Lifetime | Cooldown | Energy | Special |
-|---|--:|--:|--:|--:|---|
-| primary | 1024.3 | 1.28s | 0.073s | 9.4 | spread 1.9°, radius 2.7 |
-| rocket | 617.8 | 3.14s | 0.82s | 31.2 | blast_radius 97.4, falloff 0.37 |
-| homing | 468.2 | 5.47s | 1.13s | 22.7 | acquire 1482.6, splash 78.3/0.28, turn_rate 212.4°/s |
-| beam | — | — | — | 26.4/s drain, min 5.2 | ramp 1.42s, range 942.7, class×: fighter 2.8, bc 1.0, capital 0.64 |
-| omni (Atlantis only) | 1187.4 | 1.13s | 0.11s | 8.7/bolt | 8 ports, spread 4.3°, damage = Atlantis's own gun_dmg |
-| turret (Destiny only) | 938.6 | 1.08s | 0.47s | 4.2/shot | range 642.8, damage 14.7 (fixed, independent of Destiny's gun_dmg) |
-
-Per-ship damage for primary/rocket/homing/omni lives in `SHIPS`, not
-here. `falloff_damage(base, distance, radius, falloff)`:
-`0` at `distance==0`, `base*(1-falloff)` at `distance==radius`, `0`
-beyond it. Homing turn-rate reaction: ×1.14 vs fighter, ×0.89 vs
-capital, unchanged vs battlecruiser. Homing salvo size: 1 (default), 3
-(Aurora), 6 (Atlantis).
-
----
-
-## Common syntax (both games)
+## Common syntax
 
 ```nova
 reactor "TITLE" version 1        # program header
@@ -226,11 +131,8 @@ block, never a dict literal.
 | Symptom | Cause |
 |---|---|
 | "NO POLICY LOADED" / console parse error | Syntax error — check braces, commas, straight vs. smart quotes. |
-| Reactor: scripted fault "sometimes doesn't fire" | Missing `clear_fault()` before `inject_fault()`. |
-| Reactor: a fault's effect compounds wildly | Fault body does `set x = x + n` instead of an absolute value — bodies run every tick, not once. |
-| Daedalus: launch fails naming a ship/enemy/weapon | Self-check caught a missing required field — the error names it. |
-| Daedalus: new enemy archetype never fires | `scripts/enemy.gd`'s `match kind:` doesn't know the new name yet. |
-| Daedalus: new ship looks white / wrong silhouette | Optional — add it to `HULL_COLORS` in `scripts/player.gd`. |
+| A scripted fault "sometimes doesn't fire" | Missing `clear_fault()` before `inject_fault()`. |
+| A fault's effect compounds wildly | Fault body does `set x = x + n` instead of an absolute value — bodies run every tick, not once. |
 
 **Revert:** `git checkout -- <path>` if you have git, or restore from a
 backup copy you made before editing (any filename other than the exact
@@ -242,7 +144,7 @@ alongside).
 ## Safety
 
 NovaLang cannot touch your file system or network — the full builtin
-and host-function list (see each game's `MODDING_*.md`) has nothing
-that does either. A mod's worst-case outcome is a broken *game*, never
-a broken computer. Share mods with an honest description of what they
-change, especially large balance shifts.
+and host-function list (see `MODDING_REACTOR.md`) has nothing that does
+either. A mod's worst-case outcome is a broken *game*, never a broken
+computer. Share mods with an honest description of what they change,
+especially large balance shifts.
