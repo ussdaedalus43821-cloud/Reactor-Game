@@ -39,7 +39,7 @@ const HOST_FUNCTIONS := [
 
 var core := ReactorCore.new()
 var vm: NovaVM = null
-var ready := false
+var vm_ready := false      # NOT "ready" -- that shadows Node's own `ready` signal
 var error := ""
 var backend_label := "GODOT / NovaLang"
 
@@ -88,12 +88,12 @@ func start(rules_path: String = RULES_PATH) -> void:
 
 	if not vm.load_file(rules_path):
 		error = "NovaLang: " + vm.error
-		ready = false
+		vm_ready = false
 		push_error("[NovaBridge] " + error)
 		engine_error.emit(error)
 	else:
 		error = ""
-		ready = true
+		vm_ready = true
 
 	reset(0)
 	engine_ready.emit(backend_label, hello())
@@ -101,7 +101,7 @@ func start(rules_path: String = RULES_PATH) -> void:
 
 func hello() -> Dictionary:
 	var info := {
-		"ok": ready,
+		"ok": vm_ready,
 		"engine": "nova",
 		"backend": "gdscript",
 		"dt": ReactorCore.PHYSICS_DT,
@@ -109,7 +109,7 @@ func hello() -> Dictionary:
 		"grid": GRID_N,
 		"error": error,
 	}
-	if ready:
+	if vm_ready:
 		var d := vm.describe()
 		info["title"] = d["title"]
 		info["rules_version"] = d["version"]
@@ -122,7 +122,7 @@ func hello() -> Dictionary:
 
 
 func is_ready() -> bool:
-	return ready
+	return vm_ready
 
 
 func fixed_dt() -> float:
@@ -153,9 +153,9 @@ func _register_host_functions() -> void:
 
 ## Games embedding this bridge can add their own vocabulary on top -- this
 ## is the seam daedalus_rules.nova uses.
-func register_function(name: String, fn: Callable) -> void:
+func register_function(fn_name: String, fn: Callable) -> void:
 	if vm != null:
-		vm.register_function(name, fn)
+		vm.register_function(fn_name, fn)
 
 
 static func _arg_text(args: Array, index: int, fallback: String = "") -> String:
@@ -245,7 +245,7 @@ func reset(seed_value: int = 0) -> Dictionary:
 		vm.reset(seed_value)
 		if vm.error != "":
 			error = "NovaLang: " + vm.error
-			ready = false
+			vm_ready = false
 
 	t = 0.0
 	step_count = 0
@@ -315,7 +315,7 @@ func _substep(dt: float, operator_scram: bool, faults_enabled: bool) -> void:
 	# 3. Integrate the core.
 	core.step(dt, rod_a, rod_b, flow_frac, load_frac, xenon_pcm, decay)
 
-	if not ready:
+	if not vm_ready:
 		history.append([core.flux_percent(), core.fuel_temp()])
 		return
 
@@ -352,7 +352,7 @@ func _substep(dt: float, operator_scram: bool, faults_enabled: bool) -> void:
 	if not vm.tick(dt, inputs, faults_enabled):
 		error = "NovaLang: " + vm.error
 		push_error("[NovaBridge] " + error)
-		ready = false
+		vm_ready = false
 		pending_events.append("CONTROL LOGIC FAULT -- " + vm.error)
 		engine_error.emit(error)
 		return
@@ -406,7 +406,7 @@ func snapshot() -> Dictionary:
 	pending_events.clear()
 
 	var fault = null
-	if ready and vm.active_fault != null:
+	if vm_ready and vm.active_fault != null:
 		var f: Dictionary = vm.active_fault
 		fault = {
 			"name": f["name"],
