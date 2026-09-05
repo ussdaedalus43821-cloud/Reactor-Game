@@ -32,7 +32,7 @@ const MAX_STEPS_PER_FRAME := 12     # 0.6 s of catch-up; beyond that we drop
 ## withdrawal is worth far more than the rest). Holding the key doesn't
 ## auto-repeat the nudge; _pressed()'s is_action_pressed() call defaults
 ## to allow_echo=false, so each physical press is exactly one step.
-const ROD_KEY_STEP_PCT := 0.5
+const ROD_KEY_STEP_PCT := 0.1
 
 @onready var background: ColorRect = $Background
 @onready var header: HeaderBar = $Header
