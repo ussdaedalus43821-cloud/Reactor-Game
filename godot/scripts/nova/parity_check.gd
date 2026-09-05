@@ -289,7 +289,7 @@ func _check_daedalus_data(data: Dictionary) -> void:
 	for entry in (got_sectors as Array):
 		got_keys.append(int(float((entry as Dictionary)["key"])))
 	checked += 1
-	if String(got_keys) != String(want_keys):
+	if got_keys != want_keys:
 		_fail("daedalus SECTORS", "keys", want_keys, got_keys)
 
 
@@ -329,7 +329,7 @@ func _check_ai_data(data: Dictionary) -> void:
 	for entry in data["behaviors"]:
 		var sample: Dictionary = entry
 		checked += 1
-		var got := vm.call_function("get_behavior",
+		var got = vm.call_function("get_behavior",
 				[sample["kind"], sample["player_class"], sample["hardened"]])
 		var label := "ai get_behavior(%s, %s, %s)" % [sample["kind"],
 				sample["player_class"], sample["hardened"]]
@@ -377,7 +377,7 @@ func _check_ai_data(data: Dictionary) -> void:
 	for entry in data["resolved_behaviors"]:
 		var rb: Dictionary = entry
 		checked += 1
-		var got_rb := rules_vm.call_function("enemy_behavior",
+		var got_rb = rules_vm.call_function("enemy_behavior",
 				[rb["kind"], rb["player_key"]])
 		if not _dict_matches(rb["behavior"], got_rb):
 			_fail("ai enemy_behavior(%s, %s)" % [rb["kind"], rb["player_key"]],
