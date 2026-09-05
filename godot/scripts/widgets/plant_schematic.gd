@@ -9,9 +9,12 @@ extends Control
 ## (out_temp_c/fuel_temp_c/scram, already in the bridge's state dictionary
 ## -- see control_room.gd's apply_state()); the secondary loop and cooling
 ## water are drawn with illustrative placeholder colors and a fixed "system
-## running" flow. Live numeric labels at each point, and controls that feed
-## real flow_frac/load_frac physics, are later phases -- this is a big
-## feature built incrementally on request, one testable step at a time.
+## running" flow. Every component box's border matches the pipe feeding
+## into it, so the boxes read as part of the same colored flow rather than
+## two of them being singled out. Live numeric labels at each point, and
+## controls that feed real flow_frac/load_frac physics, are later phases
+## -- this is a big feature built incrementally on request, one testable
+## step at a time.
 
 const LANE_LABELS := ["PRIMARY LOOP", "SECONDARY LOOP", "COOLING WATER"]
 
@@ -86,9 +89,12 @@ func _draw_primary_loop(rect: Rect2, font: Font) -> void:
 	_draw_loop_pipes(rect, core, sg, pumps, flow_color, speed)
 
 	ReactorTheme.draw_caption(self, font, rect.position + Vector2(0.0, -6.0), LANE_LABELS[0])
+	# All three boxes get the same accent: the whole primary loop is drawn
+	# as one uniform-temperature pipe in this phase, so their borders
+	# should agree with it rather than singling CORE out.
 	_draw_component_box(core, "CORE", font, flow_color)
-	_draw_component_box(sg, "STEAM\nGENERATOR", font)
-	_draw_component_box(pumps, "PUMPS", font)
+	_draw_component_box(sg, "STEAM\nGENERATOR", font, flow_color)
+	_draw_component_box(pumps, "PUMPS", font, flow_color)
 
 
 # ==========================================================================
@@ -117,9 +123,12 @@ func _draw_secondary_loop(rect: Rect2, font: Font) -> void:
 	_draw_return_pipe(rect, condenser, sg, FEEDWATER_COLOR, CHEVRON_SPEED_PX_S)
 
 	ReactorTheme.draw_caption(self, font, rect.position + Vector2(0.0, -6.0), LANE_LABELS[1])
-	_draw_component_box(sg, "STEAM\nGENERATOR", font)
+	# Each box's accent matches the pipe feeding into it: the generator
+	# sees the returning feedwater, the turbine and condenser both sit on
+	# the steam leg.
+	_draw_component_box(sg, "STEAM\nGENERATOR", font, FEEDWATER_COLOR)
 	_draw_component_box(turbine, "TURBINE", font, STEAM_COLOR)
-	_draw_component_box(condenser, "CONDENSER", font)
+	_draw_component_box(condenser, "CONDENSER", font, STEAM_COLOR)
 
 
 # ==========================================================================
@@ -144,9 +153,11 @@ func _draw_cooling_water(rect: Rect2, font: Font) -> void:
 			_water_temp_color(DISCHARGE_TEMP_C), CHEVRON_SPEED_PX_S)
 
 	ReactorTheme.draw_caption(self, font, rect.position + Vector2(0.0, -6.0), LANE_LABELS[2])
-	_draw_component_box(intake, "INTAKE", font)
-	_draw_component_box(condenser, "CONDENSER", font)
-	_draw_component_box(discharge, "DISCHARGE", font)
+	# Intake and the condenser both sit on the cool incoming leg; discharge
+	# sees the warmed water leaving the condenser.
+	_draw_component_box(intake, "INTAKE", font, _water_temp_color(INTAKE_TEMP_C))
+	_draw_component_box(condenser, "CONDENSER", font, _water_temp_color(INTAKE_TEMP_C))
+	_draw_component_box(discharge, "DISCHARGE", font, _water_temp_color(DISCHARGE_TEMP_C))
 
 
 ## Cooling water never gets anywhere near reactor temperatures, so it uses
