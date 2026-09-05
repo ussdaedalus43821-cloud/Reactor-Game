@@ -166,7 +166,10 @@ func _water_temp_color(t: float) -> Color:
 ## centered in it.
 func _lane_boxes(rect: Rect2) -> Array:
 	var cy := rect.position.y + rect.size.y * 0.5
-	var fractions := [0.1, 0.45, 0.8]
+	# Explicitly typed -- an untyped array literal makes `f` below a
+	# Variant, and Variant arithmetic assigned with `:=` is the one
+	# "cannot infer type" trap this project has to watch for everywhere.
+	var fractions: Array[float] = [0.1, 0.45, 0.8]
 	var result: Array = []
 	for f in fractions:
 		var cx := rect.position.x + rect.size.x * f
