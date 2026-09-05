@@ -26,6 +26,7 @@ const MAX_STEPS_PER_FRAME := 12     # 0.6 s of catch-up; beyond that we drop
 @onready var readouts: ReadoutPanel = $Readouts
 @onready var scram_button: ScramButton = $ScramButton
 @onready var event_log: EventLog = $Log
+@onready var schematic: PlantSchematic = $Schematic
 @onready var overlay: GameOverlay = $Overlay
 
 var bridge: NovaBridge = null
@@ -176,6 +177,7 @@ func _apply_state(state: Dictionary) -> void:
 
 	core_grid.apply_state(state)
 	readouts.apply_state(state)
+	schematic.apply_state(state)
 
 	# Every physics substep the bridge advanced comes back in `history`, so
 	# the strip chart stays continuous even though we only poll once a frame.

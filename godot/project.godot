@@ -1,10 +1,11 @@
 ; Engine configuration file.
 ; Reactor Sim -- hybrid Godot + NovaLang control room.
 ;
-; Base resolution is a fixed 1440x900 design space, letterboxed on any
+; Base resolution is a fixed 1440x1360 design space, letterboxed on any
 ; other aspect ("keep"). Every panel is laid out in that space, so the
 ; same scene is pixel-correct on a Mac window, an iPhone and a browser
-; canvas with no per-platform layout code.
+; canvas with no per-platform layout code. The extra 460px below the
+; original 900-tall control room is the plant schematic band.
 
 config_version=5
 
@@ -25,9 +26,9 @@ driver/enable_input=false
 [display]
 
 window/size/viewport_width=1440
-window/size/viewport_height=900
-window/size/window_width_override=1280
-window/size/window_height_override=800
+window/size/viewport_height=1360
+window/size/window_width_override=1152
+window/size/window_height_override=1088
 window/stretch/mode="canvas_items"
 window/stretch/aspect="keep"
 window/handheld/orientation=1

@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene load_steps=13 format=3]
 
 [ext_resource type="Script" path="res://scripts/control_room.gd" id="1_room"]
 [ext_resource type="PackedScene" path="res://scenes/widgets/HeaderBar.tscn" id="2_header"]
@@ -11,6 +11,7 @@
 [ext_resource type="PackedScene" path="res://scenes/widgets/ScramButton.tscn" id="9_scram"]
 [ext_resource type="PackedScene" path="res://scenes/widgets/EventLog.tscn" id="10_log"]
 [ext_resource type="PackedScene" path="res://scenes/widgets/GameOverlay.tscn" id="11_overlay"]
+[ext_resource type="PackedScene" path="res://scenes/widgets/PlantSchematic.tscn" id="12_schematic"]
 
 [node name="ControlRoom" type="Control"]
 layout_mode = 3
@@ -138,10 +139,18 @@ offset_right = 1424.0
 offset_bottom = 884.0
 mouse_filter = 2
 
+[node name="Schematic" parent="." instance=ExtResource("12_schematic")]
+layout_mode = 1
+offset_left = 16.0
+offset_top = 908.0
+offset_right = 1424.0
+offset_bottom = 1348.0
+mouse_filter = 2
+
 [node name="Overlay" parent="." instance=ExtResource("11_overlay")]
 layout_mode = 1
 offset_left = 0.0
 offset_top = 0.0
 offset_right = 1440.0
-offset_bottom = 900.0
+offset_bottom = 1360.0
 mouse_filter = 2
