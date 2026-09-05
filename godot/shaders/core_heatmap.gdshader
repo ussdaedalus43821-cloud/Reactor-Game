@@ -20,15 +20,18 @@ uniform float meltdown : hint_range(0.0, 1.0) = 0.0;
 uniform float alarm : hint_range(0.0, 1.0) = 0.0;
 uniform float scanline_strength : hint_range(0.0, 1.0) = 0.35;
 
+// 550/800/1200 mirror reactor_rules.nova's own rescaled
+// warn/trip/meltdown setpoints -- see that file's comment for why (and
+// reactor_theme.gd's temp_color(), the GDScript twin of this ramp).
 const vec3 C_COLD = vec3(0.059, 0.118, 0.549);   //  300 C  deep blue
-const vec3 C_WARM = vec3(1.000, 0.843, 0.157);   //  800 C  amber
-const vec3 C_HOT  = vec3(1.000, 1.000, 1.000);   // 1800 C  white
-const vec3 C_MELT = vec3(1.000, 0.098, 0.098);   // 2800 C  red
+const vec3 C_WARM = vec3(1.000, 0.843, 0.157);   //  550 C  amber
+const vec3 C_HOT  = vec3(1.000, 1.000, 1.000);   //  800 C  white
+const vec3 C_MELT = vec3(1.000, 0.098, 0.098);   // 1200 C  red
 
 const float T_COLD = 300.0;
-const float T_WARM = 800.0;
-const float T_HOT  = 1800.0;
-const float T_MELT = 2800.0;
+const float T_WARM = 550.0;
+const float T_HOT  = 800.0;
+const float T_MELT = 1200.0;
 
 float hash(vec2 p) {
     return fract(sin(dot(p, vec2(41.7, 289.3))) * 24634.6345);
@@ -64,8 +67,10 @@ void fragment() {
     float weight = cos(r * 1.5707963);
     float t_cell = t_ref_c + (fuel_temp_c - t_ref_c) * ((1.0 - amp) + amp * weight);
 
-    // Per-channel jitter: real cores are not perfectly symmetric.
-    t_cell += (hash(cell) - 0.5) * 26.0 * clamp((fuel_temp_c - t_ref_c) / 600.0, 0.0, 1.0);
+    // Per-channel jitter: real cores are not perfectly symmetric. Full
+    // strength by T_WARM (250 C above t_ref_c), same proportion of the
+    // cold-to-melt span the original 600/2500 ratio had.
+    t_cell += (hash(cell) - 0.5) * 26.0 * clamp((fuel_temp_c - t_ref_c) / 250.0, 0.0, 1.0);
 
     // A core in disassembly boils and flickers.
     if (meltdown > 0.0) {

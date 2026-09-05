@@ -49,18 +49,21 @@ static func alarm_color(level: int) -> Color:
 	return ALARM_COLORS[clampi(level, 0, ALARM_COLORS.size() - 1)]
 
 
-## Core temperature -> colour. Same stops as temp_to_color() in the
-## heatmap shader and in the Python reference implementation.
+## Core temperature -> colour. Same stops as temp_to_color() in
+## core_heatmap.gdshader (kept in sync by hand -- one's GDScript, the
+## other GLSL, so there's no single shared source for these four
+## numbers). 550/800/1200 mirror reactor_rules.nova's own rescaled
+## warn/trip/meltdown setpoints; see that file's comment for why.
 static func temp_color(t: float) -> Color:
 	if t <= 300.0:
 		return Color(0.059, 0.118, 0.549) * (0.25 + 0.75 * clampf(t / 300.0, 0.0, 1.0))
-	if t < 800.0:
+	if t < 550.0:
 		return Color(0.059, 0.118, 0.549).lerp(Color(1.0, 0.843, 0.157),
-				(t - 300.0) / 500.0)
-	if t < 1800.0:
-		return Color(1.0, 0.843, 0.157).lerp(Color.WHITE, (t - 800.0) / 1000.0)
+				(t - 300.0) / 250.0)
+	if t < 800.0:
+		return Color(1.0, 0.843, 0.157).lerp(Color.WHITE, (t - 550.0) / 250.0)
 	return Color.WHITE.lerp(Color(1.0, 0.098, 0.098),
-			clampf((t - 1800.0) / 1000.0, 0.0, 1.0))
+			clampf((t - 800.0) / 400.0, 0.0, 1.0))
 
 
 ## A sunken instrument bay: dark well, lit top-left bevel, dark bottom-right.

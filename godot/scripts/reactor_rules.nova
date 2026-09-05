@@ -35,20 +35,30 @@ params {
                                        # negative feedback often turns one
                                        # of these around on its own within
                                        # a second) from a real runaway
-    trip_fuel_temp_c      = 1800.0    # fuel temperature high trip
+    trip_fuel_temp_c      = 800.0     # fuel temperature high trip
     trip_pressure_mpa     = 18.5      # primary overpressure trip
     trip_lowflow_frac     = 0.5       # loss-of-flow trip, above trip_lowflow_power_pct
     trip_lowflow_power_pct = 50.0
 
     # ---- alarm thresholds (advisory tier) ----
     warn_flux_pct         = 115.0
-    warn_fuel_temp_c      = 1200.0
+    # 550/650/800/1200 (warn/overheat/trip/meltdown) replace the original
+    # 1200/1500/1800/2800: steady 100% rated power only ever settles
+    # around 416 C given this plant's own heat-transfer constants (see
+    # reactor_physics.gd's HTC_FUEL_MOD/HTC_MOD_OUT), so the old
+    # thresholds sat 3-7x hotter than the plant could realistically
+    # reach even during a real excursion. These keep the same relative
+    # spacing/escalation the original had, just anchored to what this
+    # plant can actually do -- see reactor_theme.gd, core_grid.gd and
+    # core_heatmap.gdshader, which all mirror these same four numbers
+    # for their own color scales and must be rescaled together with this.
+    warn_fuel_temp_c      = 550.0
     warn_pressure_mpa     = 17.5
 
     # ---- damage / win conditions ----
-    meltdown_temp_c       = 2800.0
+    meltdown_temp_c       = 1200.0
     meltdown_sustain_s    = 5.0
-    overheat_temp_c       = 1500.0
+    overheat_temp_c       = 650.0
     startup_flux_pct      = 3.0
     ascension_flux_pct    = 60.0
     survive_time_s        = 900.0     # 15 minutes on shift and you win
@@ -182,7 +192,7 @@ rule warn_flux_entry priority 125 edge {
 
 rule warn_temp_entry priority 124 edge {
     when  running and fuel_temp_c > warn_fuel_temp_c
-    then  log("CAUTION: FUEL TEMPERATURE ABOVE 1200 C")
+    then  log("CAUTION: FUEL TEMPERATURE ABOVE 550 C")
 }
 
 # ==========================================================================

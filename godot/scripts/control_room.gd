@@ -120,15 +120,19 @@ func _setup_dials() -> void:
 	temp_dial.label_text = "FUEL TEMP"
 	temp_dial.unit_text = "C"
 	temp_dial.min_value = 0.0
-	temp_dial.max_value = 3000.0
+	# 550/650/800/1500 (warn/overheat/trip/dial max) mirror
+	# reactor_rules.nova's own rescaled setpoints -- see that file's
+	# comment on why 1200/1500/1800/3000 sat far hotter than this plant's
+	# heat-transfer constants let it actually reach.
+	temp_dial.max_value = 1500.0
 	temp_dial.decimals = 0
 	temp_dial.major_ticks = 6
 	temp_dial.dial_color = ReactorTheme.AMBER
 	temp_dial.set_zones([
-		[0.0, 1200.0, Color(ReactorTheme.GREEN, 0.55)],
-		[1200.0, 1500.0, Color(ReactorTheme.YELLOW, 0.55)],
-		[1500.0, 1800.0, Color(ReactorTheme.AMBER, 0.6)],
-		[1800.0, 3000.0, Color(ReactorTheme.RED, 0.7)],
+		[0.0, 550.0, Color(ReactorTheme.GREEN, 0.55)],
+		[550.0, 650.0, Color(ReactorTheme.YELLOW, 0.55)],
+		[650.0, 800.0, Color(ReactorTheme.AMBER, 0.6)],
+		[800.0, 1500.0, Color(ReactorTheme.RED, 0.7)],
 	])
 
 	pressure_dial.label_text = "PRIMARY PRESSURE"

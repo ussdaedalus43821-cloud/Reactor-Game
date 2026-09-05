@@ -129,11 +129,11 @@ func _draw() -> void:
 	var steps := 48
 	for i in range(steps):
 		var f := float(i) / float(steps - 1)
-		var t := 270.0 + f * (2800.0 - 270.0)
+		var t := 270.0 + f * (1200.0 - 270.0)
 		draw_rect(Rect2(legend.position + Vector2(legend.size.x * f, 0.0),
 				Vector2(legend.size.x / float(steps) + 1.0, legend.size.y)),
 				ReactorTheme.temp_color(t), true)
 	draw_string(font, legend.position + Vector2(0.0, 18.0), "270 C",
 			HORIZONTAL_ALIGNMENT_LEFT, -1, 10, ReactorTheme.TEXT_FAINT)
 	draw_string(font, legend.position + Vector2(legend.size.x - 46.0, 18.0),
-			"2800 C", HORIZONTAL_ALIGNMENT_LEFT, -1, 10, ReactorTheme.TEXT_FAINT)
+			"1200 C", HORIZONTAL_ALIGNMENT_LEFT, -1, 10, ReactorTheme.TEXT_FAINT)

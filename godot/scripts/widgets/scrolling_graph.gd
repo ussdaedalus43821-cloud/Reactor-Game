@@ -5,7 +5,7 @@ extends Control
 ##
 ## Holds 60 s of 20 Hz samples in two ring buffers (1200 points each) and
 ## redraws them as polylines against independent left/right scales, so a
-## 300 % flux spike and a 2800 C fuel temperature can share one chart
+## 300 % flux spike and a 1200 C fuel temperature can share one chart
 ## without either being squashed flat. The vertical scales expand to fit
 ## the data and then relax back down slowly, the way a real recorder's
 ## range switch would be nudged up during a transient.
