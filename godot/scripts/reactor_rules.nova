@@ -28,6 +28,13 @@ reactor "CHERNOBYL-1" version 1
 params {
     # ---- protection setpoints ----
     trip_flux_pct         = 150.0     # neutron flux high trip
+    trip_flux_sustain_s   = 1.0       # flux must stay above trip_flux_pct
+                                       # this long before it actually
+                                       # scrams -- filters a brief prompt-
+                                       # kinetics spike (fuel/moderator
+                                       # negative feedback often turns one
+                                       # of these around on its own within
+                                       # a second) from a real runaway
     trip_fuel_temp_c      = 1800.0    # fuel temperature high trip
     trip_pressure_mpa     = 18.5      # primary overpressure trip
     trip_lowflow_frac     = 0.5       # loss-of-flow trip, above trip_lowflow_power_pct
@@ -94,7 +101,8 @@ rule operator_scram priority 300 edge {
 }
 
 rule flux_high_trip priority 290 {
-    when  running and not scram and flux_pct > trip_flux_pct
+    when  running and not scram
+          and held(flux_pct > trip_flux_pct, trip_flux_sustain_s)
     then  scram("AUTO SCRAM -- NEUTRON FLUX HIGH")
 }
 
