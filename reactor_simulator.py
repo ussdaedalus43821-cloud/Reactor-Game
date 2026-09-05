@@ -23,7 +23,10 @@ import pygame
 # Window / timing
 # --------------------------------------------------------------------------
 
-WIDTH, HEIGHT = 1440, 900
+WIDTH = 1440
+CONTROL_ROOM_HEIGHT = 900   # unchanged from the original control-room-only window
+SCHEMATIC_HEIGHT = 460     # new plant-schematic band -- Phase 1 of the incremental plan
+HEIGHT = CONTROL_ROOM_HEIGHT + SCHEMATIC_HEIGHT
 RENDER_FPS = 60
 PHYSICS_DT = 0.05          # fixed physics timestep (20 Hz), required for RK4 stability
 PHYSICS_HZ = 20
@@ -590,6 +593,45 @@ def draw_event_log(surface, rect, log_deque, small_font):
         txt = small_font.render(entry, True, DIM_TEXT)
         surface.blit(txt, (rect.x + 10, y))
         y += 18
+
+
+# ==========================================================================
+# PLANT SCHEMATIC (Phase 1: layout + animated flow only -- the secondary
+# loop and cooling water are drawn with illustrative placeholder colors,
+# not real heat-transfer physics yet; only the primary hot leg is wired to
+# the actual core outlet temperature. Live numeric labels and the pump-
+# speed / turbine-bypass / cooling-flow controls are later phases.)
+# ==========================================================================
+
+def draw_component_box(surface, rect, label, small_font,
+                        border_color=PANEL_BORDER, fill=(40, 44, 54)):
+    pygame.draw.rect(surface, fill, rect, border_radius=6)
+    pygame.draw.rect(surface, border_color, rect, 2, border_radius=6)
+    txt = small_font.render(label, True, TEXT_COLOR)
+    surface.blit(txt, (rect.centerx - txt.get_width() // 2, rect.centery - txt.get_height() // 2))
+
+
+def draw_flow_pipe(surface, p0, p1, color, t_ms, width=6, speed_px_s=70.0, spacing=26):
+    """A pipe segment drawn as a solid line in `color`, with small white
+    chevrons sliding from p0 toward p1 to show flow direction. Re-run every
+    frame with the same p0/p1 and a moving t_ms -- there is no state to
+    track between calls, the animation phase comes entirely from the clock."""
+    pygame.draw.line(surface, color, p0, p1, width)
+    dx, dy = p1[0] - p0[0], p1[1] - p0[1]
+    length = math.hypot(dx, dy)
+    if length < 1.0:
+        return
+    ux, uy = dx / length, dy / length
+    px, py = -uy, ux
+    phase = (t_ms * 0.001 * speed_px_s) % spacing
+    d = phase
+    while d < length:
+        cx, cy = p0[0] + ux * d, p0[1] + uy * d
+        tip = (cx + ux * 7, cy + uy * 7)
+        left = (cx - ux * 5 + px * 5, cy - uy * 5 + py * 5)
+        right = (cx - ux * 5 - px * 5, cy - uy * 5 - py * 5)
+        pygame.draw.polygon(surface, WHITE, (tip, left, right))
+        d += spacing
 
 
 # ==========================================================================
