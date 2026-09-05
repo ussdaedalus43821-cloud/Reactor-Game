@@ -274,7 +274,7 @@ rule auto_regulate priority 10 {
 # fault_gap_max_s before the next one.
 # ==========================================================================
 
-fault turbine_trip weight 1.0 duration 40.0 label "TURBINE TRIP" {
+fault turbine_trip weight 1.0 duration 120.0 label "TURBINE TRIP" {
     set load_frac = 0.0
 }
 

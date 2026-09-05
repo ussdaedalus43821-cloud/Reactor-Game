@@ -368,7 +368,7 @@ The four faults shipped with the game:
 
 | Fault | Duration | What it does |
 |---|---|---|
-| `turbine_trip` | 40s | `load_frac = 0.0` — the turbine stops accepting steam. |
+| `turbine_trip` | 120s | `load_frac = 0.0` — the turbine stops accepting steam. |
 | `feedwater_failure` | 45s | `flow_frac = 0.3` — coolant flow drops to 30%. |
 | `rod_stuck` | 35s | `stuck_bank = "A"` or `"B"` (picked once, on entry) — that bank's drive seizes and won't move. |
 | `xenon_poisoning` | 60s | Ramps `xenon_pcm` down toward `-xenon_max_pcm` over `xenon_ramp_s` seconds. |

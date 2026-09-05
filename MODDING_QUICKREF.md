@@ -69,7 +69,7 @@ python3 reference/reactor_host.py --validate --rules reactor_rules.nova
 `load_frac`, `stuck_bank`, `xenon_pcm`. A fault body runs every tick for
 its `duration` — always assign an absolute value, never `x = x + n`.
 
-**Built-in faults:** `turbine_trip` (40s, `load_frac=0`),
+**Built-in faults:** `turbine_trip` (120s, `load_frac=0`),
 `feedwater_failure` (45s, `flow_frac=0.3`), `rod_stuck` (35s,
 `stuck_bank` seized), `xenon_poisoning` (60s, ramped `xenon_pcm`).
 
