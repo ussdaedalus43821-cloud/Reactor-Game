@@ -126,7 +126,15 @@ rule core_disassembly priority 200 once {
 }
 
 rule shift_survived priority 195 once {
-    when  running and t >= survive_time_s
+    # held(), not a raw t >= survive_time_s -- t is the plant's total
+    # elapsed clock and never resets on its own, so a straight time check
+    # let an operator get scrammed, sit tripped for the rest of the
+    # shift, and still win once the clock ran out. held(not scram, ...)
+    # only counts CONTINUOUS scram-free time and drops back to zero the
+    # instant a trip happens (see nova_evaluator.gd's _eval_held()), so a
+    # SCRAM now genuinely costs the whole shift's progress, not just the
+    # power excursion that caused it.
+    when  running and held(not scram, survive_time_s)
     then  victory("15 MINUTES SURVIVED -- VETERAN OPERATOR")
 }
 
