@@ -8,6 +8,15 @@ extends Control
 ## integrated by reactor_physics.gd, and every trip, alarm and fault
 ## decision comes from reactor_rules.nova, interpreted in-engine. This
 ## script is the panel and nothing more.
+##
+## project.godot's own header comment gets clobbered by Godot's editor
+## every time it resaves the file, so the layout rationale lives here
+## instead: base resolution is a fixed 1440x1360 design space, letterboxed
+## on any other aspect ("keep" stretch). Every panel is laid out in that
+## space, so the same scene is pixel-correct on a Mac window, an iPhone
+## and a browser canvas with no per-platform layout code. The bottom
+## 460px (below the original 900-tall control room) is the plant
+## schematic band -- see plant_schematic.gd.
 
 const BG_SHADER_PATH := "res://shaders/control_room_bg.gdshader"
 const MAX_STEPS_PER_FRAME := 12     # 0.6 s of catch-up; beyond that we drop
