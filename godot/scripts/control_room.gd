@@ -13,6 +13,15 @@ const BG_SHADER_PATH := "res://shaders/control_room_bg.gdshader"
 const MAX_STEPS_PER_FRAME := 12     # 0.6 s of catch-up; beyond that we drop
                                     # simulated time rather than spiral
 
+## Keyboard rod control: Q/A drive Bank A's target out/in, W/S drive
+## Bank B's the same way (Q above A, W above S -- the same up/down sense
+## as the two banks sitting side by side on the panel). Not rate-limited
+## by ReactorCore.MAX_ROD_RATE_PCT_S -- that constant caps how fast the
+## physical rods can chase a target, same as when the mouse slider snaps
+## the target instantly; this is just how fast the target itself moves
+## while a key is held, so it wants to feel responsive.
+const ROD_KEY_RATE_PCT_S := 40.0
+
 @onready var background: ColorRect = $Background
 @onready var header: HeaderBar = $Header
 @onready var banner: FaultBanner = $Banner
@@ -129,6 +138,8 @@ func _setup_dials() -> void:
 # ==========================================================================
 
 func _process(delta: float) -> void:
+	_handle_rod_keys(delta)
+
 	if bridge == null or not bridge.is_ready():
 		return
 
@@ -277,6 +288,43 @@ func _pressed(event: InputEvent, action: String, fallback_key: Key) -> bool:
 		var key := event as InputEventKey
 		return key.pressed and not key.echo and key.keycode == fallback_key
 	return false
+
+
+## Same remappable-action-with-raw-key-fallback approach as _pressed(),
+## but for a HELD key polled every frame rather than a single press event
+## -- rod control is a rate, not a toggle.
+func _key_held(action: String, fallback_key: Key) -> bool:
+	if InputMap.has_action(action):
+		return Input.is_action_pressed(action)
+	return Input.is_physical_key_pressed(fallback_key)
+
+
+## Q/A move Bank A's commanded target out/in; W/S do the same for Bank B.
+## Mirrors exactly what dragging that bank's slider already does -- moves
+## _target_a/_target_b (what _process() feeds the bridge every tick) and
+## the slider's own .target (so the handle the operator sees moves too),
+## and is gated by the same rod_a.enabled/rod_b.enabled a SCRAM or
+## game-over already sets false.
+func _handle_rod_keys(delta: float) -> void:
+	if rod_a.enabled:
+		var da := 0.0
+		if _key_held("rod_a_out", KEY_Q):
+			da += 1.0
+		if _key_held("rod_a_in", KEY_A):
+			da -= 1.0
+		if da != 0.0:
+			_target_a = clampf(_target_a + da * ROD_KEY_RATE_PCT_S * delta, 0.0, 100.0)
+			rod_a.target = _target_a
+
+	if rod_b.enabled:
+		var db := 0.0
+		if _key_held("rod_b_out", KEY_W):
+			db += 1.0
+		if _key_held("rod_b_in", KEY_S):
+			db -= 1.0
+		if db != 0.0:
+			_target_b = clampf(_target_b + db * ROD_KEY_RATE_PCT_S * delta, 0.0, 100.0)
+			rod_b.target = _target_b
 
 
 func _on_rod_a_changed(value: float) -> void:
