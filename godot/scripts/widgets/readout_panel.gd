@@ -10,6 +10,8 @@ extends Control
 
 const ROW_HEIGHT := 22.0
 
+@export var title_text: String = "PLANT PARAMETERS"
+
 var rows: Array = []        # [[label, text, Color], ...]
 
 
@@ -45,7 +47,7 @@ func _draw() -> void:
 	var font := get_theme_default_font()
 	ReactorTheme.draw_bay(self, Rect2(Vector2.ZERO, size))
 
-	draw_string(font, Vector2(10.0, 17.0), "PLANT PARAMETERS",
+	draw_string(font, Vector2(10.0, 17.0), title_text,
 			HORIZONTAL_ALIGNMENT_LEFT, -1, 12, ReactorTheme.TEXT_DIM)
 	draw_line(Vector2(8.0, 24.0), Vector2(size.x - 8.0, 24.0),
 			ReactorTheme.BEZEL, 1.0)

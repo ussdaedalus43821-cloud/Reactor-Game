@@ -67,6 +67,13 @@ var load_frac := 1.0
 var xenon_pcm := 0.0
 var stuck_bank := ""
 
+## Manual operator override for flow_frac/load_frac, applied after the
+## policy runs each substep -- -1.0 means "hands off, let
+## reactor_rules.nova's fault injector (or nothing) decide", 0.0..1.0 is
+## an operator-commanded value that wins outright. See _substep().
+var manual_flow_override := -1.0
+var manual_load_override := -1.0
+
 var scram_requested := false
 var scram_reason := ""
 var trip_reset := false
@@ -235,6 +242,21 @@ func _fn_clear_fault(_args: Array):
 	return null
 
 
+## The operator's own hand on the fault injector -- clears whatever is
+## currently running (inject_fault() otherwise refuses to override an
+## active fault) and starts the named one immediately, full duration,
+## exactly as if the scheduler had picked it.
+func force_fault(name: String) -> void:
+	if vm != null:
+		vm.clear_fault()
+		vm.inject_fault(name)
+
+
+func clear_active_fault() -> void:
+	if vm != null:
+		vm.clear_fault()
+
+
 # ==========================================================================
 # Simulation
 # ==========================================================================
@@ -273,6 +295,8 @@ func reset(seed_value: int = 0) -> Dictionary:
 	load_frac = 1.0
 	xenon_pcm = 0.0
 	stuck_bank = ""
+	manual_flow_override = -1.0
+	manual_load_override = -1.0
 
 	pending_events.clear()
 	pending_events.append("SIMULATION RESET -- REACTOR SUBCRITICAL")
@@ -359,6 +383,12 @@ func _substep(dt: float, operator_scram: bool, faults_enabled: bool) -> void:
 
 	flow_frac = float(vm.get_global("flow_frac", 1.0))
 	load_frac = float(vm.get_global("load_frac", 1.0))
+	# The operator's valve wins outright over whatever the policy just
+	# computed -- see manual_flow_override's own comment.
+	if manual_flow_override >= 0.0:
+		flow_frac = manual_flow_override
+	if manual_load_override >= 0.0:
+		load_frac = manual_load_override
 	xenon_pcm = float(vm.get_global("xenon_pcm", 0.0))
 	stuck_bank = String(vm.get_global("stuck_bank", ""))
 	state_name = String(vm.get_global("state", "STARTUP"))

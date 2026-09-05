@@ -130,6 +130,12 @@ get away from you.
 * **`R`** starts a new shift after a meltdown or a win.
 * Every 45–90 s the fault injector picks something: turbine trip, feedwater
   pump failure, a seized rod bank, xenon poisoning.
+* Don't want to wait for the injector? Force any of them yourself with
+  **`1`/`2`/`3`/`4`** (rod stuck / turbine trip / feedwater failure / xenon
+  poisoning) and clear whatever's running with **`0`**. **`E`/`D`** and
+  **`T`/`G`** drag the coolant-flow and turbine-load valves by hand — push
+  either below 100 % and it overrides the fault injector outright; push it
+  back to 100 % and the automatic system has it again.
 
 Hold fuel temperature under 2800 °C for 15:00 and you survive the shift.
 Let it sit above that for five continuous seconds and the core disassembles.

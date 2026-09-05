@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3]
+[gd_scene load_steps=14 format=3]
 
 [ext_resource type="Script" path="res://scripts/control_room.gd" id="1_room"]
 [ext_resource type="PackedScene" path="res://scenes/widgets/HeaderBar.tscn" id="2_header"]
@@ -8,6 +8,7 @@
 [ext_resource type="PackedScene" path="res://scenes/widgets/ScrollingGraph.tscn" id="6_graph"]
 [ext_resource type="PackedScene" path="res://scenes/widgets/RodSlider.tscn" id="7_rod"]
 [ext_resource type="PackedScene" path="res://scenes/widgets/ReadoutPanel.tscn" id="8_readouts"]
+[ext_resource type="PackedScene" path="res://scenes/widgets/ThrottleSlider.tscn" id="13_throttle"]
 [ext_resource type="PackedScene" path="res://scenes/widgets/ScramButton.tscn" id="9_scram"]
 [ext_resource type="PackedScene" path="res://scenes/widgets/EventLog.tscn" id="10_log"]
 [ext_resource type="PackedScene" path="res://scenes/widgets/GameOverlay.tscn" id="11_overlay"]
@@ -147,10 +148,36 @@ offset_right = 1424.0
 offset_bottom = 1348.0
 mouse_filter = 2
 
+[node name="FlowSlider" parent="." instance=ExtResource("13_throttle")]
+layout_mode = 1
+offset_left = 16.0
+offset_top = 1368.0
+offset_right = 112.0
+offset_bottom = 1558.0
+label_text = "COOLANT FLOW"
+accent = Color(0.35, 0.55, 0.95, 1)
+
+[node name="LoadSlider" parent="." instance=ExtResource("13_throttle")]
+layout_mode = 1
+offset_left = 124.0
+offset_top = 1368.0
+offset_right = 220.0
+offset_bottom = 1558.0
+label_text = "TURBINE LOAD"
+accent = Color(0.9, 0.35, 0.3, 1)
+
+[node name="KeyLegend" parent="." instance=ExtResource("8_readouts")]
+layout_mode = 1
+offset_left = 236.0
+offset_top = 1368.0
+offset_right = 1424.0
+offset_bottom = 1558.0
+mouse_filter = 2
+
 [node name="Overlay" parent="." instance=ExtResource("11_overlay")]
 layout_mode = 1
 offset_left = 0.0
 offset_top = 0.0
 offset_right = 1440.0
-offset_bottom = 1360.0
+offset_bottom = 1580.0
 mouse_filter = 2
