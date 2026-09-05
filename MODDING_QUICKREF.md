@@ -42,10 +42,10 @@ python3 reference/reactor_host.py --validate --rules reactor_rules.nova
 
 | Param | Default | Meaning |
 |---|---|---|
-| `trip_flux_pct` | 150.0 | Auto-SCRAM: neutron flux (%). |
-| `trip_fuel_temp_c` | 1800.0 | Auto-SCRAM: fuel temp (°C). |
-| `trip_pressure_mpa` | 18.5 | Auto-SCRAM: primary pressure (MPa). |
-| `trip_lowflow_frac` | 0.5 | Auto-SCRAM: flow fraction floor. |
+| `trip_flux_pct` | 150.0 | SCRAM vote: neutron flux (%). Needs a 2nd channel to actually trip. |
+| `trip_fuel_temp_c` | 1800.0 | SCRAM vote: fuel temp (°C). Needs a 2nd channel to actually trip. |
+| `trip_pressure_mpa` | 18.5 | SCRAM vote: primary pressure (MPa). Needs a 2nd channel to actually trip. |
+| `trip_lowflow_frac` | 0.5 | SCRAM vote: flow fraction floor. Needs a 2nd channel to actually trip. |
 | `trip_lowflow_power_pct` | 50.0 | Loss-of-flow trip arms above this power. |
 | `warn_flux_pct` | 115.0 | Caution alarm threshold, flux. |
 | `warn_fuel_temp_c` | 1200.0 | Caution alarm threshold, fuel temp. |

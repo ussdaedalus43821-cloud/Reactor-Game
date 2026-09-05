@@ -148,7 +148,7 @@ class TestParser(unittest.TestCase):
                   encoding="utf-8") as fh:
             prog = parse(fh.read(), "reactor_rules.nova")
         self.assertEqual(prog.title, "CHERNOBYL-1")
-        self.assertEqual(len(prog.rules), 25)
+        self.assertEqual(len(prog.rules), 22)
         self.assertEqual({f["name"] for f in prog.faults},
                          {"turbine_trip", "feedwater_failure", "rod_stuck",
                           "xenon_poisoning"})

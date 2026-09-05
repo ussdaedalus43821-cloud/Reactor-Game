@@ -99,6 +99,18 @@ signals {
     thermal_slack = meltdown_temp_c - fuel_temp_c
     hot           = fuel_temp_c > overheat_temp_c
     running       = not game_over
+
+    # ---- protection channel votes ----
+    # A real trip system never scrams off one instrument -- a single stuck
+    # or noisy sensor should not be able to drop the plant. Each channel
+    # below is independent (flux, fuel temp, primary pressure, coolant
+    # flow); flux_trip's held() debounce still filters a brief prompt-
+    # kinetics spike, same as before. See protection_trip.
+    flux_trip     = held(flux_pct > trip_flux_pct, trip_flux_sustain_s)
+    fuel_trip     = fuel_temp_c > trip_fuel_temp_c
+    pressure_trip = pressure_mpa > trip_pressure_mpa
+    lowflow_trip  = flow_frac < trip_lowflow_frac and flux_pct > trip_lowflow_power_pct
+    trip_votes    = flux_trip + fuel_trip + pressure_trip + lowflow_trip
 }
 
 # ==========================================================================
@@ -110,27 +122,18 @@ rule operator_scram priority 300 edge {
     then  scram("MANUAL SCRAM INITIATED")
 }
 
-rule flux_high_trip priority 290 {
-    when  running and not scram
-          and held(flux_pct > trip_flux_pct, trip_flux_sustain_s)
-    then  scram("AUTO SCRAM -- NEUTRON FLUX HIGH")
-}
-
-rule fuel_temp_trip priority 285 {
-    when  running and not scram and fuel_temp_c > trip_fuel_temp_c
-    then  scram("AUTO SCRAM -- FUEL TEMPERATURE HIGH")
-}
-
-rule overpressure_trip priority 280 {
-    when  running and not scram and pressure_mpa > trip_pressure_mpa
-    then  scram("AUTO SCRAM -- PRIMARY OVERPRESSURE")
-}
-
-rule loss_of_flow_trip priority 275 {
-    when  running and not scram
-          and flow_frac < trip_lowflow_frac
-          and flux_pct > trip_lowflow_power_pct
-    then  scram("AUTO SCRAM -- LOSS OF COOLANT FLOW")
+# 2-out-of-4 coincidence: no single channel may scram the plant alone, so a
+# lone stuck sensor (or one brief real excursion) cannot trip it -- two
+# independent channels have to agree first. Real plants vote trips the same
+# way for exactly this reason.
+rule protection_trip priority 290 {
+    when  running and not scram and trip_votes >= 2
+    then  let reasons = []
+          if flux_trip     { reasons = append(reasons, "NEUTRON FLUX HIGH") }
+          if fuel_trip     { reasons = append(reasons, "FUEL TEMPERATURE HIGH") }
+          if pressure_trip { reasons = append(reasons, "PRIMARY OVERPRESSURE") }
+          if lowflow_trip  { reasons = append(reasons, "LOSS OF COOLANT FLOW") }
+          scram("AUTO SCRAM -- 2-CHANNEL COINCIDENCE: " + join(reasons, " + "))
 }
 
 # ==========================================================================

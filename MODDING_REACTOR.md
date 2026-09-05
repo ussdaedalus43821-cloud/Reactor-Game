@@ -222,10 +222,10 @@ useful mods are a one-line change in here.
 
 | Param | Default | What it does |
 |---|---|---|
-| `trip_flux_pct` | `150.0` | Neutron flux (% of rated power) that triggers an automatic SCRAM. |
-| `trip_fuel_temp_c` | `1800.0` | Fuel temperature (°C) that triggers an automatic SCRAM. |
-| `trip_pressure_mpa` | `18.5` | Primary loop pressure (MPa) that triggers an automatic SCRAM. |
-| `trip_lowflow_frac` | `0.5` | Coolant flow fraction (0–1) below which a loss-of-flow SCRAM can trigger. |
+| `trip_flux_pct` | `150.0` | Neutron flux (% of rated power) high channel — one vote toward an automatic SCRAM. |
+| `trip_fuel_temp_c` | `1800.0` | Fuel temperature (°C) high channel — one vote toward an automatic SCRAM. |
+| `trip_pressure_mpa` | `18.5` | Primary loop pressure (MPa) high channel — one vote toward an automatic SCRAM. |
+| `trip_lowflow_frac` | `0.5` | Coolant flow fraction (0–1) below which the loss-of-flow channel casts its vote. |
 | `trip_lowflow_power_pct` | `50.0` | The loss-of-flow trip only arms above this power level — a shutdown reactor at low flow isn't dangerous. |
 | `warn_flux_pct` | `115.0` | Advisory "CAUTION" alarm threshold for flux — below the trip point, just a warning. |
 | `warn_fuel_temp_c` | `1200.0` | Advisory alarm threshold for fuel temperature. |
@@ -254,6 +254,16 @@ trip_flux_pct = 150.0
 # After: the automatic trip doesn't step in until 200% power
 trip_flux_pct = 200.0
 ```
+
+**None of the four `trip_*` params scrams the plant by itself.** Crossing
+`trip_flux_pct` (or any single one of the four) only casts that channel's
+vote; the plant only trips once **two or more** of the four channels agree
+in the same tick (see `protection_trip` below). This is deliberate — a
+single stuck or noisy sensor shouldn't be able to drop the plant, and it's
+also why lowering just one of these thresholds doesn't necessarily make the
+game trip any earlier: the second channel still has to agree.
+
+
 
 ### 3. `effects { }` — what faults are allowed to touch
 
@@ -309,9 +319,9 @@ readability, not required.
 ### 5. `rule { }` blocks — the actual logic
 
 ```nova
-rule flux_high_trip priority 290 {
-    when  running and not scram and flux_pct > trip_flux_pct
-    then  scram("AUTO SCRAM -- NEUTRON FLUX HIGH")
+rule protection_trip priority 290 {
+    when  running and not scram and trip_votes >= 2
+    then  scram("AUTO SCRAM -- 2-CHANNEL COINCIDENCE: ...")
 }
 ```
 
@@ -330,13 +340,21 @@ order), and two optional modifiers:
   doesn't spam the log every single tick flux stays high.
 
 The existing rules fall into five groups, in priority order:
-**protection** (the four SCRAM trips, priority 275–300), **end of run**
-(meltdown/victory, priority ~195–200), **alarms** (priority 125–160),
-**operating state** (the STARTUP/STEADY/SCRAM/etc. state machine,
-priority 50–60), and **housekeeping** (xenon decay and the optional
-autopilot, priority 10–20). Read `reactor_rules.nova` top to bottom —
-it's organized in exactly this order with section-header comments, and
-it's short enough (about 270 lines) to read in full in a few minutes.
+**protection** (the manual SCRAM button plus the `protection_trip`
+coincidence rule, priority 290–300), **end of run** (meltdown/victory,
+priority ~195–200), **alarms** (priority 125–160), **operating state**
+(the STARTUP/STEADY/SCRAM/etc. state machine, priority 50–60), and
+**housekeeping** (xenon decay and the optional autopilot, priority
+10–20). Read `reactor_rules.nova` top to bottom — it's organized in
+exactly this order with section-header comments, and it's short enough
+(about 300 lines) to read in full in a few minutes.
+
+`protection_trip` doesn't check any one measurement itself — it just
+counts `trip_votes`, a `signals { }` total of four independent boolean
+channels (`flux_trip`, `fuel_trip`, `pressure_trip`, `lowflow_trip`), and
+fires once two or more of them are true in the same tick. Want a fifth
+channel (say, a low-pressure trip)? Add a signal for it the same way and
+add it to the `trip_votes` sum — `protection_trip` itself doesn't change.
 
 ### 6. `fault { }` blocks — equipment failures
 
@@ -664,7 +682,9 @@ pushing back, unless the player finds another way to manage it.
 2. Find `warn_flux_pct = 115.0` in the `params { }` block.
 3. Change it to `warn_flux_pct = 105.0` — the caution alarm now fires
    ten percentage points earlier, giving you more time to react before
-   `trip_flux_pct` (still 150.0) actually scrams the plant.
+   flux crossing `trip_flux_pct` (still 150.0) can cast its vote toward
+   an automatic SCRAM (it still takes a second channel agreeing to
+   actually trip the plant — see `protection_trip`).
 4. Save, relaunch. That's a complete, working mod.
 
 **Intermediate — add a brand-new fault:**

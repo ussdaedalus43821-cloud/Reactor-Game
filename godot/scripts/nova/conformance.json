@@ -1860,27 +1860,56 @@
     "fuel_temp_c": 276.9109274638013,
     "pressure_mpa": 15.102331505479443,
     "reactivity_pcm": 12160.860878921325,
-    "rod_a": 0.0,
-    "state": "SCRAM",
-    "scram": true,
+    "rod_a": 100.0,
+    "state": "STEADY",
+    "scram": false,
     "alarm_level": 2,
     "events": [
-     "AUTO SCRAM -- NEUTRON FLUX HIGH",
      "CAUTION: FLUX ABOVE 115%"
     ]
    },
    {
     "i": 875,
     "t": 43.8,
-    "flux_pct": 123.27923099672145,
-    "fuel_temp_c": 280.4998579081751,
-    "pressure_mpa": 15.104040047446132,
-    "reactivity_pcm": -5846.111758468555,
+    "flux_pct": 302.9387899194501,
+    "fuel_temp_c": 282.29765136731265,
+    "pressure_mpa": 15.104144750124263,
+    "reactivity_pcm": 12150.620802501559,
+    "rod_a": 100.0,
+    "state": "STEADY",
+    "scram": false,
+    "alarm_level": 2,
+    "events": []
+   },
+   {
+    "i": 881,
+    "t": 44.1,
+    "flux_pct": 9077.029574028798,
+    "fuel_temp_c": 649.5578393044201,
+    "pressure_mpa": 15.2297208765911,
+    "reactivity_pcm": 11451.879626274713,
+    "rod_a": 100.0,
+    "state": "STEADY",
+    "scram": false,
+    "alarm_level": 2,
+    "events": [
+     "CAUTION: FUEL TEMPERATURE ABOVE 550 C"
+    ]
+   },
+   {
+    "i": 888,
+    "t": 44.45,
+    "flux_pct": 68933.94413084739,
+    "fuel_temp_c": 7842.633460748697,
+    "pressure_mpa": 19.243585651209788,
+    "reactivity_pcm": -2699.815924710592,
     "rod_a": 0.0,
     "state": "SCRAM",
     "scram": true,
-    "alarm_level": 2,
-    "events": []
+    "alarm_level": 3,
+    "events": [
+     "AUTO SCRAM -- 2-CHANNEL COINCIDENCE: FUEL TEMPERATURE HIGH + PRIMARY OVERPRESSURE"
+    ]
    }
   ]
  },
