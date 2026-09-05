@@ -24,12 +24,15 @@ const MAX_STEPS_PER_FRAME := 12     # 0.6 s of catch-up; beyond that we drop
 
 ## Keyboard rod control: Q/A drive Bank A's target out/in, W/S drive
 ## Bank B's the same way (Q above A, W above S -- the same up/down sense
-## as the two banks sitting side by side on the panel). Not rate-limited
-## by ReactorCore.MAX_ROD_RATE_PCT_S -- that constant caps how fast the
-## physical rods can chase a target, same as when the mouse slider snaps
-## the target instantly; this is just how fast the target itself moves
-## while a key is held, so it wants to feel responsive.
-const ROD_KEY_RATE_PCT_S := 40.0
+## as the two banks sitting side by side on the panel). Each press nudges
+## the target by one small fixed step rather than a continuous held
+## rate -- a 40 %/s continuous rate turned out to blow straight past the
+## fine adjustments rod worth's cubic curve actually needs (see
+## ReactorCore.bank_worth_pcm()'s own comment: the last 10 % of
+## withdrawal is worth far more than the rest). Holding the key doesn't
+## auto-repeat the nudge; _pressed()'s is_action_pressed() call defaults
+## to allow_echo=false, so each physical press is exactly one step.
+const ROD_KEY_STEP_PCT := 0.5
 
 @onready var background: ColorRect = $Background
 @onready var header: HeaderBar = $Header
@@ -147,8 +150,6 @@ func _setup_dials() -> void:
 # ==========================================================================
 
 func _process(delta: float) -> void:
-	_handle_rod_keys(delta)
-
 	if bridge == null or not bridge.is_ready():
 		return
 
@@ -281,6 +282,18 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif _pressed(event, "restart", KEY_R):
 		_restart()
 		get_viewport().set_input_as_handled()
+	elif _pressed(event, "rod_a_out", KEY_Q):
+		_nudge_rod_a(ROD_KEY_STEP_PCT)
+		get_viewport().set_input_as_handled()
+	elif _pressed(event, "rod_a_in", KEY_A):
+		_nudge_rod_a(-ROD_KEY_STEP_PCT)
+		get_viewport().set_input_as_handled()
+	elif _pressed(event, "rod_b_out", KEY_W):
+		_nudge_rod_b(ROD_KEY_STEP_PCT)
+		get_viewport().set_input_as_handled()
+	elif _pressed(event, "rod_b_in", KEY_S):
+		_nudge_rod_b(-ROD_KEY_STEP_PCT)
+		get_viewport().set_input_as_handled()
 	elif event is InputEventKey:
 		var key := event as InputEventKey
 		if key.pressed and not key.echo and key.keycode == KEY_ESCAPE:
@@ -289,7 +302,9 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 ## Prefer the remappable InputMap action, but fall back to the raw key so
-## the panel still works if the input map is missing.
+## the panel still works if the input map is missing. is_action_pressed()
+## defaults to allow_echo=false, so a held key does not repeat-fire this
+## -- exactly what a "nudge by one step" control wants.
 func _pressed(event: InputEvent, action: String, fallback_key: Key) -> bool:
 	if InputMap.has_action(action):
 		return event.is_action_pressed(action)
@@ -299,41 +314,24 @@ func _pressed(event: InputEvent, action: String, fallback_key: Key) -> bool:
 	return false
 
 
-## Same remappable-action-with-raw-key-fallback approach as _pressed(),
-## but for a HELD key polled every frame rather than a single press event
-## -- rod control is a rate, not a toggle.
-func _key_held(action: String, fallback_key: Key) -> bool:
-	if InputMap.has_action(action):
-		return Input.is_action_pressed(action)
-	return Input.is_physical_key_pressed(fallback_key)
-
-
-## Q/A move Bank A's commanded target out/in; W/S do the same for Bank B.
+## Q/A nudge Bank A's commanded target out/in; W/S do the same for Bank B.
 ## Mirrors exactly what dragging that bank's slider already does -- moves
 ## _target_a/_target_b (what _process() feeds the bridge every tick) and
 ## the slider's own .target (so the handle the operator sees moves too),
 ## and is gated by the same rod_a.enabled/rod_b.enabled a SCRAM or
 ## game-over already sets false.
-func _handle_rod_keys(delta: float) -> void:
-	if rod_a.enabled:
-		var da := 0.0
-		if _key_held("rod_a_out", KEY_Q):
-			da += 1.0
-		if _key_held("rod_a_in", KEY_A):
-			da -= 1.0
-		if da != 0.0:
-			_target_a = clampf(_target_a + da * ROD_KEY_RATE_PCT_S * delta, 0.0, 100.0)
-			rod_a.target = _target_a
+func _nudge_rod_a(step: float) -> void:
+	if not rod_a.enabled:
+		return
+	_target_a = clampf(_target_a + step, 0.0, 100.0)
+	rod_a.target = _target_a
 
-	if rod_b.enabled:
-		var db := 0.0
-		if _key_held("rod_b_out", KEY_W):
-			db += 1.0
-		if _key_held("rod_b_in", KEY_S):
-			db -= 1.0
-		if db != 0.0:
-			_target_b = clampf(_target_b + db * ROD_KEY_RATE_PCT_S * delta, 0.0, 100.0)
-			rod_b.target = _target_b
+
+func _nudge_rod_b(step: float) -> void:
+	if not rod_b.enabled:
+		return
+	_target_b = clampf(_target_b + step, 0.0, 100.0)
+	rod_b.target = _target_b
 
 
 func _on_rod_a_changed(value: float) -> void:
