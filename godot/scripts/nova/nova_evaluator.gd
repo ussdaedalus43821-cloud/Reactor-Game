@@ -284,7 +284,7 @@ func begin_run() -> void:
 # Statements
 # ==========================================================================
 
-func exec_block(stmts: Array, env):
+func exec_block(stmts: Array, env) -> Variant:
 	for entry in stmts:
 		var stmt: Dictionary = entry
 		var signal_out = exec_stmt(stmt, env)
@@ -295,7 +295,7 @@ func exec_block(stmts: Array, env):
 	return null
 
 
-func exec_stmt(node: Dictionary, env):
+func exec_stmt(node: Dictionary, env) -> Variant:
 	var kind: String = node["k"]
 	var line: int = int(node.get("line", 0))
 	if not _tick_budget(line):
@@ -338,7 +338,7 @@ func exec_stmt(node: Dictionary, env):
 	return fail(line, "cannot execute a '%s' statement" % kind)
 
 
-func _exec_while(node: Dictionary, env, line: int):
+func _exec_while(node: Dictionary, env, line: int) -> Variant:
 	while true:
 		if not _tick_budget(line):
 			return {"flow": FLOW_RETURN, "value": null}
@@ -358,7 +358,7 @@ func _exec_while(node: Dictionary, env, line: int):
 	return null
 
 
-func _assign(node: Dictionary, env):
+func _assign(node: Dictionary, env) -> Variant:
 	var target: Dictionary = node["target"]
 	var value = eval(node["expr"], env)
 	if error != "":
@@ -380,7 +380,7 @@ func _assign(node: Dictionary, env):
 	return fail(line, "cannot assign to a '%s'" % target["k"])
 
 
-func _set_element(obj, key, value, line: int):
+func _set_element(obj, key, value, line: int) -> Variant:
 	if typeof(obj) == TYPE_DICTIONARY:
 		var d: Dictionary = obj
 		d[key if typeof(key) == TYPE_STRING else text(key)] = value
@@ -401,7 +401,7 @@ func _set_element(obj, key, value, line: int):
 	return fail(line, "cannot assign into a %s" % type_name(obj))
 
 
-func _import(node: Dictionary, env):
+func _import(node: Dictionary, env) -> Variant:
 	var line: int = int(node.get("line", 0))
 	if vm == null:
 		return fail(line, "import is not available here")
@@ -420,7 +420,7 @@ func _import(node: Dictionary, env):
 # Expressions
 # ==========================================================================
 
-func eval(node: Dictionary, env):
+func eval(node: Dictionary, env) -> Variant:
 	var kind: String = node["k"]
 
 	if kind == "num" or kind == "str" or kind == "bool":
@@ -483,7 +483,7 @@ func _num(v, line: int) -> float:
 	return 0.0
 
 
-func _get_element(obj, key, line: int):
+func _get_element(obj, key, line: int) -> Variant:
 	if typeof(obj) == TYPE_DICTIONARY:
 		var d: Dictionary = obj
 		var k = key if typeof(key) == TYPE_STRING else text(key)
@@ -522,7 +522,7 @@ func _get_element(obj, key, line: int):
 	return null
 
 
-func _eval_binary(node: Dictionary, env):
+func _eval_binary(node: Dictionary, env) -> Variant:
 	var op: String = node["op"]
 	var line: int = int(node.get("line", 0))
 
@@ -576,7 +576,7 @@ func _eval_binary(node: Dictionary, env):
 # Calls
 # ==========================================================================
 
-func _eval_call(node: Dictionary, env):
+func _eval_call(node: Dictionary, env) -> Variant:
 	var callee: Dictionary = node["callee"]
 	var line: int = int(node.get("line", 0))
 
@@ -630,7 +630,7 @@ func _eval_args(arg_nodes: Array, env) -> Array:
 	return out
 
 
-func call_function(fn: NovaFunc, args: Array, line: int = 0):
+func call_function(fn: NovaFunc, args: Array, line: int = 0) -> Variant:
 	if args.size() != fn.params.size():
 		fail(line, "%s() takes %d argument(s), got %d"
 				% [fn.name if fn.name != "" else "anonymous",
@@ -654,7 +654,7 @@ func call_function(fn: NovaFunc, args: Array, line: int = 0):
 	return null
 
 
-func _eval_held(node: Dictionary, env):
+func _eval_held(node: Dictionary, env) -> Variant:
 	var line: int = int(node.get("line", 0))
 	var args: Array = node["args"]
 	if args.size() != 2:
@@ -676,7 +676,7 @@ func _eval_held(node: Dictionary, env):
 # Builtins
 # ==========================================================================
 
-func call_builtin(name: String, args: Array, line: int):
+func call_builtin(name: String, args: Array, line: int) -> Variant:
 	var need: int = int(BUILTIN_ARITY[name])
 	if args.size() < need:
 		fail(line, "%s() needs %d argument(s), got %d"

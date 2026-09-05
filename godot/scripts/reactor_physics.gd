@@ -161,13 +161,13 @@ func _stage(base: PackedFloat64Array, k: PackedFloat64Array, scale: float) -> vo
 ## Classic 4th-order Runge-Kutta over the whole state vector at once.
 ## Euler appears nowhere in this simulation.
 func step(dt: float, rod_a: float, rod_b: float, flow_frac: float,
-		load_frac: float, xenon_pcm: float, decay_heat_pct: float) -> float:
+		load_frac: float, xenon_pcm: float, decay_pct: float) -> float:
 	_rod_a = rod_a
 	_rod_b = rod_b
 	_flow = flow_frac
 	_load = load_frac
 	_xenon = xenon_pcm
-	_decay = decay_heat_pct
+	_decay = decay_pct
 
 	_derivs(y, _k1)
 	_stage(y, _k1, dt * 0.5)

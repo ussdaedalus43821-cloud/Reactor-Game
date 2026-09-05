@@ -71,7 +71,7 @@ func _sample_at(buffer: PackedFloat32Array, i: int) -> float:
 	return buffer[(start + i) % CAPACITY]
 
 
-func _build_line(buffer: PackedFloat32Array, scale: float,
+func _build_line(buffer: PackedFloat32Array, value_scale: float,
 		plot: Rect2) -> PackedVector2Array:
 	var points := PackedVector2Array()
 	if _count < 2:
@@ -85,13 +85,13 @@ func _build_line(buffer: PackedFloat32Array, scale: float,
 	while i < _count:
 		var v := _sample_at(buffer, i)
 		var x := plot.position.x + plot.size.x * (float(i) / float(_count - 1))
-		var y := plot.end.y - plot.size.y * clampf(v / scale, 0.0, 1.0)
+		var y := plot.end.y - plot.size.y * clampf(v / value_scale, 0.0, 1.0)
 		points.append(Vector2(x, y))
 		i += stride
 	# Always pin the newest sample to the right edge.
 	var last := _sample_at(buffer, _count - 1)
 	points.append(Vector2(plot.end.x,
-			plot.end.y - plot.size.y * clampf(last / scale, 0.0, 1.0)))
+			plot.end.y - plot.size.y * clampf(last / value_scale, 0.0, 1.0)))
 	return points
 
 
