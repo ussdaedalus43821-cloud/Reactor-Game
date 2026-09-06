@@ -136,6 +136,12 @@ get away from you.
   **`T`/`G`** drag the coolant-flow and turbine-load valves by hand — push
   either below 100 % and it overrides the fault injector outright; push it
   back to 100 % and the automatic system has it again.
+* The header's **OUTPUT** is what the turbine-generator is actually selling
+  to the grid, not neutron flux — it's capped at 100 % of rated capacity and
+  goes to zero the instant the turbine trips or coolant flow stalls, even
+  if the core itself is still running hot. **SHIFT $** is cumulative revenue
+  at a flat rate per MWh of that same output, so a trip or a choked valve
+  costs cash, not just safety margin.
 
 Hold fuel temperature under 2800 °C for 15:00 and you survive the shift.
 Let it sit above that for five continuous seconds and the core disassembles.

@@ -226,7 +226,11 @@ func _apply_state(state: Dictionary) -> void:
 	header.state_name = state_name
 	header.plant_time = plant_time
 	header.reactivity_pcm = float(state.get("reactivity_pcm", 0.0))
-	header.power_pct = flux
+	# Electrical output, not neutron flux -- see NovaBridge's own comment
+	# on power_pct. They agree at a clean 100 % steady state and nowhere
+	# else, which is the point.
+	header.power_pct = float(state.get("power_pct", flux))
+	header.revenue_usd = float(state.get("revenue_usd", 0.0))
 	header.alarm_level = alarm_level
 
 	flux_dial.value = flux

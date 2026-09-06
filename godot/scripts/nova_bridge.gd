@@ -31,6 +31,14 @@ const DECAY_HEAT_TAU_S := 130.0
 const GRID_N := 10
 const MAX_STEPS_PER_TICK := 60
 
+## Electrical output, not thermal: a real turbine-generator is a rated
+## device, so it never sells more than its nameplate MW regardless of how
+## hard the core is running, and it sells nothing at all with the turbine
+## off or the coolant not moving heat to it -- see power_pct's own
+## comment in _substep().
+const RATED_ELECTRICAL_MW := 1000.0
+const PRICE_PER_MWH := 45.0
+
 ## Exactly the names reference/reactor_host.py registers.
 const HOST_FUNCTIONS := [
 	"log", "alarm", "scram", "reset_trip", "meltdown", "victory",
@@ -73,6 +81,9 @@ var stuck_bank := ""
 ## an operator-commanded value that wins outright. See _substep().
 var manual_flow_override := -1.0
 var manual_load_override := -1.0
+
+var power_pct := 0.0
+var revenue_usd := 0.0
 
 var scram_requested := false
 var scram_reason := ""
@@ -297,6 +308,8 @@ func reset(seed_value: int = 0) -> Dictionary:
 	stuck_bank = ""
 	manual_flow_override = -1.0
 	manual_load_override = -1.0
+	power_pct = 0.0
+	revenue_usd = 0.0
 
 	pending_events.clear()
 	pending_events.append("SIMULATION RESET -- REACTOR SUBCRITICAL")
@@ -389,6 +402,14 @@ func _substep(dt: float, operator_scram: bool, faults_enabled: bool) -> void:
 		flow_frac = manual_flow_override
 	if manual_load_override >= 0.0:
 		load_frac = manual_load_override
+
+	# Electrical output, not neutron flux: capped at rated capacity (a
+	# generator does not sell 150 % of nameplate just because the core is
+	# running a spike), and zeroed by a tripped turbine or stalled coolant
+	# flow even while the core itself is still making heat.
+	power_pct = clampf(core.flux_percent(), 0.0, 100.0) * flow_frac * load_frac
+	revenue_usd += (power_pct / 100.0) * RATED_ELECTRICAL_MW * PRICE_PER_MWH * (dt / 3600.0)
+
 	xenon_pcm = float(vm.get_global("xenon_pcm", 0.0))
 	stuck_bank = String(vm.get_global("stuck_bank", ""))
 	state_name = String(vm.get_global("state", "STARTUP"))
@@ -471,6 +492,8 @@ func snapshot() -> Dictionary:
 		"rod_target_b": rod_target_b,
 		"flow_frac": flow_frac,
 		"load_frac": load_frac,
+		"power_pct": power_pct,
+		"revenue_usd": revenue_usd,
 		"xenon_pcm": xenon_pcm,
 		"stuck_bank": stuck_bank,
 		"scram": scram,
