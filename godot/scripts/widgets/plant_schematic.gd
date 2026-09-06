@@ -4,17 +4,24 @@ extends Control
 ## Plant overview: primary loop, secondary loop, cooling water -- on the
 ## same screen as the control room above it, no view switching.
 ##
-## Phase 1 (this file, for now): layout, component boxes and animated flow
-## direction only. Only the primary loop's color reflects real plant state
-## (out_temp_c/fuel_temp_c/scram, already in the bridge's state dictionary
-## -- see control_room.gd's apply_state()); the secondary loop and cooling
-## water are drawn with illustrative placeholder colors and a fixed "system
-## running" flow. Every component box's border matches the pipe feeding
-## into it, so the boxes read as part of the same colored flow rather than
-## two of them being singled out. Live numeric labels at each point, and
-## controls that feed real flow_frac/load_frac physics, are later phases
-## -- this is a big feature built incrementally on request, one testable
-## step at a time.
+## Colors are still illustrative on the secondary loop and cooling water
+## (only the primary loop's color reflects a real temperature --
+## out_temp_c, already in the bridge's state dictionary -- see
+## control_room.gd's apply_state()), but every pipe's *speed* now answers
+## to the same flow_frac/load_frac the throttle sliders and the fault
+## injector drive, so a feedwater failure or a turbine trip visibly slows
+## the water and steam, not just the numbers in the readout panel:
+##   * primary loop (core/generator/pumps) and the cooling-water lane
+##     both scale with flow_frac -- the coolant-flow valve and a
+##     feedwater failure act on the same pumps that move both.
+##   * the secondary loop's steam leg (generator -> turbine -> condenser)
+##     scales with load_frac -- no load, no steam being drawn through.
+##   * the secondary loop's return leg (condenser -> generator) is the
+##     feedwater pumps' own path back to the generator, so it scales with
+##     flow_frac too, not load_frac.
+## Every component box's border matches the pipe feeding into it, so the
+## boxes read as part of the same colored flow rather than two of them
+## being singled out.
 
 const LANE_LABELS := ["PRIMARY LOOP", "SECONDARY LOOP", "COOLING WATER"]
 
@@ -28,6 +35,8 @@ var fuel_temp_c := 270.0
 var pressure_mpa := 15.5
 var scram := false
 var flux_pct := 0.0
+var flow_frac := 1.0
+var load_frac := 1.0
 
 var _t := 0.0
 
@@ -45,6 +54,8 @@ func apply_state(state: Dictionary) -> void:
 	pressure_mpa = float(state.get("pressure_mpa", 15.5))
 	scram = bool(state.get("scram", false))
 	flux_pct = float(state.get("flux_pct", 0.0))
+	flow_frac = float(state.get("flow_frac", 1.0))
+	load_frac = float(state.get("load_frac", 1.0))
 
 
 func _process(delta: float) -> void:
@@ -71,10 +82,10 @@ func _draw() -> void:
 # ==========================================================================
 # Primary loop -- Core -> Steam Generator -> Pumps -> back to Core.
 # Flow color and speed both reflect real state: hotter outlet temp reads
-# hotter along the pipe, and a SCRAM visibly slows the animated flow to a
-# crawl (the primary pumps do keep running after a trip, just cooling a
-# rapidly-quieting core -- this is a stand-in for that reading until pump
-# speed is wired to real physics in a later phase).
+# hotter along the pipe, the coolant-flow valve/a feedwater failure (both
+# flow_frac) slow the animated flow in direct proportion, and a SCRAM
+# knocks a further 0.15x off on top of that (the primary pumps do keep
+# running after a trip, just cooling a rapidly-quieting core).
 # ==========================================================================
 
 func _draw_primary_loop(rect: Rect2, font: Font) -> void:
@@ -84,7 +95,9 @@ func _draw_primary_loop(rect: Rect2, font: Font) -> void:
 	var pumps: Rect2 = boxes[2]
 
 	var flow_color := ReactorTheme.temp_color(out_temp_c)
-	var speed := CHEVRON_SPEED_PX_S if not scram else CHEVRON_SPEED_PX_S * 0.15
+	var speed := CHEVRON_SPEED_PX_S * flow_frac
+	if scram:
+		speed *= 0.15
 
 	_draw_loop_pipes(rect, core, sg, pumps, flow_color, speed)
 
@@ -101,9 +114,13 @@ func _draw_primary_loop(rect: Rect2, font: Font) -> void:
 # Secondary loop -- Steam Generator -> Turbine -> Condenser -> back to the
 # Steam Generator. Steam (red-hot leg, generator to turbine) vs. water
 # (blue return leg, condenser back to the generator) are drawn as distinct
-# colors on the two halves of the loop, per the design brief -- both still
-# a fixed illustrative temperature until the secondary side gets its own
-# heat-transfer model in a later phase.
+# colors on the two halves of the loop -- both still a fixed illustrative
+# temperature until the secondary side gets its own heat-transfer model,
+# but their speeds now answer to two different variables on purpose: the
+# steam leg is however much the turbine is actually drawing (load_frac),
+# while the return leg is the feedwater pumps' own path back to the
+# generator (flow_frac) -- a turbine trip and a feedwater failure should
+# not look like the same thing here, because they are not the same fault.
 # ==========================================================================
 
 const STEAM_COLOR := Color(0.9, 0.35, 0.3)
@@ -117,10 +134,12 @@ func _draw_secondary_loop(rect: Rect2, font: Font) -> void:
 
 	# Steam leg: generator -> turbine. Water leg: condenser -> generator
 	# (the return pipe below the boxes). Drawn as two separate calls
-	# rather than one loop so each half gets its own color.
-	_draw_flow_pipe(_right(sg), _left(turbine), STEAM_COLOR, CHEVRON_SPEED_PX_S)
-	_draw_flow_pipe(_right(turbine), _left(condenser), STEAM_COLOR, CHEVRON_SPEED_PX_S)
-	_draw_return_pipe(rect, condenser, sg, FEEDWATER_COLOR, CHEVRON_SPEED_PX_S)
+	# rather than one loop so each half gets its own color and speed.
+	var steam_speed := CHEVRON_SPEED_PX_S * load_frac
+	var feedwater_speed := CHEVRON_SPEED_PX_S * flow_frac
+	_draw_flow_pipe(_right(sg), _left(turbine), STEAM_COLOR, steam_speed)
+	_draw_flow_pipe(_right(turbine), _left(condenser), STEAM_COLOR, steam_speed)
+	_draw_return_pipe(rect, condenser, sg, FEEDWATER_COLOR, feedwater_speed)
 
 	ReactorTheme.draw_caption(self, font, rect.position + Vector2(0.0, -6.0), LANE_LABELS[1])
 	# Each box's accent matches the pipe feeding into it: the generator
@@ -135,7 +154,10 @@ func _draw_secondary_loop(rect: Rect2, font: Font) -> void:
 # Cooling water -- Intake -> Condenser -> Discharge. A fixed temperature
 # rise across the condenser (illustrative -- real condenser-side heat
 # transfer is a later phase), colored cool-to-warm along the pipe so the
-# rise reads at a glance even before there's a numeric label on it.
+# rise reads at a glance even before there's a numeric label on it. Same
+# flow_frac as the primary loop and the secondary loop's feedwater leg --
+# a feedwater failure is a pump problem, and it is the same pumps moving
+# all three, so all three visibly slow together.
 # ==========================================================================
 
 const INTAKE_TEMP_C := 18.0
@@ -147,10 +169,11 @@ func _draw_cooling_water(rect: Rect2, font: Font) -> void:
 	var condenser: Rect2 = boxes[1]
 	var discharge: Rect2 = boxes[2]
 
+	var speed := CHEVRON_SPEED_PX_S * flow_frac
 	_draw_flow_pipe(_right(intake), _left(condenser),
-			_water_temp_color(INTAKE_TEMP_C), CHEVRON_SPEED_PX_S)
+			_water_temp_color(INTAKE_TEMP_C), speed)
 	_draw_flow_pipe(_right(condenser), _left(discharge),
-			_water_temp_color(DISCHARGE_TEMP_C), CHEVRON_SPEED_PX_S)
+			_water_temp_color(DISCHARGE_TEMP_C), speed)
 
 	ReactorTheme.draw_caption(self, font, rect.position + Vector2(0.0, -6.0), LANE_LABELS[2])
 	# Intake and the condenser both sit on the cool incoming leg; discharge
