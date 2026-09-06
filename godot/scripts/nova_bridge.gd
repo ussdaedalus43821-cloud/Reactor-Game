@@ -403,11 +403,16 @@ func _substep(dt: float, operator_scram: bool, faults_enabled: bool) -> void:
 	if manual_load_override >= 0.0:
 		load_frac = manual_load_override
 
-	# Electrical output, not neutron flux: capped at rated capacity (a
-	# generator does not sell 150 % of nameplate just because the core is
-	# running a spike), and zeroed by a tripped turbine or stalled coolant
-	# flow even while the core itself is still making heat.
-	power_pct = clampf(core.flux_percent(), 0.0, 100.0) * flow_frac * load_frac
+	# Electrical output, not neutron flux: neutron flux is fission power
+	# only, but the heat actually available to make steam is fission
+	# *plus* decay heat (`decay`, above) -- real plants absolutely do sell
+	# power off decay heat, so a SCRAM does not zero this out by itself.
+	# It's still capped at rated capacity (a generator does not sell
+	# 150 % of nameplate just because the core is running a spike), and
+	# still zeroed by a tripped turbine or stalled coolant flow, because
+	# heat nobody is carrying to a spinning generator earns nothing.
+	var thermal_pct := core.flux_percent() + decay
+	power_pct = clampf(thermal_pct, 0.0, 100.0) * flow_frac * load_frac
 	revenue_usd += (power_pct / 100.0) * RATED_ELECTRICAL_MW * PRICE_PER_MWH * (dt / 3600.0)
 
 	xenon_pcm = float(vm.get_global("xenon_pcm", 0.0))

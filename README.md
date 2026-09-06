@@ -139,7 +139,10 @@ get away from you.
 * The header's **OUTPUT** is what the turbine-generator is actually selling
   to the grid, not neutron flux — it's capped at 100 % of rated capacity and
   goes to zero the instant the turbine trips or coolant flow stalls, even
-  if the core itself is still running hot. **SHIFT $** is cumulative revenue
+  if the core itself is still running hot. It counts decay heat too, so a
+  SCRAM doesn't zero it out by itself — as long as the turbine's still
+  spinning and coolant's still flowing, you keep selling whatever heat is
+  still coming off the core as it cools. **SHIFT $** is cumulative revenue
   at a flat rate per MWh of that same output, so a trip or a choked valve
   costs cash, not just safety margin.
 
