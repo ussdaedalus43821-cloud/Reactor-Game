@@ -51,9 +51,12 @@ func _draw() -> void:
 	draw_string(font, Vector2(38.0, size.y * 0.5 + 8.0), state_name,
 			HORIZONTAL_ALIGNMENT_LEFT, -1, 22, col)
 
-	# Shift clock and the 15-minute goal.
+	# Shift clock and the 15-minute goal. Truncating to whole minutes is
+	# the point of a T+MM:SS stamp, not an accident.
+	@warning_ignore("integer_division")
 	var mins := int(plant_time) / 60
 	var secs := int(plant_time) % 60
+	@warning_ignore("integer_division")
 	var goal_m := int(goal_time) / 60
 	draw_string(font, Vector2(300.0, size.y * 0.5 + 6.0),
 			"T+%02d:%02d" % [mins, secs], HORIZONTAL_ALIGNMENT_LEFT, -1, 18,

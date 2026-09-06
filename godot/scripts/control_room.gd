@@ -294,6 +294,8 @@ func _apply_state(state: Dictionary) -> void:
 					"15 minutes on watch, core intact. Veteran operator.",
 					ReactorTheme.GREEN)
 		else:
+			# Truncating to whole minutes is the point of a T+MM:SS stamp.
+			@warning_ignore("integer_division")
 			overlay.show_result("MELTDOWN",
 					"Core disassembly at T+%02d:%02d. Fuel temperature %.0f C."
 					% [int(plant_time) / 60, int(plant_time) % 60, fuel],
@@ -417,9 +419,9 @@ func _nudge_rod_b(step: float) -> void:
 ## random scheduler uses, just triggered on demand instead of by the
 ## weighted roll. Refused after the run has ended, same as every other
 ## control.
-func _force_fault(name: String) -> void:
+func _force_fault(fault_name: String) -> void:
 	if bridge != null and not bridge.game_over:
-		bridge.force_fault(name)
+		bridge.force_fault(fault_name)
 
 
 func _on_rod_a_changed(value: float) -> void:

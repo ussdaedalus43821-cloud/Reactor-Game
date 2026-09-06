@@ -257,10 +257,10 @@ func _fn_clear_fault(_args: Array):
 ## currently running (inject_fault() otherwise refuses to override an
 ## active fault) and starts the named one immediately, full duration,
 ## exactly as if the scheduler had picked it.
-func force_fault(name: String) -> void:
+func force_fault(fault_name: String) -> void:
 	if vm != null:
 		vm.clear_fault()
-		vm.inject_fault(name)
+		vm.inject_fault(fault_name)
 
 
 func clear_active_fault() -> void:
