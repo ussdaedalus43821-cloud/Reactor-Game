@@ -205,7 +205,7 @@ func _check_daedalus_data(data: Dictionary) -> void:
 		vm.register_function(String(fn_name), func(_args: Array): return null)
 
 	checked += 1
-	if not vm.load_file("daedalus_rules.nova"):
+	if not vm.load_file("nova/fixtures/daedalus_rules.nova"):
 		failures.append("daedalus_rules.nova failed to load: " + vm.error)
 		return
 
@@ -307,7 +307,7 @@ func _check_daedalus_data(data: Dictionary) -> void:
 func _check_ai_data(data: Dictionary) -> void:
 	var vm := NovaVM.new()
 	checked += 1
-	if not vm.load_file("daedalus_ai.nova"):
+	if not vm.load_file("nova/fixtures/daedalus_ai.nova"):
 		failures.append("daedalus_ai.nova failed to load: " + vm.error)
 		return
 
@@ -350,7 +350,7 @@ func _check_ai_data(data: Dictionary) -> void:
 			"victory", "inject_fault", "clear_fault"]:
 		rules_vm.register_function(String(fn_name), func(_args: Array): return null)
 	checked += 1
-	if not rules_vm.load_file("daedalus_rules.nova"):
+	if not rules_vm.load_file("nova/fixtures/daedalus_rules.nova"):
 		failures.append("daedalus_rules.nova (ai import) failed to load: "
 				+ rules_vm.error)
 		return
@@ -452,7 +452,7 @@ func _dict_matches(want, got) -> bool:
 func _check_weapons_data(data: Dictionary) -> void:
 	var vm := NovaVM.new()
 	checked += 1
-	if not vm.load_file("daedalus_weapons.nova"):
+	if not vm.load_file("nova/fixtures/daedalus_weapons.nova"):
 		failures.append("daedalus_weapons.nova failed to load: " + vm.error)
 		return
 
@@ -489,7 +489,7 @@ func _check_weapons_data(data: Dictionary) -> void:
 			"victory", "inject_fault", "clear_fault"]:
 		rules_vm.register_function(String(fn_name), func(_args: Array): return null)
 	checked += 1
-	if not rules_vm.load_file("daedalus_rules.nova"):
+	if not rules_vm.load_file("nova/fixtures/daedalus_rules.nova"):
 		failures.append("daedalus_rules.nova (weapons import) failed to load: "
 				+ rules_vm.error)
 		return

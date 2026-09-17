@@ -23,7 +23,6 @@ a text file, so the same code runs on macOS, iOS and Web.
 │              nova_vm.gd         load / eval / call    │
 │                    │                                  │
 │              res://scripts/reactor_rules.nova         │
-│              res://scripts/lib/combat.nova            │
 └───────────────────────────────────────────────────────┘
 ```
 
@@ -162,12 +161,6 @@ godot/                          the Godot project — open this
     reactor_physics.gd          RK4 six-group core
     reactor_theme.gd            shared palette
     reactor_rules.nova          >>> the reactor's control policy <<<
-    daedalus_rules.nova         a second NovaLang program, kept only as
-    daedalus_ai.nova            conformance-test fixtures for the interpreter
-    daedalus_weapons.nova       (parity_check.gd loads these three; the game
-                                 they were written for lives in its own repo,
-                                 github.com/ussdaedalus43821-cloud/DaedalusGodot)
-    lib/combat.nova             a NovaLang module
     nova/
       nova_lexer.gd             tokenizer
       nova_parser.gd            recursive-descent parser
@@ -175,6 +168,12 @@ godot/                          the Godot project — open this
       nova_vm.gd                load / eval / call + the rule engine
       parity_check.gd           replays the goldens in-engine
       conformance.json          generated goldens
+      fixtures/                 a second, larger NovaLang program, kept
+        daedalus_rules.nova     only as conformance-test fixtures for the
+        daedalus_ai.nova        interpreter (parity_check.gd loads these
+        daedalus_weapons.nova   three; the game they were written for
+        lib/combat.nova         lives in its own repo,
+                                 github.com/ussdaedalus43821-cloud/DaedalusGodot)
     widgets/                    dial, core map, strip chart, scram button…
   shaders/                      core heatmap, industrial backdrop
 reference/                      Python reference implementation (never ships)

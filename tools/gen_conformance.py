@@ -229,7 +229,7 @@ def weapons_data() -> dict:
     the edge, all three beam outcomes), and the standalone formula helpers.
     """
     vm = NovaVM(random.Random(7), module_reader=_read_script)
-    if not vm.load_file("daedalus_weapons.nova"):
+    if not vm.load_file("nova/fixtures/daedalus_weapons.nova"):
         raise SystemExit("daedalus_weapons.nova failed to load: %s" % vm.error)
 
     weapons_table = {}
@@ -244,7 +244,7 @@ def weapons_data() -> dict:
     rules_vm = NovaVM(random.Random(7), module_reader=_read_script)
     for fn_name in host.HOST_FUNCTIONS:
         rules_vm.register_function(fn_name, lambda args: None)
-    if not rules_vm.load_file("daedalus_rules.nova"):
+    if not rules_vm.load_file("nova/fixtures/daedalus_rules.nova"):
         raise SystemExit("daedalus_rules.nova failed to load: %s" % rules_vm.error)
 
     fires = [
@@ -296,7 +296,7 @@ def daedalus_data() -> dict:
                 module_reader=lambda p: _read_script(p))
     for fn_name in host.HOST_FUNCTIONS:
         vm.register_function(fn_name, lambda args: None)
-    if not vm.load_file("daedalus_rules.nova"):
+    if not vm.load_file("nova/fixtures/daedalus_rules.nova"):
         raise SystemExit("daedalus_rules.nova failed to load: %s" % vm.error)
 
     ships = {}
@@ -352,7 +352,7 @@ def ai_data() -> dict:
     the raw ENEMY table and the rules.nova <-> ai.nova integration seam
     (enemy_weapon_damage, player_weapon_vs_enemy, enemy_behavior)."""
     vm = NovaVM(random.Random(7), module_reader=_read_script)
-    if not vm.load_file("daedalus_ai.nova"):
+    if not vm.load_file("nova/fixtures/daedalus_ai.nova"):
         raise SystemExit("daedalus_ai.nova failed to load: %s" % vm.error)
 
     enemy = {}
@@ -377,7 +377,7 @@ def ai_data() -> dict:
     rules_vm = NovaVM(random.Random(7), module_reader=_read_script)
     for fn_name in host.HOST_FUNCTIONS:
         rules_vm.register_function(fn_name, lambda args: None)
-    if not rules_vm.load_file("daedalus_rules.nova"):
+    if not rules_vm.load_file("nova/fixtures/daedalus_rules.nova"):
         raise SystemExit("daedalus_rules.nova failed to load: %s" % rules_vm.error)
 
     enemy_damage = [

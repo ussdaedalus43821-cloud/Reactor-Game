@@ -29,7 +29,7 @@ echo
 echo "== novalang policies ======================================="
 python3 reference/reactor_host.py --validate --rules reactor_rules.nova \
   | python3 -c 'import json,sys; d=json.load(sys.stdin); print("  reactor_rules.nova:", d["title"], "--", len(d["rules"]), "rules,", len(d["faults"]), "faults")'
-python3 reference/reactor_host.py --validate --rules daedalus_rules.nova \
+python3 reference/reactor_host.py --validate --rules nova/fixtures/daedalus_rules.nova \
   | python3 -c 'import json,sys; d=json.load(sys.stdin); print("  daedalus_rules.nova:", d["title"], "--", len(d["rules"]), "rules,", len(d["faults"]), "faults")'
 
 echo
@@ -42,7 +42,7 @@ import reactor_host as host
 vm = NovaVM(random.Random(7), base_dir=host.RULES_DIR)
 for n in host.HOST_FUNCTIONS:
     vm.register_function(n, lambda a: None)
-assert vm.load_file("daedalus_rules.nova"), vm.error
+assert vm.load_file("nova/fixtures/daedalus_rules.nova"), vm.error
 ships = vm.get_global("SHIPS")
 print("  %d hulls, %d sectors, %d danger bands"
       % (len(ships), len(vm.get_global("SECTORS")),
@@ -65,7 +65,7 @@ import random, sys
 sys.path.insert(0, "reference")
 from nova_vm import NovaVM
 vm = NovaVM(random.Random(7), base_dir="godot/scripts")
-assert vm.load_file("daedalus_ai.nova"), vm.error
+assert vm.load_file("nova/fixtures/daedalus_ai.nova"), vm.error
 order = vm.get_global("ENEMY_ORDER")
 print("  %d hostile archetypes" % len(order))
 for kind in order:
@@ -86,7 +86,7 @@ import random, sys
 sys.path.insert(0, "reference")
 from nova_vm import NovaVM
 vm = NovaVM(random.Random(7), base_dir="godot/scripts")
-assert vm.load_file("daedalus_weapons.nova"), vm.error
+assert vm.load_file("nova/fixtures/daedalus_weapons.nova"), vm.error
 order = vm.get_global("WEAPON_ORDER")
 print("  %d weapon systems" % len(order))
 for kind in order:

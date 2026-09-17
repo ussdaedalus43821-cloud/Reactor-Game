@@ -14,7 +14,7 @@ Godot on every platform the engine targets.
 ```gdscript
 var vm := NovaVM.new()
 vm.register_function("hull", func(args): return $Ship.hull)
-vm.load_file("daedalus_rules.nova")          # from res://scripts/
+vm.load_file("nova/fixtures/daedalus_rules.nova")  # from res://scripts/
 vm.call_function("threat_score", [["capital", "wdart"]])
 ```
 

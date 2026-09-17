@@ -670,7 +670,7 @@ class TestReactorHost(unittest.TestCase):
         self.assertIn("operator_scram", d["rules"])
 
     def test_the_daedalus_policy_loads_too(self):
-        sim = host.ReactorHost("daedalus_rules.nova", seed=2)
+        sim = host.ReactorHost("nova/fixtures/daedalus_rules.nova", seed=2)
         self.assertEqual(sim.error, "")
 
 
@@ -708,7 +708,7 @@ class TestDaedalusData(unittest.TestCase):
         cls.vm = NovaVM(random.Random(7), base_dir=host.RULES_DIR)
         for name in host.HOST_FUNCTIONS:
             cls.vm.register_function(name, lambda args: None)
-        assert cls.vm.load_file("daedalus_rules.nova"), cls.vm.error
+        assert cls.vm.load_file("nova/fixtures/daedalus_rules.nova"), cls.vm.error
 
     def test_every_ship_stat_is_exact(self):
         ships = self.vm.get_global("SHIPS")
@@ -913,7 +913,7 @@ class TestDaedalusAI(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.vm = NovaVM(random.Random(7), base_dir=host.RULES_DIR)
-        assert cls.vm.load_file("daedalus_ai.nova"), cls.vm.error
+        assert cls.vm.load_file("nova/fixtures/daedalus_ai.nova"), cls.vm.error
 
     def behavior(self, kind, player_class, hardened=False):
         b = self.vm.call_function("get_behavior", [kind, player_class, hardened])
@@ -1106,7 +1106,7 @@ class TestDaedalusRulesEnemyBridge(unittest.TestCase):
         cls.vm = NovaVM(random.Random(7), base_dir=host.RULES_DIR)
         for name in host.HOST_FUNCTIONS:
             cls.vm.register_function(name, lambda args: None)
-        assert cls.vm.load_file("daedalus_rules.nova"), cls.vm.error
+        assert cls.vm.load_file("nova/fixtures/daedalus_rules.nova"), cls.vm.error
 
     def test_enemy_order_and_stats_are_reachable_through_the_import(self):
         self.assertEqual(self.vm.get_global("ENEMY_ORDER"),
@@ -1168,7 +1168,7 @@ class TestDaedalusRulesEnemyBridge(unittest.TestCase):
         uses): the same module source must not answer differently
         depending on who asked."""
         standalone = NovaVM(random.Random(7), base_dir=host.RULES_DIR)
-        assert standalone.load_file("daedalus_ai.nova"), standalone.error
+        assert standalone.load_file("nova/fixtures/daedalus_ai.nova"), standalone.error
 
         # daedalus_rules.nova has no bare get_behavior() -- confirm that is
         # deliberate namespacing, not an accidental gap.
@@ -1199,7 +1199,7 @@ class TestDaedalusWeapons(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.vm = NovaVM(random.Random(7), base_dir=host.RULES_DIR)
-        assert cls.vm.load_file("daedalus_weapons.nova"), cls.vm.error
+        assert cls.vm.load_file("nova/fixtures/daedalus_weapons.nova"), cls.vm.error
 
     def test_weapon_order(self):
         self.assertEqual(self.vm.get_global("WEAPON_ORDER"),
@@ -1418,7 +1418,7 @@ class TestDaedalusRulesWeaponsBridge(unittest.TestCase):
         cls.vm = NovaVM(random.Random(7), base_dir=host.RULES_DIR)
         for name in host.HOST_FUNCTIONS:
             cls.vm.register_function(name, lambda args: None)
-        assert cls.vm.load_file("daedalus_rules.nova"), cls.vm.error
+        assert cls.vm.load_file("nova/fixtures/daedalus_rules.nova"), cls.vm.error
 
     CLASS_OF = {"x302": "fighter", "daedalus": "battlecruiser",
                "phoenix": "battlecruiser", "aurora": "capital",
@@ -1505,7 +1505,7 @@ class TestDaedalusRulesWeaponsBridge(unittest.TestCase):
 
     def test_weapons_nova_still_loads_standalone(self):
         standalone = NovaVM(random.Random(7), base_dir=host.RULES_DIR)
-        assert standalone.load_file("daedalus_weapons.nova"), standalone.error
+        assert standalone.load_file("nova/fixtures/daedalus_weapons.nova"), standalone.error
         a = standalone.call_function("fire_ballistic",
                                      ["primary", 12.3, 1.0, 0.0])
         b = self.vm.call_function("fire_weapon",

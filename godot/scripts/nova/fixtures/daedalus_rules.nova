@@ -17,9 +17,9 @@
 
 reactor "DAEDALUS  BC-304" version 4
 
-import "lib/combat.nova" as combat
-import "daedalus_ai.nova" as ai
-import "daedalus_weapons.nova" as weapons
+import "nova/fixtures/lib/combat.nova" as combat
+import "nova/fixtures/daedalus_ai.nova" as ai
+import "nova/fixtures/daedalus_weapons.nova" as weapons
 
 
 # ==========================================================================
