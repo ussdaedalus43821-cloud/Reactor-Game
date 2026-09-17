@@ -2,7 +2,8 @@ class_name HeaderBar
 extends Control
 
 ## The status strip across the top: operating state, shift clock, live
-## reactivity, and which backend is actually running the reactor.
+## reactivity, electrical output and cash earned, and which backend is
+## actually running the reactor.
 ##
 ## The backend readout is not a debugging leftover. Whether the core is
 ## being integrated by NumPy in a Python process or by GDScript in-engine
@@ -14,6 +15,7 @@ var plant_time := 0.0
 var goal_time := 900.0
 var reactivity_pcm := 0.0
 var power_pct := 0.0
+var revenue_usd := 0.0
 var backend_label := "starting"
 var backend_ok := true
 var alarm_level := 0
@@ -49,9 +51,12 @@ func _draw() -> void:
 	draw_string(font, Vector2(38.0, size.y * 0.5 + 8.0), state_name,
 			HORIZONTAL_ALIGNMENT_LEFT, -1, 22, col)
 
-	# Shift clock and the 15-minute goal.
+	# Shift clock and the 15-minute goal. Truncating to whole minutes is
+	# the point of a T+MM:SS stamp, not an accident.
+	@warning_ignore("integer_division")
 	var mins := int(plant_time) / 60
 	var secs := int(plant_time) % 60
+	@warning_ignore("integer_division")
 	var goal_m := int(goal_time) / 60
 	draw_string(font, Vector2(300.0, size.y * 0.5 + 6.0),
 			"T+%02d:%02d" % [mins, secs], HORIZONTAL_ALIGNMENT_LEFT, -1, 18,
@@ -79,9 +84,19 @@ func _draw() -> void:
 			"REACTIVITY %+8.1f pcm" % reactivity_pcm,
 			HORIZONTAL_ALIGNMENT_LEFT, -1, 15, rho_col)
 
+	# Electrical output sold to the grid -- capped at rated capacity and
+	# degraded by turbine load/coolant flow, unlike the flux dial, which
+	# is the core's own uncapped thermal reading. See NovaBridge.power_pct.
 	draw_string(font, Vector2(790.0, size.y * 0.5 + 6.0),
-			"POWER %6.1f %%" % power_pct, HORIZONTAL_ALIGNMENT_LEFT, -1, 15,
+			"OUTPUT %6.1f %%" % power_pct, HORIZONTAL_ALIGNMENT_LEFT, -1, 15,
 			ReactorTheme.CYAN)
+
+	# Cash earned so far this shift, at PRICE_PER_MWH for every MWh of
+	# that same electrical output -- a SCRAM or a choked valve doesn't
+	# just cost safety margin, it costs money too.
+	draw_string(font, Vector2(960.0, size.y * 0.5 + 6.0),
+			"SHIFT $%s" % _format_money(revenue_usd), HORIZONTAL_ALIGNMENT_LEFT,
+			-1, 15, ReactorTheme.GREEN)
 
 	# Backend badge, right-aligned.
 	var badge := "SIM: " + backend_label
@@ -93,3 +108,18 @@ func _draw() -> void:
 	draw_rect(badge_rect, Color(badge_col, 0.45), false, 1.0)
 	draw_string(font, badge_rect.position + Vector2(8.0, 15.0), badge,
 			HORIZONTAL_ALIGNMENT_LEFT, -1, 12, badge_col)
+
+
+## Whole dollars with a comma every three digits -- "%d" alone reads as a
+## wall of digits once a shift has been running a few minutes.
+static func _format_money(v: float) -> String:
+	var n := int(round(abs(v)))
+	var digits := str(n)
+	var grouped := ""
+	var count := 0
+	for i in range(digits.length() - 1, -1, -1):
+		grouped = digits[i] + grouped
+		count += 1
+		if count % 3 == 0 and i != 0:
+			grouped = "," + grouped
+	return ("-" if v < 0.0 else "") + grouped

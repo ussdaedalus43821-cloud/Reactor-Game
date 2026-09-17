@@ -1,12 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
-  <rect width="128" height="128" rx="22" fill="#12151b"/>
-  <circle cx="64" cy="64" r="44" fill="none" stroke="#2b3240" stroke-width="4"/>
-  <g fill="#e8963c">
-    <path d="M64 40a24 24 0 0 1 20.8 12L64 64z"/>
-    <path d="M84.8 76A24 24 0 0 1 43.2 76L64 64z"/>
-    <path d="M43.2 52A24 24 0 0 1 64 40L64 64z" opacity="0"/>
-    <path d="M43.2 52 64 64 43.2 76a24 24 0 0 1 0-24z"/>
+  <circle cx="64" cy="64" r="62" fill="#000000"/>
+  <g fill="#f0a63c">
+    <path d="M57,51.876 L39,20.699 A50,50 0 0,1 89,20.699 L71,51.876 A14,14 0 0,0 57,51.876 Z"/>
+    <path d="M57,76.124 L39,107.301 A50,50 0 0,1 14,64 L50,64 A14,14 0 0,0 57,76.124 Z"/>
+    <path d="M78,64 L114,64 A50,50 0 0,1 89,107.301 L71,76.124 A14,14 0 0,0 78,64 Z"/>
+    <circle cx="64" cy="64" r="14"/>
   </g>
-  <circle cx="64" cy="64" r="8" fill="#ffd76a"/>
-  <circle cx="64" cy="64" r="44" fill="none" stroke="#e8963c" stroke-width="2" opacity="0.5"/>
 </svg>

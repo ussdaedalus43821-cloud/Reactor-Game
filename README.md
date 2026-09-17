@@ -23,7 +23,6 @@ a text file, so the same code runs on macOS, iOS and Web.
 │              nova_vm.gd         load / eval / call    │
 │                    │                                  │
 │              res://scripts/reactor_rules.nova         │
-│              res://scripts/daedalus_rules.nova        │
 │              res://scripts/lib/combat.nova            │
 └───────────────────────────────────────────────────────┘
 ```
@@ -131,6 +130,21 @@ get away from you.
 * **`R`** starts a new shift after a meltdown or a win.
 * Every 45–90 s the fault injector picks something: turbine trip, feedwater
   pump failure, a seized rod bank, xenon poisoning.
+* Don't want to wait for the injector? Force any of them yourself with
+  **`1`/`2`/`3`/`4`** (rod stuck / turbine trip / feedwater failure / xenon
+  poisoning) and clear whatever's running with **`0`**. **`E`/`D`** and
+  **`T`/`G`** drag the coolant-flow and turbine-load valves by hand — push
+  either below 100 % and it overrides the fault injector outright; push it
+  back to 100 % and the automatic system has it again.
+* The header's **OUTPUT** is what the turbine-generator is actually selling
+  to the grid, not neutron flux — it's capped at 100 % of rated capacity and
+  goes to zero the instant the turbine trips or coolant flow stalls, even
+  if the core itself is still running hot. It counts decay heat too, so a
+  SCRAM doesn't zero it out by itself — as long as the turbine's still
+  spinning and coolant's still flowing, you keep selling whatever heat is
+  still coming off the core as it cools. **SHIFT $** is cumulative revenue
+  at a flat rate per MWh of that same output, so a trip or a choked valve
+  costs cash, not just safety margin.
 
 Hold fuel temperature under 2800 °C for 15:00 and you survive the shift.
 Let it sit above that for five continuous seconds and the core disassembles.
@@ -145,15 +159,14 @@ godot/                          the Godot project — open this
   scripts/
     control_room.gd             fixed-step loop, state fan-out
     nova_bridge.gd              NovaLang <-> reactor physics + UI
-    daedalus_bridge.gd          NovaLang -> Daedalus ship/power/sector data
-    ai_bridge.gd                NovaLang -> Daedalus enemy AI behavior
     reactor_physics.gd          RK4 six-group core
     reactor_theme.gd            shared palette
     reactor_rules.nova          >>> the reactor's control policy <<<
-    daedalus_rules.nova         >>> Daedalus ship stats, damage scaling,
-                                    power budget, sectors, advisor <<<
-    daedalus_ai.nova            >>> enemy AI: six archetypes, tuning,
-                                    reactions to player ship class <<<
+    daedalus_rules.nova         a second NovaLang program, kept only as
+    daedalus_ai.nova            conformance-test fixtures for the interpreter
+    daedalus_weapons.nova       (parity_check.gd loads these three; the game
+                                 they were written for lives in its own repo,
+                                 github.com/ussdaedalus43821-cloud/DaedalusGodot)
     lib/combat.nova             a NovaLang module
     nova/
       nova_lexer.gd             tokenizer
@@ -232,3 +245,32 @@ control policy. `check_project.py` fails the build if a preset loses it.
   `InputEventScreenTouch`.
 * **Web** — serve over HTTP, not `file://`. GL Compatibility renderer, so
   no `SharedArrayBuffer` or cross-origin isolation headers needed.
+
+## Modding
+
+Every reactor policy is one text file, `godot/scripts/reactor_rules.nova` —
+edit it in any text editor, save, and relaunch to try your change. No
+compiler, no rebuild.
+
+* **[MODDING_REACTOR.md](MODDING_REACTOR.md)** — the full guide: what's
+  inside `reactor_rules.nova`, how to write a custom scenario (a
+  coolant leak, a scripted meltdown chain), how to retune trip setpoints
+  and fault behavior, worked example mods, and troubleshooting.
+* **[MODDING_QUICKREF.md](MODDING_QUICKREF.md)** — a one-page cheat
+  sheet of every moddable value in this game.
+
+NovaLang is sandboxed: a `.nova` file has no file system or network
+access, so the worst a bad mod does is fail to load or unbalance the
+game.
+
+## Daedalus — the other game built on this language
+
+Daedalus is a separate, standalone Godot 4 space-combat game whose ship
+stats, enemy AI and weapons logic are all written in NovaLang, using the
+same interpreter (`scripts/nova/`) that runs the reactor above. It lives
+in its own repository — [DaedalusGodot](https://github.com/ussdaedalus43821-cloud/DaedalusGodot)
+— not in this one. This repo keeps only `daedalus_rules.nova`,
+`daedalus_ai.nova` and `daedalus_weapons.nova`, loaded by
+`parity_check.gd` purely as a second, larger NovaLang program to test
+the interpreter's module/import system against; nothing here depends on
+Daedalus, and nothing playable ships with this repo.

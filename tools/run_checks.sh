@@ -80,6 +80,32 @@ for kind, cls, hard in [("fighter","capital",False), ("fighter","fighter",False)
 PY
 
 echo
+echo "== daedalus stage 3 weapons =================================="
+python3 - <<'PY'
+import random, sys
+sys.path.insert(0, "reference")
+from nova_vm import NovaVM
+vm = NovaVM(random.Random(7), base_dir="godot/scripts")
+assert vm.load_file("daedalus_weapons.nova"), vm.error
+order = vm.get_global("WEAPON_ORDER")
+print("  %d weapon systems" % len(order))
+for kind in order:
+    w = vm.get_global("WEAPONS")[kind]
+    rng = vm.call_function("effective_range", [kind])
+    print("    %-8s %-28s range %8.1f  cooldown %.3fs"
+          % (kind, w["name"], rng, w.get("cooldown", 0.0)))
+for weapon_type, raw, mult, dist in [("primary", 12.3, 1.0, 0.0),
+                                     ("rocket", 117.5, 2.37, 97.4),
+                                     ("rocket", 117.5, 2.37, 200.0)]:
+    r = vm.call_function("fire_ballistic", [weapon_type, raw, mult, dist])
+    print("    fire_ballistic(%s, raw=%s, mult=%s, dist=%s) -> %s"
+          % (weapon_type, raw, mult, dist, r))
+for target_class in ("fighter", "battlecruiser", "capital"):
+    r = vm.call_function("fire_beam", [2431.0, target_class, 100.0, 1.42])
+    print("    fire_beam vs %-13s -> %s" % (target_class, r))
+PY
+
+echo
 echo "== headless reactor run ===================================="
 python3 reference/reactor_host.py --selftest --seconds 300 \
   | python3 -c 'import json,sys; d=json.load(sys.stdin); print("  %.0fx realtime, %s us/step, final state %s" % (d["realtime_factor"], d["us_per_step"], d["final"]["state"])); [print("   ", e) for e in d["events"]]'

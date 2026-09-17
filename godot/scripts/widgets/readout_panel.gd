@@ -10,6 +10,8 @@ extends Control
 
 const ROW_HEIGHT := 22.0
 
+@export var title_text: String = "PLANT PARAMETERS"
+
 var rows: Array = []        # [[label, text, Color], ...]
 
 
@@ -21,7 +23,7 @@ func set_rows(new_rows: Array) -> void:
 ## Build the standard set from a bridge state Dictionary.
 func apply_state(state: Dictionary) -> void:
 	var flow := float(state.get("flow_frac", 1.0))
-	var load := float(state.get("load_frac", 1.0))
+	var load_frac := float(state.get("load_frac", 1.0))
 	var xenon := float(state.get("xenon_pcm", 0.0))
 	set_rows([
 		["MODERATOR", "%7.1f C" % float(state.get("mod_temp_c", 0.0)),
@@ -30,8 +32,8 @@ func apply_state(state: Dictionary) -> void:
 			ReactorTheme.TEXT],
 		["COOLANT FLOW", "%6.0f %%" % (flow * 100.0),
 			ReactorTheme.GREEN if flow > 0.9 else ReactorTheme.RED],
-		["TURBINE LOAD", "%6.0f %%" % (load * 100.0),
-			ReactorTheme.GREEN if load > 0.9 else ReactorTheme.AMBER],
+		["TURBINE LOAD", "%6.0f %%" % (load_frac * 100.0),
+			ReactorTheme.GREEN if load_frac > 0.9 else ReactorTheme.AMBER],
 		["XENON WORTH", "%+7.1f pcm" % xenon,
 			ReactorTheme.TEXT_DIM if xenon > -1.0 else ReactorTheme.CYAN],
 		["BANK A", "%6.1f %% out" % float(state.get("rod_a", 0.0)),
@@ -45,7 +47,7 @@ func _draw() -> void:
 	var font := get_theme_default_font()
 	ReactorTheme.draw_bay(self, Rect2(Vector2.ZERO, size))
 
-	draw_string(font, Vector2(10.0, 17.0), "PLANT PARAMETERS",
+	draw_string(font, Vector2(10.0, 17.0), title_text,
 			HORIZONTAL_ALIGNMENT_LEFT, -1, 12, ReactorTheme.TEXT_DIM)
 	draw_line(Vector2(8.0, 24.0), Vector2(size.x - 8.0, 24.0),
 			ReactorTheme.BEZEL, 1.0)

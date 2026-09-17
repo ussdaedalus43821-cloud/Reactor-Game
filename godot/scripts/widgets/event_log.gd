@@ -56,6 +56,8 @@ func add_line(text: String, plant_time: float) -> void:
 	elif upper.contains("SURVIVED") or upper.contains("VETERAN"):
 		color = ReactorTheme.GREEN
 
+	# Truncating to whole minutes is the point of a T+MM:SS stamp.
+	@warning_ignore("integer_division")
 	var stamp := "T+%02d:%02d" % [int(plant_time) / 60, int(plant_time) % 60]
 	_entries.append(Entry.new(text, stamp, color))
 	while _entries.size() > MAX_LINES:

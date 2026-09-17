@@ -31,6 +31,14 @@ const DECAY_HEAT_TAU_S := 130.0
 const GRID_N := 10
 const MAX_STEPS_PER_TICK := 60
 
+## Electrical output, not thermal: a real turbine-generator is a rated
+## device, so it never sells more than its nameplate MW regardless of how
+## hard the core is running, and it sells nothing at all with the turbine
+## off or the coolant not moving heat to it -- see power_pct's own
+## comment in _substep().
+const RATED_ELECTRICAL_MW := 1000.0
+const PRICE_PER_MWH := 45.0
+
 ## Exactly the names reference/reactor_host.py registers.
 const HOST_FUNCTIONS := [
 	"log", "alarm", "scram", "reset_trip", "meltdown", "victory",
@@ -39,7 +47,7 @@ const HOST_FUNCTIONS := [
 
 var core := ReactorCore.new()
 var vm: NovaVM = null
-var ready := false
+var vm_ready := false      # NOT "ready" -- that shadows Node's own `ready` signal
 var error := ""
 var backend_label := "GODOT / NovaLang"
 
@@ -67,6 +75,16 @@ var load_frac := 1.0
 var xenon_pcm := 0.0
 var stuck_bank := ""
 
+## Manual operator override for flow_frac/load_frac, applied after the
+## policy runs each substep -- -1.0 means "hands off, let
+## reactor_rules.nova's fault injector (or nothing) decide", 0.0..1.0 is
+## an operator-commanded value that wins outright. See _substep().
+var manual_flow_override := -1.0
+var manual_load_override := -1.0
+
+var power_pct := 0.0
+var revenue_usd := 0.0
+
 var scram_requested := false
 var scram_reason := ""
 var trip_reset := false
@@ -88,12 +106,12 @@ func start(rules_path: String = RULES_PATH) -> void:
 
 	if not vm.load_file(rules_path):
 		error = "NovaLang: " + vm.error
-		ready = false
+		vm_ready = false
 		push_error("[NovaBridge] " + error)
 		engine_error.emit(error)
 	else:
 		error = ""
-		ready = true
+		vm_ready = true
 
 	reset(0)
 	engine_ready.emit(backend_label, hello())
@@ -101,7 +119,7 @@ func start(rules_path: String = RULES_PATH) -> void:
 
 func hello() -> Dictionary:
 	var info := {
-		"ok": ready,
+		"ok": vm_ready,
 		"engine": "nova",
 		"backend": "gdscript",
 		"dt": ReactorCore.PHYSICS_DT,
@@ -109,7 +127,7 @@ func hello() -> Dictionary:
 		"grid": GRID_N,
 		"error": error,
 	}
-	if ready:
+	if vm_ready:
 		var d := vm.describe()
 		info["title"] = d["title"]
 		info["rules_version"] = d["version"]
@@ -122,7 +140,7 @@ func hello() -> Dictionary:
 
 
 func is_ready() -> bool:
-	return ready
+	return vm_ready
 
 
 func fixed_dt() -> float:
@@ -153,9 +171,9 @@ func _register_host_functions() -> void:
 
 ## Games embedding this bridge can add their own vocabulary on top -- this
 ## is the seam daedalus_rules.nova uses.
-func register_function(name: String, fn: Callable) -> void:
+func register_function(fn_name: String, fn: Callable) -> void:
 	if vm != null:
-		vm.register_function(name, fn)
+		vm.register_function(fn_name, fn)
 
 
 static func _arg_text(args: Array, index: int, fallback: String = "") -> String:
@@ -235,6 +253,21 @@ func _fn_clear_fault(_args: Array):
 	return null
 
 
+## The operator's own hand on the fault injector -- clears whatever is
+## currently running (inject_fault() otherwise refuses to override an
+## active fault) and starts the named one immediately, full duration,
+## exactly as if the scheduler had picked it.
+func force_fault(fault_name: String) -> void:
+	if vm != null:
+		vm.clear_fault()
+		vm.inject_fault(fault_name)
+
+
+func clear_active_fault() -> void:
+	if vm != null:
+		vm.clear_fault()
+
+
 # ==========================================================================
 # Simulation
 # ==========================================================================
@@ -245,7 +278,7 @@ func reset(seed_value: int = 0) -> Dictionary:
 		vm.reset(seed_value)
 		if vm.error != "":
 			error = "NovaLang: " + vm.error
-			ready = false
+			vm_ready = false
 
 	t = 0.0
 	step_count = 0
@@ -273,6 +306,10 @@ func reset(seed_value: int = 0) -> Dictionary:
 	load_frac = 1.0
 	xenon_pcm = 0.0
 	stuck_bank = ""
+	manual_flow_override = -1.0
+	manual_load_override = -1.0
+	power_pct = 0.0
+	revenue_usd = 0.0
 
 	pending_events.clear()
 	pending_events.append("SIMULATION RESET -- REACTOR SUBCRITICAL")
@@ -315,7 +352,7 @@ func _substep(dt: float, operator_scram: bool, faults_enabled: bool) -> void:
 	# 3. Integrate the core.
 	core.step(dt, rod_a, rod_b, flow_frac, load_frac, xenon_pcm, decay)
 
-	if not ready:
+	if not vm_ready:
 		history.append([core.flux_percent(), core.fuel_temp()])
 		return
 
@@ -352,13 +389,32 @@ func _substep(dt: float, operator_scram: bool, faults_enabled: bool) -> void:
 	if not vm.tick(dt, inputs, faults_enabled):
 		error = "NovaLang: " + vm.error
 		push_error("[NovaBridge] " + error)
-		ready = false
+		vm_ready = false
 		pending_events.append("CONTROL LOGIC FAULT -- " + vm.error)
 		engine_error.emit(error)
 		return
 
 	flow_frac = float(vm.get_global("flow_frac", 1.0))
 	load_frac = float(vm.get_global("load_frac", 1.0))
+	# The operator's valve wins outright over whatever the policy just
+	# computed -- see manual_flow_override's own comment.
+	if manual_flow_override >= 0.0:
+		flow_frac = manual_flow_override
+	if manual_load_override >= 0.0:
+		load_frac = manual_load_override
+
+	# Electrical output, not neutron flux: neutron flux is fission power
+	# only, but the heat actually available to make steam is fission
+	# *plus* decay heat (`decay`, above) -- real plants absolutely do sell
+	# power off decay heat, so a SCRAM does not zero this out by itself.
+	# It's still capped at rated capacity (a generator does not sell
+	# 150 % of nameplate just because the core is running a spike), and
+	# still zeroed by a tripped turbine or stalled coolant flow, because
+	# heat nobody is carrying to a spinning generator earns nothing.
+	var thermal_pct := core.flux_percent() + decay
+	power_pct = clampf(thermal_pct, 0.0, 100.0) * flow_frac * load_frac
+	revenue_usd += (power_pct / 100.0) * RATED_ELECTRICAL_MW * PRICE_PER_MWH * (dt / 3600.0)
+
 	xenon_pcm = float(vm.get_global("xenon_pcm", 0.0))
 	stuck_bank = String(vm.get_global("stuck_bank", ""))
 	state_name = String(vm.get_global("state", "STARTUP"))
@@ -377,14 +433,24 @@ func _substep(dt: float, operator_scram: bool, faults_enabled: bool) -> void:
 	history.append([core.flux_percent(), core.fuel_temp()])
 
 
-## Rods slam in -- a real scram drops them under gravity, it does not drive
-## them, so this bypasses the rate limit on purpose.
+## Rods slam in -- a real scram drops them under gravity, bypassing the
+## normal drive-rate limit on purpose -- except a bank a rod_stuck fault
+## has already seized stays exactly where it is, gravity or not. That is
+## what lets the automatic trip still fail you if you push the plant
+## while a bank is already seized: the alarm still fires and the other
+## bank still drops on schedule, but a genuinely stuck rod does not
+## un-stick itself just because the protection system asked it to. Only
+## one bank is ever stuck at a time (see reactor_rules.nova's fault
+## injector), so a scram is never fully inert -- just possibly not
+## enough on its own.
 func _latch_scram() -> void:
 	flux_at_scram = core.flux_percent()
 	scram = true
 	scram_t = t
-	rod_a = 0.0
-	rod_b = 0.0
+	if stuck_bank != "A":
+		rod_a = 0.0
+	if stuck_bank != "B":
+		rod_b = 0.0
 	rod_target_a = 0.0
 	rod_target_b = 0.0
 
@@ -406,7 +472,7 @@ func snapshot() -> Dictionary:
 	pending_events.clear()
 
 	var fault = null
-	if ready and vm.active_fault != null:
+	if vm_ready and vm.active_fault != null:
 		var f: Dictionary = vm.active_fault
 		fault = {
 			"name": f["name"],
@@ -431,6 +497,8 @@ func snapshot() -> Dictionary:
 		"rod_target_b": rod_target_b,
 		"flow_frac": flow_frac,
 		"load_frac": load_frac,
+		"power_pct": power_pct,
+		"revenue_usd": revenue_usd,
 		"xenon_pcm": xenon_pcm,
 		"stuck_bank": stuck_bank,
 		"scram": scram,

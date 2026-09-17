@@ -290,13 +290,23 @@ class ReactorHost:
         self.history.append([self.physics.flux_percent, self.physics.fuel_temp])
 
     def _latch_scram(self):
-        """Rods slam in -- a real scram drops them under gravity, it does
-        not drive them, so this bypasses the rate limit on purpose."""
+        """Rods slam in -- a real scram drops them under gravity, bypassing
+        the normal drive-rate limit on purpose -- except a bank a
+        rod_stuck fault has already seized stays exactly where it is,
+        gravity or not. That is what lets the automatic trip still fail
+        you if you push the plant while a bank is already seized: the
+        alarm still fires and the other bank still drops on schedule, but
+        a genuinely stuck rod does not un-stick itself just because the
+        protection system asked it to. Only one bank is ever stuck at a
+        time (see reactor_rules.nova's fault injector), so a scram is
+        never fully inert -- just possibly not enough on its own."""
         self.flux_at_scram = self.physics.flux_percent
         self.scram = True
         self.scram_t = self.t
-        self.rod_a = 0.0
-        self.rod_b = 0.0
+        if self.stuck_bank != "A":
+            self.rod_a = 0.0
+        if self.stuck_bank != "B":
+            self.rod_b = 0.0
         self.rod_target_a = 0.0
         self.rod_target_b = 0.0
 
