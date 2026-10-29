@@ -292,11 +292,18 @@ class NovaVM:
         if self.active_fault is not None:
             ev.exec_block(self.active_fault["body"], Env(ev.globals))
 
-    def tick(self, dt: float, inputs: dict, faults_enabled: bool = True) -> bool:
+    def tick(self, dt: float, inputs: dict, faults_enabled: bool = True,
+             overrides=None) -> bool:
         """One control cycle: reset transient effects, take the host's
-        measurements, run the fault scheduler, recompute signals, then fire
-        every rule in priority order. The host reads results back with
-        get_global() and through the functions it registered."""
+        measurements, run the fault scheduler, apply the host's overrides,
+        recompute signals, then fire every rule in priority order. The host
+        reads results back with get_global() and through the functions it
+        registered.
+
+        `overrides` are values the host forces regardless of the policy (an
+        operator's hand on a valve). They land after the fault bodies and
+        before the signals, so they beat any fault and every trip channel
+        sees the plant as it really is."""
         ev = self.evaluator
         ev.begin_run()
         ev.dt = dt
@@ -317,6 +324,9 @@ class NovaVM:
         if ev.error:
             self.error = ev.error
             return False
+
+        for key, value in (overrides or {}).items():
+            ev.globals.declare(key, value)
 
         for name, expr in self.program.signal_defs:
             ev.globals.declare(name, ev.eval(expr, ev.globals))

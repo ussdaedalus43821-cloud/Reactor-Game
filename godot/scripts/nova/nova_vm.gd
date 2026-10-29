@@ -18,7 +18,7 @@ extends RefCounted
 ##     vm.eval(source, "<name>")            # same, from a string
 ##     vm.call_function("fib", [10.0])      # GDScript -> NovaLang
 ##     vm.register_function("hull", fn)     # NovaLang -> GDScript
-##     vm.tick(dt, inputs, faults_enabled)  # one rule-engine cycle
+##     vm.tick(dt, inputs, faults_enabled, overrides)  # one rule-engine cycle
 ##
 ## call_function() is not spelled call(): every Godot Object already has a
 ## call() method and shadowing it is a hard error, so both this and the
@@ -341,10 +341,16 @@ func _update_faults(now: float, enabled: bool) -> void:
 
 
 ## One control cycle: reset transient effects, take the host's
-## measurements, run the fault scheduler, recompute signals, then fire every
-## rule in priority order. The host reads results back with get_global() and
-## through the functions it registered.
-func tick(dt: float, inputs: Dictionary, faults_enabled: bool = true) -> bool:
+## measurements, run the fault scheduler, apply the host's overrides,
+## recompute signals, then fire every rule in priority order. The host reads
+## results back with get_global() and through the functions it registered.
+##
+## `overrides` are values the host forces regardless of the policy (an
+## operator's hand on a valve). They land after the fault bodies and before
+## the signals, so they beat any fault and every trip channel sees the plant
+## as it really is.
+func tick(dt: float, inputs: Dictionary, faults_enabled: bool = true,
+		overrides: Dictionary = {}) -> bool:
 	var ev := evaluator
 	ev.begin_run()
 	ev.dt = dt
@@ -365,6 +371,9 @@ func tick(dt: float, inputs: Dictionary, faults_enabled: bool = true) -> bool:
 	if ev.error != "":
 		error = ev.error
 		return false
+
+	for key in overrides:
+		ev.globals.declare(String(key), overrides[key])
 
 	for entry in program["signal_defs"]:
 		ev.globals.declare(String(entry[0]), ev.eval(entry[1], ev.globals))

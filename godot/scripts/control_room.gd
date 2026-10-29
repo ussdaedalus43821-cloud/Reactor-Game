@@ -443,11 +443,10 @@ func _restart() -> void:
 	_accum = 0.0
 	rod_a.target = 0.0
 	rod_b.target = 0.0
-	# Not release_to_auto() -- that no-ops while the slider is disabled
-	# (e.g. restarting right after a meltdown), and a restart must clear
-	# manual overrides unconditionally.
-	flow_slider.value = 100.0
-	load_slider.value = 100.0
+	# A restart must clear manual overrides unconditionally -- even right
+	# after a meltdown, while the sliders are still disabled.
+	flow_slider.release_to_auto()
+	load_slider.release_to_auto()
 	graph.clear_history()
 	event_log.clear_log()
 	overlay.hide_result()

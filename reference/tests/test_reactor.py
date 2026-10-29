@@ -470,6 +470,22 @@ class TestReactorDSL(unittest.TestCase):
         self.assertIn("ALARM: TRIP", seen)
         self.assertIn("TRIP CLEARED", seen)
 
+    def test_host_overrides_beat_faults_and_reach_the_signals(self):
+        h = Harness('reactor "t"\n'
+                    'effects { flow_frac = 1.0 }\n'
+                    'signals { low = flow_frac < 0.5 }\n'
+                    'fault pump weight 1 duration 10 label "PUMP" {\n'
+                    '    set flow_frac = 0.3\n}')
+        h.vm.tick(0.05, {"t": 0.0}, False, {"flow_frac": 0.0})
+        self.assertEqual(h.g("flow_frac"), 0.0)
+        self.assertTrue(h.g("low"))           # the trip channel sees the valve
+        h.vm.inject_fault("pump")
+        h.vm.tick(0.05, {"t": 0.05}, False, {"flow_frac": 0.9})
+        self.assertEqual(h.g("flow_frac"), 0.9)   # the operator beats the fault
+        self.assertFalse(h.g("low"))
+        h.vm.tick(0.05, {"t": 0.1}, False)
+        self.assertEqual(h.g("flow_frac"), 0.3)   # hands off: the fault again
+
     def test_runtime_errors_in_a_rule_name_the_rule(self):
         h = Harness('reactor "t"\nrule bad { when true then set x = nope }')
         self.assertFalse(h.tick(t=0.0))
@@ -663,6 +679,15 @@ class TestReactorHost(unittest.TestCase):
         result = host.selftest(seconds=20.0, seed=3)
         self.assertTrue(result["ok"])
         self.assertGreater(result["realtime_factor"], 1.0)
+
+    def test_stuck_rod_seizes_the_announced_bank_from_its_first_tick(self):
+        for seed in range(8):
+            sim = host.ReactorHost(seed=seed)
+            sim.advance(10, 50.0, 50.0, False, False)
+            sim.vm.inject_fault("rod_stuck")
+            snap = sim.advance(1, 50.0, 50.0, False, False)
+            seized = [e for e in snap["events"] if e.endswith("DRIVE SEIZED")]
+            self.assertEqual(seized, ["BANK %s DRIVE SEIZED" % snap["stuck_bank"]])
 
     def test_validate_reports_the_policy(self):
         d = host.validate(host.DEFAULT_RULES)

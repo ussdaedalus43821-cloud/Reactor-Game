@@ -291,9 +291,13 @@ fault xenon_poisoning weight 1.0 duration 60.0 label "XENON POISONING" {
 }
 
 # The bank a stuck-rod fault seizes is latched once, on the rising edge of
-# the fault, so it cannot flicker between A and B while the fault runs.
+# the fault, so it cannot flicker between A and B while the fault runs. The
+# fault body ran before this rule and still read the previous pick, so the
+# fresh pick is applied to stuck_bank here too -- otherwise the wrong bank
+# seizes for the onset tick.
 rule latch_stuck_bank priority 95 edge {
     when  active_fault == "rod_stuck"
     then  set stuck_bank_pick = pick("A", "B")
+          set stuck_bank = stuck_bank_pick
           log("BANK " + stuck_bank_pick + " DRIVE SEIZED")
 }

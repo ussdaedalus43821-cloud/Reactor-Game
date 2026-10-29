@@ -75,10 +75,11 @@ var load_frac := 1.0
 var xenon_pcm := 0.0
 var stuck_bank := ""
 
-## Manual operator override for flow_frac/load_frac, applied after the
-## policy runs each substep -- -1.0 means "hands off, let
-## reactor_rules.nova's fault injector (or nothing) decide", 0.0..1.0 is
-## an operator-commanded value that wins outright. See _substep().
+## Manual operator override for flow_frac/load_frac -- -1.0 means "hands
+## off, let reactor_rules.nova's fault injector (or nothing) decide",
+## 0.0..1.0 is an operator-commanded value that wins outright. Handed to the
+## VM as a tick override, so the policy's trip channels see it too. See
+## _substep().
 var manual_flow_override := -1.0
 var manual_load_override := -1.0
 
@@ -385,7 +386,16 @@ func _substep(dt: float, operator_scram: bool, faults_enabled: bool) -> void:
 		"meltdown": meltdown,
 	}
 
-	if not vm.tick(dt, inputs, faults_enabled):
+	# The operator's valves are forced inside the VM, after the fault bodies
+	# and before the signals -- so they beat any fault, and the loss-of-flow
+	# trip channel sees an operator-closed valve exactly like a failed pump.
+	var overrides := {}
+	if manual_flow_override >= 0.0:
+		overrides["flow_frac"] = manual_flow_override
+	if manual_load_override >= 0.0:
+		overrides["load_frac"] = manual_load_override
+
+	if not vm.tick(dt, inputs, faults_enabled, overrides):
 		error = "NovaLang: " + vm.error
 		push_error("[NovaBridge] " + error)
 		vm_ready = false
@@ -395,12 +405,6 @@ func _substep(dt: float, operator_scram: bool, faults_enabled: bool) -> void:
 
 	flow_frac = float(vm.get_global("flow_frac", 1.0))
 	load_frac = float(vm.get_global("load_frac", 1.0))
-	# The operator's valve wins outright over whatever the policy just
-	# computed -- see manual_flow_override's own comment.
-	if manual_flow_override >= 0.0:
-		flow_frac = manual_flow_override
-	if manual_load_override >= 0.0:
-		load_frac = manual_load_override
 
 	# Electrical output, not neutron flux: neutron flux is fission power
 	# only, but the heat actually available to make steam is fission
