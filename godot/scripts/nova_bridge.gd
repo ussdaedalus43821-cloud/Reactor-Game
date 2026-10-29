@@ -169,8 +169,7 @@ func _register_host_functions() -> void:
 	vm.register_function("clear_fault", _fn_clear_fault)
 
 
-## Games embedding this bridge can add their own vocabulary on top -- this
-## is the seam daedalus_rules.nova uses.
+## Games embedding this bridge can add their own vocabulary on top.
 func register_function(fn_name: String, fn: Callable) -> void:
 	if vm != null:
 		vm.register_function(fn_name, fn)
