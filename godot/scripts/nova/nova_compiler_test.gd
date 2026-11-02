@@ -79,26 +79,47 @@ func _show_sample(label: String, source, module_reader: Callable) -> void:
 # Compile one source string; returns the NovaCompiler result or null
 # ==========================================================================
 
-func _compile_source(source: String, label: String, module_reader: Callable) -> Variant:
+## `expect_ok` is the conformance corpus's own verdict on this source --
+## false for a handful of cases (err_parse, err_lex) that are
+## *deliberately* malformed, to check that the parser/lexer rejects them
+## with an exact message. A failure there is the correct outcome, not a
+## compiler bug, so it is reported but not counted against `failures`.
+## Everything else in the corpus parses fine and is expected to compile
+## fine too: this pass has no VM yet, so a case whose `ok:false` comes
+## from a *runtime* error in the tree-walker (unknown identifier, wrong
+## arity, out-of-range index, ...) is correctly expected to compile --
+## Phase 2's parity check is what verifies it then fails at the right
+## moment, with the right message, once bytecode actually runs.
+func _compile_source(source: String, label: String, module_reader: Callable,
+		expect_ok: bool = true) -> Variant:
 	var parser := NovaParser.new()
 	var program := parser.parse(source, label)
 	if parser.error != "":
-		print("  PARSE FAIL: " + parser.error)
-		failures += 1
+		if expect_ok:
+			print("  PARSE FAIL: " + parser.error)
+			failures += 1
+		else:
+			print("  (expected) PARSE FAIL: " + parser.error)
 		return null
 
 	var resolver := NovaResolver.new(module_reader)
 	resolver.resolve_program(program)
 	if resolver.error != "":
-		print("  RESOLVE FAIL: " + resolver.error)
-		failures += 1
+		if expect_ok:
+			print("  RESOLVE FAIL: " + resolver.error)
+			failures += 1
+		else:
+			print("  (expected) RESOLVE FAIL: " + resolver.error)
 		return null
 
 	var compiler := NovaCompiler.new()
 	var result := compiler.compile_program(program)
 	if compiler.error != "":
-		print("  COMPILE FAIL: " + compiler.error)
-		failures += 1
+		if expect_ok:
+			print("  COMPILE FAIL: " + compiler.error)
+			failures += 1
+		else:
+			print("  (expected) COMPILE FAIL: " + compiler.error)
 		return null
 
 	compiled += 1
@@ -120,12 +141,17 @@ func _run_conformance_corpus() -> void:
 	var reader := func(path): return modules.get(path)
 	var cases: Array = doc.get("cases", [])
 	var ok := 0
+	var expected_rejections := 0
 	for entry in cases:
 		var case: Dictionary = entry
-		var res = _compile_source(String(case["source"]), String(case["name"]), reader)
+		var expect_ok: bool = case.get("ok", true)
+		var res = _compile_source(String(case["source"]), String(case["name"]), reader, expect_ok)
 		if res != null:
 			ok += 1
-	print("  " + str(ok) + "/" + str(cases.size()) + " conformance cases compiled")
+		elif not expect_ok:
+			expected_rejections += 1
+	print("  " + str(ok) + "/" + str(cases.size()) + " conformance cases compiled (" +
+			str(expected_rejections) + " deliberately-invalid case(s) correctly rejected)")
 
 
 func _load_conformance() -> Dictionary:
