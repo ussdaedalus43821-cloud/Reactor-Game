@@ -11,12 +11,16 @@ extends SceneTree
 ## exact host calls made and the exact error text. It also records a
 ## deterministic reactor trace: reactor_rules.nova driven through a scripted
 ## rod program with the fault injector off. This script replays all of it
-## inside Godot and diffs.
+## inside Godot, through *both* GDScript backends in turn (NovaVM2, the
+## bytecode VM, and NovaEvaluator, the tree-walker kept as its reference),
+## and diffs every one against the Python oracle.
 ##
-## That is how an interpreter no CI machine can run still gets verified.
+## That is how an interpreter no CI machine can run still gets verified --
+## and how the VM gets held to the exact same bar the tree-walker always
+## has been, not just "doesn't crash" (nova_compiler_test.gd's job).
 ##
-## Run it headless -- exits non-zero on any mismatch, so it drops straight
-## into a build pipeline:
+## Run it headless -- exits non-zero on any mismatch in either backend, so
+## it drops straight into a build pipeline:
 ##
 ##     godot --headless --path godot --script res://scripts/nova/parity_check.gd
 ##
@@ -30,6 +34,11 @@ const FLOAT_TOLERANCE := 1e-9
 var failures: Array = []
 var checked := 0
 
+## Which backend every NovaVM this pass constructs should use -- set once
+## per lap around the backend loop in _initialize(), read by _make_vm()
+## and _check_reactor_trace().
+var _use_vm2 := true
+
 
 func _initialize() -> void:
 	print("NovaLang parity check")
@@ -40,35 +49,54 @@ func _initialize() -> void:
 		_finish(2)
 		return
 
-	var modules: Dictionary = doc.get("modules", {})
-	for entry in doc.get("cases", []):
-		_check_case(entry, modules)
+	var overall_ok := true
+	for use_vm2 in [true, false]:
+		_use_vm2 = use_vm2
+		var label := "bytecode VM" if use_vm2 else "tree-walker"
+		failures = []
+		checked = 0
+		print("")
+		print("---- backend: %s ----" % label)
 
-	if doc.has("reactor_trace"):
-		_check_reactor_trace(doc["reactor_trace"])
+		var modules: Dictionary = doc.get("modules", {})
+		for entry in doc.get("cases", []):
+			_check_case(entry, modules)
 
-	if doc.has("daedalus_data"):
-		_check_daedalus_data(doc["daedalus_data"])
+		if doc.has("reactor_trace"):
+			_check_reactor_trace(doc["reactor_trace"])
 
-	if doc.has("ai_data"):
-		_check_ai_data(doc["ai_data"])
+		if doc.has("daedalus_data"):
+			_check_daedalus_data(doc["daedalus_data"])
 
-	if doc.has("weapons_data"):
-		_check_weapons_data(doc["weapons_data"])
+		if doc.has("ai_data"):
+			_check_ai_data(doc["ai_data"])
 
-	print("")
-	if failures.is_empty():
-		print("parity OK -- %d checks, GDScript matches the reference" % checked)
-		_finish(0)
-	else:
-		print("%d parity failure(s) out of %d checks:" % [failures.size(), checked])
-		for f in failures:
-			print("  FAIL  " + String(f))
-		_finish(1)
+		if doc.has("weapons_data"):
+			_check_weapons_data(doc["weapons_data"])
+
+		print("")
+		if failures.is_empty():
+			print("parity OK (%s) -- %d checks, GDScript matches the reference" % [label, checked])
+		else:
+			overall_ok = false
+			print("%d parity failure(s) out of %d checks (%s):" % [failures.size(), checked, label])
+			for f in failures:
+				print("  FAIL  " + String(f))
+
+	_finish(0 if overall_ok else 1)
 
 
 func _finish(code: int) -> void:
 	quit(code)
+
+
+## Every check below builds its own NovaVM(s) through this instead of
+## `NovaVM.new(...)` directly, so each one picks up whichever backend the
+## current lap of _initialize()'s loop is checking.
+func _make_vm(generator: RandomNumberGenerator = null, reader: Callable = Callable()) -> NovaVM:
+	var vm := NovaVM.new(generator, reader)
+	vm.use_bytecode_vm = _use_vm2
+	return vm
 
 
 func _load_conformance() -> Dictionary:
@@ -103,7 +131,7 @@ func _check_case(entry: Dictionary, modules: Dictionary) -> void:
 	var host_calls: Array = []
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 12345
-	var vm := NovaVM.new(rng, func(path): return modules.get(path))
+	var vm := _make_vm(rng, func(path): return modules.get(path))
 
 	for fn_name in entry.get("_host", ["log", "alarm", "scram", "reset_trip",
 			"meltdown", "victory", "inject_fault", "clear_fault"]):
@@ -148,7 +176,7 @@ func _same_string_list(got: Array, expected) -> bool:
 
 func _check_reactor_trace(trace: Dictionary) -> void:
 	var bridge := NovaBridge.new()
-	bridge.start(String(trace.get("rules", "reactor_rules.nova")))
+	bridge.start(String(trace.get("rules", "reactor_rules.nova")), _use_vm2)
 	if not bridge.is_ready():
 		failures.append("reactor trace: policy failed to load -- " + bridge.error)
 		checked += 1
@@ -199,7 +227,7 @@ func _compare_frame(want: Dictionary, got: Dictionary, index: int) -> void:
 # ==========================================================================
 
 func _check_daedalus_data(data: Dictionary) -> void:
-	var vm := NovaVM.new()
+	var vm := _make_vm()
 	for fn_name in ["log", "alarm", "scram", "reset_trip", "meltdown",
 			"victory", "inject_fault", "clear_fault"]:
 		vm.register_function(String(fn_name), func(_args: Array): return null)
@@ -305,7 +333,7 @@ func _check_daedalus_data(data: Dictionary) -> void:
 # ==========================================================================
 
 func _check_ai_data(data: Dictionary) -> void:
-	var vm := NovaVM.new()
+	var vm := _make_vm()
 	checked += 1
 	if not vm.load_file("nova/fixtures/daedalus_ai.nova"):
 		failures.append("daedalus_ai.nova failed to load: " + vm.error)
@@ -345,7 +373,7 @@ func _check_ai_data(data: Dictionary) -> void:
 					rs["damage"], got_dmg)
 
 	# The integration seam: daedalus_rules.nova importing daedalus_ai.nova.
-	var rules_vm := NovaVM.new()
+	var rules_vm := _make_vm()
 	for fn_name in ["log", "alarm", "scram", "reset_trip", "meltdown",
 			"victory", "inject_fault", "clear_fault"]:
 		rules_vm.register_function(String(fn_name), func(_args: Array): return null)
@@ -450,7 +478,7 @@ func _dict_matches(want, got) -> bool:
 # ==========================================================================
 
 func _check_weapons_data(data: Dictionary) -> void:
-	var vm := NovaVM.new()
+	var vm := _make_vm()
 	checked += 1
 	if not vm.load_file("nova/fixtures/daedalus_weapons.nova"):
 		failures.append("daedalus_weapons.nova failed to load: " + vm.error)
@@ -484,7 +512,7 @@ func _check_weapons_data(data: Dictionary) -> void:
 				_fail("weapons %s(%s)" % [fn_name, sample["args"]], "result",
 						sample["result"], got)
 
-	var rules_vm := NovaVM.new()
+	var rules_vm := _make_vm()
 	for fn_name in ["log", "alarm", "scram", "reset_trip", "meltdown",
 			"victory", "inject_fault", "clear_fault"]:
 		rules_vm.register_function(String(fn_name), func(_args: Array): return null)

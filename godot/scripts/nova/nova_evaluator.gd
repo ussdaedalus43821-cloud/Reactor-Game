@@ -92,13 +92,23 @@ class Env:
 
 
 ## A user-defined function plus the environment it closed over.
+##
+## `code`/`cells` are set instead of `body`/`closure` when this value is a
+## NovaVM2 closure rather than a tree-walker function -- `code` (non-null)
+## says which. Kept on the same class, rather than a second value type,
+## so type_name()/text()/truthy()/deep_equal() recognize a function value
+## made by either backend with no changes, and the two backends can never
+## disagree about what a function prints as or whether it's callable.
 class NovaFunc:
 	var name: String
 	var params: Array
 	var body: Dictionary
 	var closure
 
-	func _init(n: String, p: Array, b: Dictionary, c) -> void:
+	var code = null          # NovaCode, when this is a VM2 closure
+	var cells: Array = []    # this closure's captured Cells, for VM2
+
+	func _init(n: String = "", p: Array = [], b: Dictionary = {}, c = null) -> void:
 		name = n
 		params = p
 		body = b

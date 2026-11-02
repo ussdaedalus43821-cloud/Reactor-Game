@@ -99,9 +99,10 @@ var _rules_path := RULES_PATH
 # Lifecycle
 # ==========================================================================
 
-func start(rules_path: String = RULES_PATH) -> void:
+func start(rules_path: String = RULES_PATH, use_bytecode_vm: bool = true) -> void:
 	_rules_path = rules_path
 	vm = NovaVM.new()
+	vm.use_bytecode_vm = use_bytecode_vm
 	_register_host_functions()
 
 	if not vm.load_file(rules_path):
