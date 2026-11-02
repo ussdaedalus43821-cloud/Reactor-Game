@@ -61,7 +61,7 @@ func _show_sample(label: String, source, module_reader: Callable) -> void:
 	if source == null:
 		print("  SKIP: could not read source")
 		return
-	var result := _compile_source(String(source), label, module_reader)
+	var result = _compile_source(String(source), label, module_reader)
 	if result == null:
 		return
 	var compiled_program: Dictionary = result
@@ -122,7 +122,7 @@ func _run_conformance_corpus() -> void:
 	var ok := 0
 	for entry in cases:
 		var case: Dictionary = entry
-		var res := _compile_source(String(case["source"]), String(case["name"]), reader)
+		var res = _compile_source(String(case["source"]), String(case["name"]), reader)
 		if res != null:
 			ok += 1
 	print("  " + str(ok) + "/" + str(cases.size()) + " conformance cases compiled")
