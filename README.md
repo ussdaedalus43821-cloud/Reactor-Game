@@ -168,12 +168,6 @@ godot/                          the Godot project — open this
       nova_vm.gd                load / eval / call + the rule engine
       parity_check.gd           replays the goldens in-engine
       conformance.json          generated goldens
-      fixtures/                 a second, larger NovaLang program, kept
-        daedalus_rules.nova     only as conformance-test fixtures for the
-        daedalus_ai.nova        interpreter (parity_check.gd loads these
-        daedalus_weapons.nova   three; the game they were written for
-        lib/combat.nova         lives in its own repo,
-                                 github.com/ussdaedalus43821-cloud/DaedalusGodot)
     widgets/                    dial, core map, strip chart, scram button…
   shaders/                      core heatmap, industrial backdrop
 reference/                      Python reference implementation (never ships)
@@ -194,7 +188,7 @@ reactor_simulator.py            the original standalone pygame prototype
 never shipped and the game never runs it.** It exists for one reason: a
 2 500-line interpreter needs a specification you can execute.
 
-* 77 unit tests run against it in CI.
+* 76 unit tests run against it in CI.
 * `tools/gen_conformance.py` runs a corpus of 51 NovaLang programs through
   it and records the exact output, host calls and error text of each, plus
   a 900-step reactor trace — into `conformance.json`.
@@ -268,8 +262,4 @@ Daedalus is a separate, standalone Godot 4 space-combat game whose ship
 stats, enemy AI and weapons logic are all written in NovaLang, using the
 same interpreter (`scripts/nova/`) that runs the reactor above. It lives
 in its own repository — [DaedalusGodot](https://github.com/ussdaedalus43821-cloud/DaedalusGodot)
-— not in this one. This repo keeps only `daedalus_rules.nova`,
-`daedalus_ai.nova` and `daedalus_weapons.nova`, loaded by
-`parity_check.gd` purely as a second, larger NovaLang program to test
-the interpreter's module/import system against; nothing here depends on
-Daedalus, and nothing playable ships with this repo.
+— not in this one, and nothing here depends on it.

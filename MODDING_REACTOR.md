@@ -826,8 +826,7 @@ preference:
 
 ---
 
-For every value not covered above, and for a side-by-side reference
-with Daedalus's own moddable numbers, see
+For every value not covered above, see
 [`MODDING_QUICKREF.md`](MODDING_QUICKREF.md). For the full language
 syntax (every operator, every builtin, module imports, closures), see
 [`docs/NOVALANG.md`](docs/NOVALANG.md).

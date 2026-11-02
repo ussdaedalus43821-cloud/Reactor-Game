@@ -90,8 +90,8 @@ reactor was. Now they are ordinary functions the host registers:
 vm.register_function("scram", _fn_scram)
 ```
 
-which is why `daedalus_rules.nova` can run in the same interpreter with a
-completely different vocabulary, and why NovaLang is a general-purpose
+which is why another game can run its own scripts in the same interpreter
+with a completely different vocabulary, and why NovaLang is a general-purpose
 scripting language rather than a reactor DSL with delusions.
 
 ## One frame

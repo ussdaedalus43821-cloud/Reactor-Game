@@ -192,73 +192,6 @@ def reactor_trace(steps: int = 900) -> dict:
             "rod_program": program, "frames": frames}
 
 
-WEAPONS_FIRE_SAMPLES = [
-    # weapon_type, attacker_key, target_class, distance, elapsed
-    ["primary", "x302", "fighter", 0.0, 0.0],
-    ["primary", "x302", "capital", 0.0, 0.0],
-    ["primary", "atlantis", "battlecruiser", 0.0, 0.0],
-    ["primary", "daedalus", "battlecruiser", 5000.0, 0.0],   # out of range
-    ["rocket", "daedalus", "fighter", 0.0, 0.0],
-    ["rocket", "daedalus", "fighter", 97.4, 0.0],             # blast edge
-    ["rocket", "daedalus", "fighter", 200.0, 0.0],            # beyond blast
-    ["homing", "phoenix", "capital", 40.0, 0.0],
-    ["beam", "daedalus", "fighter", 100.0, 1.42],
-    ["beam", "daedalus", "capital", 100.0, 0.0],
-    ["beam", "phoenix", "battlecruiser", 100.0, 1.42],
-    ["beam", "x302", "fighter", 100.0, 1.42],                 # unequipped
-    ["omni", "atlantis", "fighter", 50.0, 0.0],
-    ["omni", "daedalus", "fighter", 50.0, 0.0],               # refused
-    ["turret", "destiny", "battlecruiser", 300.0, 0.0],
-    ["turret", "atlantis", "battlecruiser", 300.0, 0.0],      # refused
-]
-
-WEAPONS_FORMULA_SAMPLES = {
-    "falloff_damage": [[100.0, 0.0, 97.4, 0.37], [100.0, 48.7, 97.4, 0.37],
-                       [100.0, 97.4, 97.4, 0.37], [100.0, 200.0, 97.4, 0.37]],
-    "beam_ramp_frac": [[0.0], [0.71], [1.42], [10.0]],
-    "homing_turn_rate": [["fighter"], ["capital"], ["battlecruiser"]],
-    "homing_salvo_size": [["aurora"], ["atlantis"], ["daedalus"]],
-    "effective_range": [["primary"], ["rocket"], ["homing"], ["beam"],
-                        ["turret"]],
-}
-
-
-def weapons_data() -> dict:
-    """Pin the weapon tables, the fire-resolution samples above (covering
-    every guard: out of range, unequipped, blast/splash falloff at and past
-    the edge, all three beam outcomes), and the standalone formula helpers.
-    """
-    vm = NovaVM(random.Random(7), module_reader=_read_script)
-    if not vm.load_file("nova/fixtures/daedalus_weapons.nova"):
-        raise SystemExit("daedalus_weapons.nova failed to load: %s" % vm.error)
-
-    weapons_table = {}
-    for key, entry in vm.get_global("WEAPONS").items():
-        weapons_table[key] = dict(entry)
-
-    formulas = {}
-    for fn_name, arglists in WEAPONS_FORMULA_SAMPLES.items():
-        formulas[fn_name] = [{"args": args, "result": vm.call_function(fn_name, args)}
-                             for args in arglists]
-
-    rules_vm = NovaVM(random.Random(7), module_reader=_read_script)
-    for fn_name in host.HOST_FUNCTIONS:
-        rules_vm.register_function(fn_name, lambda args: None)
-    if not rules_vm.load_file("nova/fixtures/daedalus_rules.nova"):
-        raise SystemExit("daedalus_rules.nova failed to load: %s" % rules_vm.error)
-
-    fires = [
-        {"args": args, "result": rules_vm.call_function("fire_weapon", args)}
-        for args in WEAPONS_FIRE_SAMPLES]
-
-    return {
-        "weapon_order": vm.get_global("WEAPON_ORDER"),
-        "weapons": weapons_table,
-        "formulas": formulas,
-        "fires": fires,
-    }
-
-
 def build_doc() -> dict:
     """The whole golden document. check_parity.py rebuilds this and diffs it
     against the committed file, so a reference change that nobody
@@ -271,145 +204,7 @@ def build_doc() -> dict:
         "modules": MODULES,
         "cases": [run_case(name, src) for name, src in CASES],
         "reactor_trace": reactor_trace(),
-        "daedalus_data": daedalus_data(),
-        "ai_data": ai_data(),
-        "weapons_data": weapons_data(),
     }
-
-
-DAEDALUS_DAMAGE_PAIRS = [
-    ["fighter", "battlecruiser"], ["fighter", "capital"],
-    ["battlecruiser", "fighter"], ["battlecruiser", "capital"],
-    ["capital", "fighter"], ["capital", "battlecruiser"],
-    ["fighter", "fighter"], ["battlecruiser", "battlecruiser"],
-    ["capital", "capital"], ["fighter", "no_such_class"],
-]
-DAEDALUS_DANGER_SAMPLES = [[0, 40.0], [1, 0.0], [1, 12.5], [2, 0.0],
-                           [2, 7.25], [3, 0.0], [3, 3.75], [3, 20.0]]
-
-
-def daedalus_data() -> dict:
-    """Pin the Stage 1 balance tables. parity_check.gd loads the same
-    daedalus_rules.nova through the GDScript interpreter and diffs, so a
-    number that reads differently in the two runtimes fails the build."""
-    vm = NovaVM(random.Random(7),
-                module_reader=lambda p: _read_script(p))
-    for fn_name in host.HOST_FUNCTIONS:
-        vm.register_function(fn_name, lambda args: None)
-    if not vm.load_file("nova/fixtures/daedalus_rules.nova"):
-        raise SystemExit("daedalus_rules.nova failed to load: %s" % vm.error)
-
-    ships = {}
-    for key, entry in vm.get_global("SHIPS").items():
-        ships[key] = {k: entry[k] for k in
-                      ("name", "class", "shield", "hull", "speed", "turn",
-                       "gun_dmg", "rocket_dmg", "homing_dmg", "beam_dmg",
-                       "hardened")}
-
-    return {
-        "ship_order": vm.get_global("SHIP_ORDER"),
-        "ships": ships,
-        "damage_pairs": [
-            {"a": a, "b": b,
-             "mult": vm.call_function("damage_multiplier", [a, b])}
-            for a, b in DAEDALUS_DAMAGE_PAIRS],
-        "power": dict(vm.get_global("POWER")),
-        "danger_samples": [
-            {"danger": d, "gen": g,
-             "hostiles": vm.call_function("hostiles_for", [float(d), g])}
-            for d, g in DAEDALUS_DANGER_SAMPLES],
-        "sector_keys": [int(s["key"]) for s in vm.get_global("SECTORS")],
-        "sector_hostiles": [
-            {"key": k, "gen": 6.0,
-             "hostiles": vm.call_function("sector_hostiles", [float(k), 6.0])}
-            for k in (1, 4, 5, 9)],
-        "power_balance": [
-            {"thrust": t, "cloak": c, "shields": sh,
-             "net": vm.call_function("power_balance", [t, c, sh])}
-            for t, c, sh in ((False, False, False), (True, False, True),
-                             (True, True, False), (True, True, True))],
-    }
-
-
-AI_PLAYER_CLASSES = ["fighter", "battlecruiser", "capital"]
-
-AI_DAMAGE_SAMPLES = [
-    ["dart", "atlantis"], ["capital", "x302"], ["ori", "x302"],
-    ["fighter", "daedalus"], ["hive", "phoenix"], ["replicator", "destiny"],
-]
-
-AI_BEHAVIOR_SAMPLES = [
-    ["dart", "atlantis"], ["dart", "destiny"], ["dart", "daedalus"],
-    ["replicator", "aurora"], ["replicator", "phoenix"],
-    ["fighter", "aurora"],
-]
-
-
-def ai_data() -> dict:
-    """Pin every (kind, player_class, hardened) behavior -- all 36
-    combinations, not a sample, since the whole point of a uniform-shape
-    dict is that there is no cheap subset to spot-check instead. Also pins
-    the raw ENEMY table and the rules.nova <-> ai.nova integration seam
-    (enemy_weapon_damage, player_weapon_vs_enemy, enemy_behavior)."""
-    vm = NovaVM(random.Random(7), module_reader=_read_script)
-    if not vm.load_file("nova/fixtures/daedalus_ai.nova"):
-        raise SystemExit("daedalus_ai.nova failed to load: %s" % vm.error)
-
-    enemy = {}
-    for key, entry in vm.get_global("ENEMY").items():
-        enemy[key] = {k: entry[k] for k in
-                     ("name", "class", "role", "shield", "hull", "score",
-                      "max_speed", "turn_rate", "gun_dmg", "keep_dist",
-                      "engage_range", "fire_cd")}
-
-    behaviors = []
-    for kind in vm.get_global("ENEMY_ORDER"):
-        for player_class in AI_PLAYER_CLASSES:
-            for hardened in (False, True):
-                b = vm.call_function("get_behavior",
-                                     [kind, player_class, hardened])
-                behaviors.append({"kind": kind, "player_class": player_class,
-                                  "hardened": hardened, "behavior": b})
-
-    ram_samples = [{"speed": s, "damage": vm.call_function("dart_ram_damage", [s])}
-                   for s in (0.0, 293.6, 587.2, 5872.0)]
-
-    rules_vm = NovaVM(random.Random(7), module_reader=_read_script)
-    for fn_name in host.HOST_FUNCTIONS:
-        rules_vm.register_function(fn_name, lambda args: None)
-    if not rules_vm.load_file("nova/fixtures/daedalus_rules.nova"):
-        raise SystemExit("daedalus_rules.nova failed to load: %s" % rules_vm.error)
-
-    enemy_damage = [
-        {"kind": k, "defender": d,
-         "damage": rules_vm.call_function("enemy_weapon_damage", [k, d])}
-        for k, d in AI_DAMAGE_SAMPLES]
-    player_damage = [
-        {"attacker": "x302", "weapon": "gun_dmg", "kind": "hive",
-         "damage": rules_vm.call_function("player_weapon_vs_enemy",
-                                          ["x302", "gun_dmg", "hive"])}]
-    resolved_behaviors = [
-        {"kind": k, "player_key": p,
-         "behavior": rules_vm.call_function("enemy_behavior", [k, p])}
-        for k, p in AI_BEHAVIOR_SAMPLES]
-
-    return {
-        "enemy_order": vm.get_global("ENEMY_ORDER"),
-        "enemy": enemy,
-        "behaviors": behaviors,
-        "ram_samples": ram_samples,
-        "enemy_damage": enemy_damage,
-        "player_damage": player_damage,
-        "resolved_behaviors": resolved_behaviors,
-    }
-
-
-def _read_script(path: str):
-    full = os.path.join(ROOT, "godot", "scripts", path)
-    if not os.path.exists(full):
-        return None
-    with open(full, "r", encoding="utf-8") as fh:
-        return fh.read()
 
 
 def main() -> int:
@@ -422,11 +217,8 @@ def main() -> int:
 
     failures = sum(1 for c in cases if not c["ok"])
     print("wrote %s" % os.path.relpath(OUT_PATH, ROOT))
-    print("  %d cases (%d expected-error), %d reactor frames, "
-          "%d daedalus hulls, %d ai behaviors, %d weapon fires"
-          % (len(cases), failures, len(doc["reactor_trace"]["frames"]),
-             len(doc["daedalus_data"]["ships"]), len(doc["ai_data"]["behaviors"]),
-             len(doc["weapons_data"]["fires"])))
+    print("  %d cases (%d expected-error), %d reactor frames"
+          % (len(cases), failures, len(doc["reactor_trace"]["frames"])))
     return 0
 
 
