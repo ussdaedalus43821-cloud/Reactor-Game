@@ -32,6 +32,8 @@ from nova_lexer import NovaError, number_text
 MAX_CALL_DEPTH = 128
 MAX_STEPS = 500000
 LIST_TOO_LONG = "a list cannot have more than 1000000 items"
+MAX_STRING_CHARS = 1000000    # nor any string longer (docs/spec/12-policy-syntax.md, [pol.limits])
+STRING_TOO_LONG = "a string cannot have more than 1000000 characters"
 MAX_LIST_ITEMS = 1000000      # no list may hold more (docs/spec/12-policy-syntax.md, [pol.limits])
 
 FLOW_RETURN = "return"
@@ -209,6 +211,51 @@ def text(v) -> str:
     return "<unknown>"
 
 
+class StringTooLong(Exception):
+    """Raised inside text_checked() only; the evaluator turns it into an error."""
+
+
+def text_checked(v, limit: int = MAX_STRING_CHARS) -> str:
+    """text(v), but never more than `limit` characters: it stops as soon as the
+    text would be longer, so a structure that shares sub-lists with itself (a list
+    doubled in a loop) cannot make it run for ever. Raises StringTooLong."""
+    parts = []
+    used = [0]
+
+    def add(piece):
+        used[0] += len(piece)
+        if used[0] > limit:
+            raise StringTooLong()
+        parts.append(piece)
+
+    def walk(x, inside):
+        if isinstance(x, list):
+            add("[")
+            for index, item in enumerate(x):
+                if index:
+                    add(", ")
+                walk(item, True)
+            add("]")
+        elif isinstance(x, dict):
+            add("{")
+            for index, key in enumerate(x):
+                if index:
+                    add(", ")
+                add(key)
+                add(": ")
+                walk(x[key], True)
+            add("}")
+        elif inside and isinstance(x, str):
+            add('"')
+            add(x)
+            add('"')
+        else:
+            add(text(x))
+
+    walk(v, False)
+    return "".join(parts)
+
+
 def inner_text(v) -> str:
     """Inside a list or dict, strings are quoted so nesting stays readable."""
     if isinstance(v, str):
@@ -381,7 +428,7 @@ class Evaluator:
 
     def _set_element(self, obj, key, value, line):
         if isinstance(obj, dict):
-            obj[text(key) if not isinstance(key, str) else key] = value
+            obj[self._etext(key, line) if not isinstance(key, str) else key] = value
             return None
         if isinstance(obj, list):
             if type_name(key) != "number":
@@ -440,7 +487,7 @@ class Evaluator:
             out = {}
             for key_node, val_node in node["pairs"]:
                 key = self.eval(key_node, env)
-                out[key if isinstance(key, str) else text(key)] = \
+                out[key if isinstance(key, str) else self._etext(key, node.get("line", 0))] = \
                     self.eval(val_node, env)
             return out
 
@@ -488,9 +535,18 @@ class Evaluator:
             return 0
         return int(x)
 
+    def _etext(self, v, line: int) -> str:
+        """The display text of a value for the evaluator's own use; a text longer than
+        MAX_STRING_CHARS is an error ([pol.limits]) and gives ""."""
+        try:
+            return text_checked(v)
+        except StringTooLong:
+            self.fail(line, STRING_TOO_LONG)
+            return ""
+
     def _get_element(self, obj, key, line):
         if isinstance(obj, dict):
-            k = key if isinstance(key, str) else text(key)
+            k = key if isinstance(key, str) else self._etext(key, line)
             if k not in obj:
                 self.fail(line, "dict has no key '%s'" % k)
                 return None
@@ -554,7 +610,11 @@ class Evaluator:
         # `+` doubles as string concatenation and list concatenation.
         if op == "+":
             if isinstance(a, str) or isinstance(b, str):
-                return text(a) + text(b)
+                left, right = self._etext(a, line), self._etext(b, line)
+                if len(left) + len(right) > MAX_STRING_CHARS:
+                    self.fail(line, STRING_TOO_LONG)
+                    return None
+                return left + right
             if isinstance(a, list) and isinstance(b, list):
                 if len(a) + len(b) > MAX_LIST_ITEMS:
                     self.fail(line, LIST_TOO_LONG)
@@ -684,7 +744,12 @@ class Evaluator:
             return None
 
         if name == "print":
-            self.output.append(" ".join(text(a) for a in args))
+            joined = " ".join(self._etext(a, line) for a in args)
+            if len(joined) > MAX_STRING_CHARS:
+                self.fail(line, STRING_TOO_LONG)
+            if self.error:
+                return None
+            self.output.append(joined)
             return None
 
         if name == "abs":
@@ -730,7 +795,7 @@ class Evaluator:
         if name == "type":
             return type_name(args[0])
         if name == "str":
-            return text(args[0])
+            return self._etext(args[0], line)
         if name == "num":
             v = args[0]
             if isinstance(v, str):
@@ -758,7 +823,7 @@ class Evaluator:
         if name == "has":
             container, key = args[0], args[1]
             if isinstance(container, dict):
-                return (key if isinstance(key, str) else text(key)) in container
+                return (key if isinstance(key, str) else self._etext(key, line)) in container
             if isinstance(container, list):
                 return any(deep_equal(x, key) for x in container)
             self.fail(line, "has() needs a dict or list")
@@ -766,7 +831,7 @@ class Evaluator:
         if name == "get":
             container, key, fallback = args[0], args[1], args[2]
             if isinstance(container, dict):
-                k = key if isinstance(key, str) else text(key)
+                k = key if isinstance(key, str) else self._etext(key, line)
                 return container.get(k, fallback)
             self.fail(line, "get() needs a dict")
             return fallback
@@ -815,22 +880,30 @@ class Evaluator:
             if not isinstance(args[0], list):
                 self.fail(line, "join() needs a list")
                 return ""
-            sep = args[1] if isinstance(args[1], str) else text(args[1])
-            return sep.join(text(x) for x in args[0])
+            sep = args[1] if isinstance(args[1], str) else self._etext(args[1], line)
+            pieces, total = [], 0
+            for item in args[0]:
+                piece = self._etext(item, line)
+                total += len(piece) + len(sep)
+                if total - len(sep) > MAX_STRING_CHARS:
+                    self.fail(line, STRING_TOO_LONG)
+                    return ""
+                pieces.append(piece)
+            return sep.join(pieces)
         if name == "split":
-            s = args[0] if isinstance(args[0], str) else text(args[0])
-            sep = args[1] if isinstance(args[1], str) else text(args[1])
+            s = args[0] if isinstance(args[0], str) else self._etext(args[0], line)
+            sep = args[1] if isinstance(args[1], str) else self._etext(args[1], line)
             if sep == "":
                 return [ch for ch in s]
             return s.split(sep)
         if name == "contains":
-            hay = args[0] if isinstance(args[0], str) else text(args[0])
-            needle = args[1] if isinstance(args[1], str) else text(args[1])
+            hay = args[0] if isinstance(args[0], str) else self._etext(args[0], line)
+            needle = args[1] if isinstance(args[1], str) else self._etext(args[1], line)
             return needle in hay
         if name == "upper":
-            return text(args[0]).upper()
+            return self._etext(args[0], line).upper()
         if name == "lower":
-            return text(args[0]).lower()
+            return self._etext(args[0], line).lower()
 
         self.fail(line, "unknown builtin '%s'" % name)
         return None

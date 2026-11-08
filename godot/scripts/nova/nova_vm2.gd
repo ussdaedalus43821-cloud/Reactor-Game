@@ -312,7 +312,9 @@ func _run(entry_frame: Frame) -> Variant:
 					for i in range(pair_count):
 						var k = flat[i * 2]
 						var v = flat[i * 2 + 1]
-						out[k if typeof(k) == TYPE_STRING else NovaEvaluator.text(k)] = v
+						out[k if typeof(k) == TYPE_STRING else _etext(k, line)] = v
+				if error != "":
+					return null
 				frame.stack.push_back(out)
 
 			_INDEX:
@@ -514,7 +516,13 @@ func _num(v, line: int) -> float:
 func _binary_arith(op: int, a, b, line: int) -> Variant:
 	if op == _ADD:
 		if typeof(a) == TYPE_STRING or typeof(b) == TYPE_STRING:
-			return NovaEvaluator.text(a) + NovaEvaluator.text(b)
+			var left_text := _etext(a, line)
+			var right_text := _etext(b, line)
+			if error == "" and left_text.length() + right_text.length() > NovaEvaluator.MAX_STRING_CHARS:
+				return _err(line, NovaEvaluator.STRING_TOO_LONG)
+			if error != "":
+				return null
+			return left_text + right_text
 		if typeof(a) == TYPE_ARRAY and typeof(b) == TYPE_ARRAY:
 			var left: Array = a
 			var right: Array = b
@@ -565,7 +573,9 @@ func _compare(op: int, a, b, line: int) -> Variant:
 func _get_element(obj, key, line: int) -> Variant:
 	if typeof(obj) == TYPE_DICTIONARY:
 		var d: Dictionary = obj
-		var k = key if typeof(key) == TYPE_STRING else NovaEvaluator.text(key)
+		var k = key if typeof(key) == TYPE_STRING else _etext(key, line)
+		if error != "":
+			return null
 		if not d.has(k):
 			return _err(line, "dict has no key '%s'" % String(k))
 		return d[k]
@@ -597,7 +607,7 @@ func _get_element(obj, key, line: int) -> Variant:
 func _set_element(obj, key, value, line: int) -> void:
 	if typeof(obj) == TYPE_DICTIONARY:
 		var d: Dictionary = obj
-		d[key if typeof(key) == TYPE_STRING else NovaEvaluator.text(key)] = value
+		d[key if typeof(key) == TYPE_STRING else _etext(key, line)] = value
 		return
 	if typeof(obj) == TYPE_ARRAY:
 		var l: Array = obj
@@ -619,6 +629,16 @@ func _set_element(obj, key, value, line: int) -> void:
 func _line(frame: Frame, ip: int) -> int:
 	var positions := frame.code.positions
 	return positions[ip] if ip < positions.size() else 0
+
+
+## The display text of a value, or "" and an error if it would be longer than
+## NovaEvaluator.MAX_STRING_CHARS characters.
+func _etext(v, line: int) -> String:
+	var t = NovaEvaluator.text_checked(v)
+	if t == null:
+		_err(line, NovaEvaluator.STRING_TOO_LONG)
+		return ""
+	return t
 
 
 func _err(line: int, msg: String) -> Variant:

@@ -556,6 +556,29 @@ class TestHardening(unittest.TestCase):
             self.assertFalse(ok, src)
             self.assertEqual(err, want, src)
 
+    def test_string_size_limit(self):
+        d19 = 'let s = "x" let i = 0 while i < 19 { s = s + s  i = i + 1 }\n'   # 524,288
+        ok, err, out = self.run_src(d19 + "let t = slice(s, 0, 475712)\nprint(len(s + t))")
+        self.assertTrue(ok, err)
+        self.assertEqual(out, ["1000000"])
+        for src, want in (
+                (d19 + "print(len(s + s))",
+                 "a string cannot have more than 1000000 characters"),
+                (d19 + 'print(len(join([s, s], "")))',
+                 "line 2: a string cannot have more than 1000000 characters"),
+                ("print(str(range(300000)))",
+                 "line 1: a string cannot have more than 1000000 characters")):
+            ok, err, _ = self.run_src(src)
+            self.assertFalse(ok, src)
+            self.assertEqual(err, want, src)
+
+    def test_a_list_that_shares_its_parts_is_refused_not_expanded(self):
+        src = "let l = [] let i = 0 while i < 40 { l = [l, l]  i = i + 1 }\nprint(str(l))"
+        ok, err, out = self.run_src(src)       # must return at once, not run for ever
+        self.assertFalse(ok)
+        self.assertEqual(err, "line 2: a string cannot have more than 1000000 characters")
+        self.assertEqual(out, [])
+
 
 class TestPhysics(unittest.TestCase):
 
