@@ -18,7 +18,7 @@ extends RefCounted
 ##     vm.eval(source, "<name>")            # same, from a string
 ##     vm.call_function("fib", [10.0])      # GDScript -> NovaLang
 ##     vm.register_function("hull", fn)     # NovaLang -> GDScript
-##     vm.tick(dt, inputs, faults_enabled)  # one rule-engine cycle
+##     vm.tick(dt, inputs, faults_enabled, overrides)  # one rule-engine cycle
 ##
 ## call_function() is not spelled call(): every Godot Object already has a
 ## call() method and shadowing it is a hard error, so both this and the
@@ -569,14 +569,20 @@ func _update_faults(now: float, enabled: bool) -> void:
 
 
 ## One control cycle: reset transient effects, take the host's
-## measurements, run the fault scheduler, recompute signals, then fire every
-## rule in priority order. The host reads results back with get_global() and
-## through the functions it registered.
-func tick(dt: float, inputs: Dictionary, faults_enabled: bool = true) -> bool:
+## measurements, run the fault scheduler, apply the host's overrides,
+## recompute signals, then fire every rule in priority order. The host reads
+## results back with get_global() and through the functions it registered.
+##
+## `overrides` are values the host forces regardless of the policy (an
+## operator's hand on a valve). They land after the fault bodies and before
+## the signals, so they beat any fault and every trip channel sees the plant
+## as it really is.
+func tick(dt: float, inputs: Dictionary, faults_enabled: bool = true,
+		overrides: Dictionary = {}) -> bool:
 	error = ""            # a failed tick does not poison the next one
 	_running = true
-	var ok := _tick_vm2(dt, inputs, faults_enabled) if use_bytecode_vm \
-			else _tick_tree_walker(dt, inputs, faults_enabled)
+	var ok := _tick_vm2(dt, inputs, faults_enabled, overrides) if use_bytecode_vm \
+			else _tick_tree_walker(dt, inputs, faults_enabled, overrides)
 	_running = false
 	return ok
 
@@ -595,7 +601,8 @@ func _tick_prelude(dt: float, inputs: Dictionary) -> void:
 			set_global(pair[0], pair[1])
 
 
-func _tick_tree_walker(dt: float, inputs: Dictionary, faults_enabled: bool) -> bool:
+func _tick_tree_walker(dt: float, inputs: Dictionary, faults_enabled: bool,
+		overrides: Dictionary) -> bool:
 	var ev := evaluator
 	ev.begin_run()
 	ev.dt = dt
@@ -604,6 +611,9 @@ func _tick_tree_walker(dt: float, inputs: Dictionary, faults_enabled: bool) -> b
 	_update_faults(_number("t", 0.0), faults_enabled)
 	if error != "":
 		return false
+
+	for key in overrides:
+		ev.globals.declare(String(key), overrides[key])
 
 	for entry in program["signal_defs"]:
 		ev.globals.declare(String(entry[0]), ev.eval(entry[1], ev.globals))
@@ -633,7 +643,8 @@ func _tick_tree_walker(dt: float, inputs: Dictionary, faults_enabled: bool) -> b
 	return true
 
 
-func _tick_vm2(dt: float, inputs: Dictionary, faults_enabled: bool) -> bool:
+func _tick_vm2(dt: float, inputs: Dictionary, faults_enabled: bool,
+		overrides: Dictionary) -> bool:
 	vm2.begin_run()
 	vm2.dt = dt
 	_tick_prelude(dt, inputs)
@@ -641,6 +652,9 @@ func _tick_vm2(dt: float, inputs: Dictionary, faults_enabled: bool) -> bool:
 	_update_faults(_number("t", 0.0), faults_enabled)
 	if error != "":
 		return false
+
+	for key in overrides:
+		set_global(String(key), overrides[key])
 
 	for entry in compiled["signals"]:
 		var value = vm2.execute(entry[1], [])

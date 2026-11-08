@@ -24,16 +24,20 @@ var value: float = 100.0: set = set_value
 var enabled: bool = true: set = set_enabled
 
 var dragging := false
+## Whether the operator holds the valve. Tracked on its own rather than read
+## off `value`: follow_auto() moves the handle too, and a fault that drives
+## the value below 100 % must not be mistaken for the operator taking over
+## -- that left the valve pinned at the fault's value after it cleared.
+var manual := false
 
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 
 
-## True once the handle sits at (effectively) full open -- the automatic
-## system, not the operator, owns the value.
+## True while the automatic system, not the operator, owns the value.
 func is_auto() -> bool:
-	return value >= 100.0 - AUTO_EPSILON
+	return not manual
 
 
 ## Fed the live simulated value every frame. Only takes while the operator
@@ -43,6 +47,13 @@ func is_auto() -> bool:
 func follow_auto(live_pct: float) -> void:
 	if not dragging and is_auto():
 		set_value(live_pct)
+
+
+## Every operator action lands here: below full open seizes manual control,
+## back at full open hands it to the automatic system again.
+func _operator_set(v: float) -> void:
+	set_value(v)
+	manual = value < 100.0 - AUTO_EPSILON
 
 
 func set_value(v: float) -> void:
@@ -61,13 +72,15 @@ func set_enabled(v: bool) -> void:
 ## sliders' Q/A/W/S keys. Always a deliberate manual action.
 func nudge(step: float) -> void:
 	if enabled:
-		set_value(value + step)
+		_operator_set(value + step)
 
 
-## Hands the valve back to the automatic system.
+## Hands the valve back to the automatic system. Not gated on `enabled`, so
+## a restart can clear the override even right after a meltdown.
 func release_to_auto() -> void:
-	if enabled:
-		set_value(100.0)
+	dragging = false
+	manual = false
+	set_value(100.0)
 
 
 func _track_rect() -> Rect2:
@@ -91,19 +104,19 @@ func _gui_input(event: InputEvent) -> void:
 		if mb.button_index == MOUSE_BUTTON_LEFT:
 			dragging = mb.pressed
 			if mb.pressed:
-				set_value(_value_from_position(mb.position.y))
+				_operator_set(_value_from_position(mb.position.y))
 			accept_event()
 	elif event is InputEventMouseMotion and dragging:
-		set_value(_value_from_position((event as InputEventMouseMotion).position.y))
+		_operator_set(_value_from_position((event as InputEventMouseMotion).position.y))
 		accept_event()
 	elif event is InputEventScreenDrag:
-		set_value(_value_from_position((event as InputEventScreenDrag).position.y))
+		_operator_set(_value_from_position((event as InputEventScreenDrag).position.y))
 		accept_event()
 	elif event is InputEventScreenTouch:
 		var st := event as InputEventScreenTouch
 		dragging = st.pressed
 		if st.pressed:
-			set_value(_value_from_position(st.position.y))
+			_operator_set(_value_from_position(st.position.y))
 		accept_event()
 
 
