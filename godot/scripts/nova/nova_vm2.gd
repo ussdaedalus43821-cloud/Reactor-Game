@@ -656,6 +656,9 @@ func _budget_line(frame: Frame, ip: int) -> int:
 		if positions[i] > 0:
 			return positions[i]
 		i -= 1
+	for j in range(ip + 1, positions.size()):      # a loop's first instruction (a literal) has none
+		if positions[j] > 0:
+			return positions[j]
 	return 0
 
 
