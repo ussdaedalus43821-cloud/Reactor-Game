@@ -24,6 +24,14 @@ extends RefCounted
 
 const MAX_CALL_DEPTH := 128
 const MAX_STEPS := 500000
+## No list may hold more than this many items; range, append and list + refuse
+## to make a longer one (the reference's MAX_LIST_ITEMS and LIST_TOO_LONG).
+const MAX_LIST_ITEMS := 1000000
+const LIST_TOO_LONG := "a list cannot have more than 1000000 items"
+## Nor any string longer than this many characters (the reference's MAX_STRING_CHARS).
+const MAX_STRING_CHARS := 1000000
+const STRING_TOO_LONG := "a string cannot have more than 1000000 characters"
+const QUOTE := "\""
 
 const FLOW_RETURN := "return"
 const FLOW_BREAK := "break"
@@ -92,13 +100,24 @@ class Env:
 
 
 ## A user-defined function plus the environment it closed over.
+##
+## `code`/`cells` are set instead of `body`/`closure` when this value is a
+## NovaVM2 closure rather than a tree-walker function -- `code` (non-null)
+## says which. Kept on the same class, rather than a second value type,
+## so type_name()/text()/truthy()/deep_equal() recognize a function value
+## made by either backend with no changes, and the two backends can never
+## disagree about what a function prints as or whether it's callable.
 class NovaFunc:
 	var name: String
 	var params: Array
 	var body: Dictionary
 	var closure
 
-	func _init(n: String, p: Array, b: Dictionary, c) -> void:
+	var code = null          # NovaCode, when this is a VM2 closure
+	var cells: Array = []    # this closure's captured Cells, for VM2
+	var globals = null       # the global scope (a Dictionary) of the module it was written in, for VM2
+
+	func _init(n: String = "", p: Array = [], b: Dictionary = {}, c = null) -> void:
 		name = n
 		params = p
 		body = b
@@ -186,6 +205,64 @@ static func text(v) -> String:
 				var fn: NovaFunc = v
 				return "<func %s>" % (fn.name if fn.name != "" else "anonymous")
 	return "<unknown>"
+
+
+## text(v), but never more than `limit` characters: null as soon as the text would be longer, so a
+## structure that shares its parts with itself (`l = [l, l]` forty times) is refused at once instead
+## of being expanded (the reference's text_checked; docs/spec/12-policy-syntax.md [pol.limits]).
+static func text_checked(v, limit: int = MAX_STRING_CHARS) -> Variant:
+	var parts := PackedStringArray()
+	var used: Array = [0]
+	if not _text_into(v, false, parts, used, limit):
+		return null
+	return "".join(parts)
+
+
+static func _add_piece(piece: String, parts: PackedStringArray, used: Array, limit: int) -> bool:
+	used[0] += piece.length()
+	if used[0] > limit:
+		return false
+	parts.append(piece)
+	return true
+
+
+static func _text_into(v, inside: bool, parts: PackedStringArray, used: Array, limit: int) -> bool:
+	match typeof(v):
+		TYPE_ARRAY:
+			var list_in: Array = v
+			if not _add_piece("[", parts, used, limit):
+				return false
+			var first_item := true
+			for item in list_in:
+				if not first_item and not _add_piece(", ", parts, used, limit):
+					return false
+				first_item = false
+				if not _text_into(item, true, parts, used, limit):
+					return false
+			return _add_piece("]", parts, used, limit)
+		TYPE_DICTIONARY:
+			var dict_in: Dictionary = v
+			if not _add_piece("{", parts, used, limit):
+				return false
+			var first_key := true
+			for key in dict_in:
+				if not first_key and not _add_piece(", ", parts, used, limit):
+					return false
+				first_key = false
+				if not _add_piece(String(key), parts, used, limit):
+					return false
+				if not _add_piece(": ", parts, used, limit):
+					return false
+				if not _text_into(dict_in[key], true, parts, used, limit):
+					return false
+			return _add_piece("}", parts, used, limit)
+		TYPE_STRING, TYPE_STRING_NAME:
+			if inside:
+				return _add_piece(QUOTE, parts, used, limit) \
+						and _add_piece(String(v), parts, used, limit) \
+						and _add_piece(QUOTE, parts, used, limit)
+			return _add_piece(String(v), parts, used, limit)
+	return _add_piece(text(v), parts, used, limit)
 
 
 ## Inside a list or dict, strings are quoted so nesting stays readable.
@@ -383,13 +460,15 @@ func _assign(node: Dictionary, env) -> Variant:
 func _set_element(obj, key, value, line: int) -> Variant:
 	if typeof(obj) == TYPE_DICTIONARY:
 		var d: Dictionary = obj
-		d[key if typeof(key) == TYPE_STRING else text(key)] = value
+		d[key if typeof(key) == TYPE_STRING else _etext(key, line)] = value
 		return null
 	if typeof(obj) == TYPE_ARRAY:
 		var l: Array = obj
 		if type_name(key) != "number":
 			return fail(line, "list index must be a number")
-		var raw := int(float(key))
+		var raw := _whole_int(key, line)
+		if error != "":
+			return null
 		var i := raw
 		if i < 0:
 			i += l.size()
@@ -447,7 +526,7 @@ func eval(node: Dictionary, env) -> Variant:
 			var out: Dictionary = {}
 			for pair in node["pairs"]:
 				var key = eval(pair[0], env)
-				out[key if typeof(key) == TYPE_STRING else text(key)] = \
+				out[key if typeof(key) == TYPE_STRING else _etext(key, int(node.get("line", 0)))] = \
 					eval(pair[1], env)
 			return out
 		"func":
@@ -483,10 +562,50 @@ func _num(v, line: int) -> float:
 	return 0.0
 
 
+## The display text of a value for the evaluator's own use: a text of more than
+## MAX_STRING_CHARS characters is an error and gives "".
+func _etext(v, line: int) -> String:
+	var t = text_checked(v)
+	if t == null:
+		fail(line, STRING_TOO_LONG)
+		return ""
+	return t
+
+
+## A number used as a count: its whole part, truncated toward zero. Infinity and
+## NaN have none and are an error (docs/spec/13-policy-values.md [pol.index]).
+func _whole(v, line: int) -> float:
+	var x := _num(v, line)
+	if is_nan(x) or is_inf(x):
+		fail(line, "expected a finite number, got %s" % NovaLexer.number_text(x))
+		return 0.0
+	return floor(x) if x >= 0.0 else ceil(x)
+
+
+## A number used as an index or a position, as a whole number (a finite one: [pol.index]).
+func _whole_int(v, line: int) -> int:
+	return int(_whole(v, line))
+
+
+static var _number_text_regex: RegEx = null
+
+
+## num("text"): an optional sign, digits with an optional point, an optional exponent, ASCII
+## spaces around it; any other text reads as 0 (docs/spec/13-policy-values.md [pol.lib-convert]).
+static func read_number(s: String) -> float:
+	if _number_text_regex == null:
+		_number_text_regex = RegEx.new()
+		_number_text_regex.compile(
+				"^[ \\t\\r\\n]*[+-]?([0-9]+\\.?[0-9]*|\\.[0-9]+)([eE][+-]?[0-9]+)?[ \\t\\r\\n]*$")
+	if _number_text_regex.search(s) == null:
+		return 0.0
+	return s.strip_edges().to_float()
+
+
 func _get_element(obj, key, line: int) -> Variant:
 	if typeof(obj) == TYPE_DICTIONARY:
 		var d: Dictionary = obj
-		var k = key if typeof(key) == TYPE_STRING else text(key)
+		var k = key if typeof(key) == TYPE_STRING else _etext(key, line)
 		if not d.has(k):
 			fail(line, "dict has no key '%s'" % String(k))
 			return null
@@ -496,7 +615,9 @@ func _get_element(obj, key, line: int) -> Variant:
 		if type_name(key) != "number":
 			fail(line, "list index must be a number")
 			return null
-		var raw := int(float(key))
+		var raw := _whole_int(key, line)
+		if error != "":
+			return null
 		var i := raw
 		if i < 0:
 			i += l.size()
@@ -509,7 +630,9 @@ func _get_element(obj, key, line: int) -> Variant:
 		if type_name(key) != "number":
 			fail(line, "string index must be a number")
 			return null
-		var raw2 := int(float(key))
+		var raw2 := _whole_int(key, line)
+		if error != "":
+			return null
 		var j := raw2
 		if j < 0:
 			j += s.length()
@@ -548,10 +671,19 @@ func _eval_binary(node: Dictionary, env) -> Variant:
 	# `+` doubles as string concatenation and list concatenation.
 	if op == "+":
 		if typeof(a) == TYPE_STRING or typeof(b) == TYPE_STRING:
-			return text(a) + text(b)
+			var left_text := _etext(a, line)
+			var right_text := _etext(b, line)
+			if left_text.length() + right_text.length() > MAX_STRING_CHARS:
+				fail(line, STRING_TOO_LONG)
+			if error != "":
+				return null
+			return left_text + right_text
 		if typeof(a) == TYPE_ARRAY and typeof(b) == TYPE_ARRAY:
 			var left: Array = a
 			var right: Array = b
+			if left.size() + right.size() > MAX_LIST_ITEMS:
+				fail(line, LIST_TOO_LONG)
+				return null
 			var joined: Array = left.duplicate()
 			joined.append_array(right)
 			return joined
@@ -687,8 +819,13 @@ func call_builtin(name: String, args: Array, line: int) -> Variant:
 		"print":
 			var parts := PackedStringArray()
 			for a in args:
-				parts.append(text(a))
-			output.append(" ".join(parts))
+				parts.append(_etext(a, line))
+			var printed := " ".join(parts)
+			if printed.length() > MAX_STRING_CHARS:
+				fail(line, STRING_TOO_LONG)
+			if error != "":
+				return null
+			output.append(printed)
 			return null
 		"abs":
 			return absf(_num(args[0], line))
@@ -734,15 +871,20 @@ func call_builtin(name: String, args: Array, line: int) -> Variant:
 		"type":
 			return type_name(args[0])
 		"str":
-			return text(args[0])
+			return _etext(args[0], line)
 		"num":
 			if typeof(args[0]) == TYPE_STRING:
-				return String(args[0]).to_float()
+				return read_number(String(args[0]))
 			return _num(args[0], line)
 		"bool":
 			return truthy(args[0])
 		"int":
-			return float(int(_num(args[0], line)))
+			# The whole part, as a number: nothing to cut off in infinity, NaN or a number that
+			# is already whole (and a 64-bit int would overflow on those).
+			var iv := _num(args[0], line)
+			if is_nan(iv) or is_inf(iv):
+				return iv
+			return floor(iv) if iv >= 0.0 else ceil(iv)
 
 		"len":
 			match typeof(args[0]):
@@ -768,7 +910,7 @@ func call_builtin(name: String, args: Array, line: int) -> Variant:
 		"has":
 			if typeof(args[0]) == TYPE_DICTIONARY:
 				var hd: Dictionary = args[0]
-				var hk = args[1] if typeof(args[1]) == TYPE_STRING else text(args[1])
+				var hk = args[1] if typeof(args[1]) == TYPE_STRING else _etext(args[1], line)
 				return hd.has(hk)
 			if typeof(args[0]) == TYPE_ARRAY:
 				var hl: Array = args[0]
@@ -782,7 +924,7 @@ func call_builtin(name: String, args: Array, line: int) -> Variant:
 			if typeof(args[0]) != TYPE_DICTIONARY:
 				fail(line, "get() needs a dict")
 				return args[2]
-			var gk = args[1] if typeof(args[1]) == TYPE_STRING else text(args[1])
+			var gk = args[1] if typeof(args[1]) == TYPE_STRING else _etext(args[1], line)
 			var gd: Dictionary = args[0]
 			return gd[gk] if gd.has(gk) else args[2]
 		"append":
@@ -790,6 +932,9 @@ func call_builtin(name: String, args: Array, line: int) -> Variant:
 				fail(line, "append() needs a list")
 				return null
 			var al: Array = args[0]
+			if al.size() >= MAX_LIST_ITEMS:
+				fail(line, LIST_TOO_LONG)
+				return null
 			al.append(args[1])
 			return al
 		"remove_at":
@@ -797,7 +942,9 @@ func call_builtin(name: String, args: Array, line: int) -> Variant:
 				fail(line, "remove_at() needs a list")
 				return null
 			var rl: Array = args[0]
-			var ri := int(_num(args[1], line))
+			var ri := _whole_int(args[1], line)
+			if error != "":
+				return null
 			if ri < 0 or ri >= rl.size():
 				fail(line, "remove_at() index %d out of range (size %d)"
 						% [ri, rl.size()])
@@ -808,36 +955,50 @@ func call_builtin(name: String, args: Array, line: int) -> Variant:
 		"slice":
 			return _builtin_slice(args, line)
 		"range":
-			var count := int(_num(args[0], line))
-			var out_range: Array = []
+			# Whole parts; infinity and NaN have none (docs/spec/13-policy-values.md
+			# [pol.index]). The size is checked from the arguments before anything is built.
+			var first := 0.0
+			var stop_at := 0.0
 			if args.size() > 1:
-				var stop := int(_num(args[1], line))
-				var i := count
-				while i < stop:
-					out_range.append(float(i))
-					i += 1
-				return out_range
-			var j := 0
-			while j < count:
-				out_range.append(float(j))
-				j += 1
+				first = _whole(args[0], line)
+				stop_at = _whole(args[1], line)
+			else:
+				stop_at = _whole(args[0], line)
+			if error != "":
+				return null
+			if stop_at - first > float(MAX_LIST_ITEMS):
+				fail(line, LIST_TOO_LONG)
+				return null
+			var out_range: Array = []
+			var i := int(first)
+			var stop := int(stop_at)
+			while i < stop:
+				out_range.append(float(i))
+				i += 1
 			return out_range
 		"join":
 			if typeof(args[0]) != TYPE_ARRAY:
 				fail(line, "join() needs a list")
 				return ""
 			var sep: String = args[1] if typeof(args[1]) == TYPE_STRING \
-					else text(args[1])
+					else _etext(args[1], line)
 			var jl: Array = args[0]
 			var strs := PackedStringArray()
+			var joined_len := 0
 			for item in jl:
-				strs.append(text(item))
+				var piece := _etext(item, line)
+				joined_len += piece.length() + sep.length()
+				if error != "" or joined_len - sep.length() > MAX_STRING_CHARS:
+					if error == "":
+						fail(line, STRING_TOO_LONG)
+					return ""
+				strs.append(piece)
 			return sep.join(strs)
 		"split":
 			var s: String = args[0] if typeof(args[0]) == TYPE_STRING \
-					else text(args[0])
+					else _etext(args[0], line)
 			var ssep: String = args[1] if typeof(args[1]) == TYPE_STRING \
-					else text(args[1])
+					else _etext(args[1], line)
 			var pieces: Array = []
 			if ssep == "":
 				for ci in range(s.length()):
@@ -848,22 +1009,24 @@ func call_builtin(name: String, args: Array, line: int) -> Variant:
 			return pieces
 		"contains":
 			var hay: String = args[0] if typeof(args[0]) == TYPE_STRING \
-					else text(args[0])
+					else _etext(args[0], line)
 			var needle: String = args[1] if typeof(args[1]) == TYPE_STRING \
-					else text(args[1])
-			return hay.contains(needle)
+					else _etext(args[1], line)
+			return needle == "" or hay.contains(needle)     # every text contains the empty one
 		"upper":
-			return text(args[0]).to_upper()
+			return _etext(args[0], line).to_upper()
 		"lower":
-			return text(args[0]).to_lower()
+			return _etext(args[0], line).to_lower()
 
 	fail(line, "unknown builtin '%s'" % name)
 	return null
 
 
 func _builtin_slice(args: Array, line: int):
-	var start := int(_num(args[1], line))
-	var stop := int(_num(args[2], line))
+	var start := _whole_int(args[1], line)
+	var stop := _whole_int(args[2], line)
+	if error != "":
+		return null
 	if start < 0:
 		start = 0
 	if stop < 0:

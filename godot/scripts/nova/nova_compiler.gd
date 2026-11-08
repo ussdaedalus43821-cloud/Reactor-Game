@@ -161,6 +161,9 @@ func _compile_stmt(node: Dictionary, ctx: _Ctx) -> void:
 			_compile_expr(node["expr"], ctx)
 			ctx.emit(OP.POP, null, line)
 		"let":
+			var init: Dictionary = node["expr"]
+			if init["k"] == "func" and String(init.get("name", "")) == "":
+				init["name"] = node["name"]       # `let f = func ...` takes the name f
 			_compile_expr(node["expr"], ctx)
 			_emit_store(node["_loc"], ctx, line)
 		"assign":
@@ -179,13 +182,16 @@ func _compile_stmt(node: Dictionary, ctx: _Ctx) -> void:
 			ctx.emit(OP.RETURN, null, line)
 		"break":
 			if ctx.loop_breaks.is_empty():
-				error = "line %d: 'break' is not inside a loop" % line
+				# Outside a loop it ends the body it is in (docs/spec/12-policy-syntax.md).
+				ctx.emit(OP.LOAD_CONST, ctx.const_index(null), line)
+				ctx.emit(OP.RETURN, null, line)
 				return
 			var bi := ctx.emit(OP.JUMP, -1, line)
 			(ctx.loop_breaks[ctx.loop_breaks.size() - 1] as Array).append(bi)
 		"continue":
 			if ctx.loop_continues.is_empty():
-				error = "line %d: 'continue' is not inside a loop" % line
+				ctx.emit(OP.LOAD_CONST, ctx.const_index(null), line)
+				ctx.emit(OP.RETURN, null, line)
 				return
 			var ci := ctx.emit(OP.JUMP, -1, line)
 			(ctx.loop_continues[ctx.loop_continues.size() - 1] as Array).append(ci)
@@ -214,7 +220,9 @@ func _compile_assign(node: Dictionary, ctx: _Ctx, line: int) -> void:
 			_compile_expr(target["obj"], ctx)
 			ctx.emit(OP.STORE_MEMBER, String(target["name"]), line)
 		_:
-			error = "line %d: cannot assign to a '%s'" % [line, target["k"]]
+			# The value is evaluated, then the assignment fails at run time.
+			ctx.emit(OP.POP, null, line)
+			ctx.emit(OP.RAISE, "cannot assign to a '%s'" % target["k"], line)
 
 
 func _compile_if(node: Dictionary, ctx: _Ctx, line: int) -> void:
@@ -327,16 +335,18 @@ func _compile_binary(node: Dictionary, ctx: _Ctx, line: int) -> void:
 	var op: String = node["op"]
 	if op == "and":
 		_compile_expr(node["a"], ctx)
-		var j := ctx.emit(OP.JUMP_IF_FALSE_KEEP, -1, line)
-		ctx.emit(OP.POP, null, line)
+		var j := ctx.emit(OP.JUMP_IF_FALSE_KEEP, -1, line)    # pops the true `a` itself
 		_compile_expr(node["b"], ctx)
+		ctx.emit(OP.NOT, null, line)                        # the result is a boolean
+		ctx.emit(OP.NOT, null, line)
 		ctx.patch(j)
 		return
 	if op == "or":
 		_compile_expr(node["a"], ctx)
 		var j2 := ctx.emit(OP.JUMP_IF_TRUE_KEEP, -1, line)
-		ctx.emit(OP.POP, null, line)
 		_compile_expr(node["b"], ctx)
+		ctx.emit(OP.NOT, null, line)
+		ctx.emit(OP.NOT, null, line)
 		ctx.patch(j2)
 		return
 	_compile_expr(node["a"], ctx)

@@ -247,7 +247,7 @@ def check_evaluator() -> None:
                 problems.append("builtin %s(): arity %d in the reference, "
                                 "%d in GDScript" % (name, ref[name], gds[name]))
 
-    for name in ("MAX_CALL_DEPTH", "MAX_STEPS"):
+    for name in ("MAX_CALL_DEPTH", "MAX_STEPS", "MAX_LIST_ITEMS", "MAX_STRING_CHARS"):
         ref_value = py_literal(REF / "nova_evaluator.py", name)
         gd_value = gd_const_number(GD / "nova" / "nova_evaluator.gd", name)
         if ref_value is None or gd_value is None:

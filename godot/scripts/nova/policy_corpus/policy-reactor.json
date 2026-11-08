@@ -1,0 +1,1834 @@
+{
+ "area": "policy-reactor",
+ "version": 1,
+ "cases": [
+  {
+   "name": "policy_reactor_inputs_the_host_adds",
+   "spec": [
+    "pol.host-inputs",
+    "pol.host-reactor"
+   ],
+   "profile": "policy",
+   "source": "rule r { when true then log(scram, scram_elapsed, game_over, victory, meltdown, operator_scram, dt) }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(false, 0, false, false, false, false, 0.05)"
+     ],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "host": "reactor",
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 2.0
+       },
+       "faults": false
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "policy_reactor_operator_scram_defaults_to_false",
+   "spec": [
+    "pol.host-inputs"
+   ],
+   "profile": "policy",
+   "source": "rule r { when true then log(type(operator_scram), operator_scram) }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(bool, false)"
+     ],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(bool, true)"
+     ],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(bool, true)"
+     ],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "host": "reactor",
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05,
+        "operator_scram": true
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.1,
+        "operator_scram": 1
+       },
+       "faults": false
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "policy_reactor_inputs_are_globals_of_the_tick",
+   "spec": [
+    "pol.host-inputs"
+   ],
+   "profile": "policy",
+   "source": "rule r { when true then log(flux_pct, fuel_temp_c, rod_a, rod_b, pressure_mpa) }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(12.5, 300, 10, 20, 15.1)"
+     ],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "host": "reactor",
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0,
+        "flux_pct": 12.5,
+        "fuel_temp_c": 300.0,
+        "rod_a": 10.0,
+        "rod_b": 20.0,
+        "pressure_mpa": 15.1
+       },
+       "faults": false
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "policy_reactor_outputs_are_read_back_as_globals",
+   "spec": [
+    "pol.host-inputs"
+   ],
+   "profile": "policy",
+   "source": "effects { flow_frac = 1.0  load_frac = 1.0  stuck_bank = \"\"  xenon_pcm = 0.0 persistent }\nrule r { when true then set flow_frac = 0.5 set xenon_pcm = xenon_pcm + 1 set state = \"STEADY\" set rod_target_a = 40 }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "flow_frac": 0.5,
+      "load_frac": 1.0,
+      "stuck_bank": "",
+      "xenon_pcm": 1.0,
+      "state": "STEADY",
+      "rod_target_a": 40.0
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "flow_frac": 0.5,
+      "load_frac": 1.0,
+      "stuck_bank": "",
+      "xenon_pcm": 2.0,
+      "state": "STEADY",
+      "rod_target_a": 40.0
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "host": "reactor",
+    "watch": [
+     "flow_frac",
+     "load_frac",
+     "stuck_bank",
+     "xenon_pcm",
+     "state",
+     "rod_target_a"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05
+       },
+       "faults": false
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "policy_reactor_scram_sets_the_global_at_once",
+   "spec": [
+    "pol.host-functions"
+   ],
+   "profile": "policy",
+   "source": "rule r { when true then log(\"before\", scram) scram(\"TRIP\") log(\"after\", scram) }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(before, false)",
+      "scram(TRIP)",
+      "log(after, true)"
+     ],
+     "watch": {
+      "scram": true
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "host": "reactor",
+    "watch": [
+     "scram"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 1.0
+       },
+       "faults": false
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "policy_reactor_scram_without_a_reason",
+   "spec": [
+    "pol.host-functions"
+   ],
+   "profile": "policy",
+   "source": "rule r { when true then scram() }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "scram()"
+     ],
+     "watch": {
+      "scram": true
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "host": "reactor",
+    "watch": [
+     "scram"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 1.0
+       },
+       "faults": false
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "policy_reactor_scram_twice_in_one_tick",
+   "spec": [
+    "pol.host-functions"
+   ],
+   "profile": "policy",
+   "source": "rule r { when true then scram(\"a\") scram(\"b\") }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "scram(a)",
+      "scram(b)"
+     ],
+     "watch": {
+      "scram": true
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "scram(a)",
+      "scram(b)"
+     ],
+     "watch": {
+      "scram": true
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "host": "reactor",
+    "watch": [
+     "scram"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 1.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 1.05
+       },
+       "faults": false
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "policy_reactor_scram_latches_for_the_next_tick",
+   "spec": [
+    "pol.host-latch"
+   ],
+   "profile": "policy",
+   "source": "rule trip priority 5 once { when true then scram(\"T\") }\nrule show priority 1 { when true then log(\"seen\", scram, scram_elapsed, game_over, victory, meltdown) }\n",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "scram(T)",
+      "log(seen, true, 0, false, false, false)"
+     ],
+     "watch": {
+      "scram": true
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(seen, true, 0.05, false, false, false)"
+     ],
+     "watch": {
+      "scram": true
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(seen, true, 0.5, false, false, false)"
+     ],
+     "watch": {
+      "scram": true
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(seen, true, 1.25, false, false, false)"
+     ],
+     "watch": {
+      "scram": true
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "host": "reactor",
+    "watch": [
+     "scram"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 1.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 1.05
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 1.5
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 2.25
+       },
+       "faults": false
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "policy_reactor_scram_ignored_while_latched",
+   "spec": [
+    "pol.host-functions"
+   ],
+   "profile": "policy",
+   "source": "rule trip priority 5 once { when true then scram(\"T\") }\nrule again priority 3 { when t > 1.0 then set scram = false scram(\"again\") }\nrule show priority 1 { when true then log(\"seen\", scram, scram_elapsed, game_over, victory, meltdown) }\n",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "scram(T)",
+      "log(seen, true, 0, false, false, false)"
+     ],
+     "watch": {
+      "scram": true
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "scram(again)",
+      "log(seen, false, 0.05, false, false, false)"
+     ],
+     "watch": {
+      "scram": false
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "scram(again)",
+      "log(seen, false, 0.1, false, false, false)"
+     ],
+     "watch": {
+      "scram": false
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "host": "reactor",
+    "watch": [
+     "scram"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 1.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 1.05
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 1.1
+       },
+       "faults": false
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "policy_reactor_scram_time_is_the_first_request",
+   "spec": [
+    "pol.host-latch"
+   ],
+   "profile": "policy",
+   "source": "rule trip priority 5 { when t >= 1.0 then scram(\"T\") }\nrule show priority 1 { when true then log(\"seen\", scram, scram_elapsed, game_over, victory, meltdown) }\n",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(seen, false, 0, false, false, false)"
+     ],
+     "watch": {
+      "scram": false
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "scram(T)",
+      "log(seen, true, 0, false, false, false)"
+     ],
+     "watch": {
+      "scram": true
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "scram(T)",
+      "log(seen, true, 0.05, false, false, false)"
+     ],
+     "watch": {
+      "scram": true
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "scram(T)",
+      "log(seen, true, 0.5, false, false, false)"
+     ],
+     "watch": {
+      "scram": true
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "host": "reactor",
+    "watch": [
+     "scram"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.5
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 1.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 1.05
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 1.5
+       },
+       "faults": false
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "policy_reactor_failed_tick_does_not_latch",
+   "spec": [
+    "pol.host-latch",
+    "pol.host-reactor"
+   ],
+   "profile": "policy",
+   "source": "rule a priority 5 once { when true then scram(\"T\") }\nrule b priority 1 { when t < 1.0 then nope() }\nrule show priority 1 { when true then log(\"seen\", scram, scram_elapsed, game_over, victory, meltdown) }\n",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": false,
+     "error": "rule 'b': line 2: unknown function 'nope'",
+     "output": [],
+     "host_calls": [
+      "scram(T)"
+     ],
+     "watch": {
+      "scram": true
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(seen, false, 0, false, false, false)"
+     ],
+     "watch": {
+      "scram": false
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "host": "reactor",
+    "watch": [
+     "scram"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.5
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 1.5
+       },
+       "faults": false
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "policy_reactor_reset_trip_clears_the_global_and_the_latch",
+   "spec": [
+    "pol.host-functions"
+   ],
+   "profile": "policy",
+   "source": "rule trip priority 5 once { when true then scram(\"T\") }\nrule clear priority 4 { when t >= 2.0 then reset_trip() }\nrule show priority 1 { when true then log(\"seen\", scram, scram_elapsed, game_over, victory, meltdown) }\n",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "scram(T)",
+      "log(seen, true, 0, false, false, false)"
+     ],
+     "watch": {
+      "scram": true
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(seen, true, 0.5, false, false, false)"
+     ],
+     "watch": {
+      "scram": true
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "reset_trip()",
+      "log(seen, false, 1, false, false, false)"
+     ],
+     "watch": {
+      "scram": false
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "reset_trip()",
+      "log(seen, false, 0, false, false, false)"
+     ],
+     "watch": {
+      "scram": false
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "reset_trip()",
+      "log(seen, false, 0, false, false, false)"
+     ],
+     "watch": {
+      "scram": false
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "host": "reactor",
+    "watch": [
+     "scram"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 1.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 1.5
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 2.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 2.05
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 2.1
+       },
+       "faults": false
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "policy_reactor_reset_trip_when_not_scrammed",
+   "spec": [
+    "pol.host-functions"
+   ],
+   "profile": "policy",
+   "source": "rule r { when true then reset_trip() }\nrule show priority 1 { when true then log(\"seen\", scram, scram_elapsed, game_over, victory, meltdown) }\n",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(seen, false, 0, false, false, false)",
+      "reset_trip()"
+     ],
+     "watch": {
+      "scram": false
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(seen, false, 0, false, false, false)",
+      "reset_trip()"
+     ],
+     "watch": {
+      "scram": false
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "host": "reactor",
+    "watch": [
+     "scram"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 1.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 1.05
+       },
+       "faults": false
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "policy_reactor_scram_and_reset_trip_in_one_tick",
+   "spec": [
+    "pol.host-latch"
+   ],
+   "profile": "policy",
+   "source": "rule a priority 5 { when t < 1.1 then scram(\"T\") }\nrule b priority 4 { when t < 1.1 then reset_trip() }\nrule show priority 1 { when true then log(\"seen\", scram, scram_elapsed, game_over, victory, meltdown) }\n",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "scram(T)",
+      "reset_trip()",
+      "log(seen, false, 0, false, false, false)"
+     ],
+     "watch": {
+      "scram": false
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "scram(T)",
+      "reset_trip()",
+      "log(seen, false, 0.05, false, false, false)"
+     ],
+     "watch": {
+      "scram": false
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(seen, false, 0, false, false, false)"
+     ],
+     "watch": {
+      "scram": false
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "host": "reactor",
+    "watch": [
+     "scram"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 1.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 1.05
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 1.1
+       },
+       "faults": false
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "policy_reactor_meltdown_ends_the_run",
+   "spec": [
+    "pol.host-functions"
+   ],
+   "profile": "policy",
+   "source": "signals { running = not game_over }\nrule r once { when true then log(\"before\", game_over, running) meltdown(\"CORE MELTED\") log(\"after\", game_over, meltdown, victory, running) }\nrule show priority 1 { when true then log(\"seen\", scram, scram_elapsed, game_over, victory, meltdown) }\n",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(seen, false, 0, false, false, false)",
+      "log(before, false, true)",
+      "meltdown(CORE MELTED)",
+      "log(after, true, true, false, false)"
+     ],
+     "watch": {
+      "game_over": true,
+      "meltdown": true,
+      "victory": false,
+      "running": false
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(seen, false, 0, true, false, true)"
+     ],
+     "watch": {
+      "game_over": true,
+      "meltdown": true,
+      "victory": false,
+      "running": false
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "host": "reactor",
+    "watch": [
+     "game_over",
+     "meltdown",
+     "victory",
+     "running"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 1.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 1.05
+       },
+       "faults": false
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "policy_reactor_meltdown_twice_in_one_tick",
+   "spec": [
+    "pol.host-functions"
+   ],
+   "profile": "policy",
+   "source": "rule r once { when true then meltdown(\"a\") set game_over = false meltdown(\"b\") }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "meltdown(a)",
+      "meltdown(b)"
+     ],
+     "watch": {
+      "game_over": false,
+      "meltdown": true,
+      "running": false
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "host": "reactor",
+    "watch": [
+     "game_over",
+     "meltdown",
+     "running"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 1.0
+       },
+       "faults": false
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "policy_reactor_meltdown_ignored_once_it_has_happened",
+   "spec": [
+    "pol.host-functions"
+   ],
+   "profile": "policy",
+   "source": "rule s priority 3 { when true then set game_over = false }\nrule r priority 2 { when true then meltdown(\"again\") }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "meltdown(again)"
+     ],
+     "watch": {
+      "game_over": true,
+      "meltdown": true
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "meltdown(again)"
+     ],
+     "watch": {
+      "game_over": false,
+      "meltdown": true
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "host": "reactor",
+    "watch": [
+     "game_over",
+     "meltdown"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 1.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 1.05
+       },
+       "faults": false
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "policy_reactor_victory_ends_the_run",
+   "spec": [
+    "pol.host-functions"
+   ],
+   "profile": "policy",
+   "source": "rule r once { when true then victory(\"YOU WIN\") }\nrule show priority 1 { when true then log(\"seen\", scram, scram_elapsed, game_over, victory, meltdown) }\n",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(seen, false, 0, false, false, false)",
+      "victory(YOU WIN)"
+     ],
+     "watch": {
+      "game_over": true,
+      "meltdown": false,
+      "victory": true,
+      "running": false
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(seen, false, 0, true, true, false)"
+     ],
+     "watch": {
+      "game_over": true,
+      "meltdown": false,
+      "victory": true,
+      "running": false
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "host": "reactor",
+    "watch": [
+     "game_over",
+     "meltdown",
+     "victory",
+     "running"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 1.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 1.05
+       },
+       "faults": false
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "policy_reactor_victory_then_meltdown_in_one_tick",
+   "spec": [
+    "pol.host-functions"
+   ],
+   "profile": "policy",
+   "source": "rule r once { when true then victory(\"WIN\") meltdown(\"MELT\") }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "victory(WIN)",
+      "meltdown(MELT)"
+     ],
+     "watch": {
+      "game_over": true,
+      "meltdown": true,
+      "victory": true,
+      "running": false
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "host": "reactor",
+    "watch": [
+     "game_over",
+     "meltdown",
+     "victory",
+     "running"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 1.0
+       },
+       "faults": false
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "policy_reactor_alarm_and_log_only_record",
+   "spec": [
+    "pol.host-functions"
+   ],
+   "profile": "policy",
+   "source": "rule r { when true then alarm(2, \"FLUX\") alarm(1) log(\"hello\", 1, [2]) log() }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "alarm(2, FLUX)",
+      "alarm(1)",
+      "log(hello, 1, [2])",
+      "log()"
+     ],
+     "watch": {
+      "scram": false,
+      "game_over": false
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "host": "reactor",
+    "watch": [
+     "scram",
+     "game_over"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 1.0
+       },
+       "faults": false
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "policy_reactor_inject_and_clear_fault",
+   "spec": [
+    "pol.host-functions"
+   ],
+   "profile": "policy",
+   "source": "fault pump duration 9 label \"PUMP\" { set flow = 0.5 }\nrule go once { when t >= 1.0 then inject_fault(\"pump\") }\nrule stop once { when t >= 2.0 then clear_fault() }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": "",
+      "fault_label": ""
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "inject_fault(pump)",
+      "log(ALARM: PUMP)"
+     ],
+     "watch": {
+      "active_fault": "pump",
+      "fault_label": "PUMP"
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": "pump",
+      "fault_label": "PUMP"
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "clear_fault()",
+      "log(PUMP CLEARED)"
+     ],
+     "watch": {
+      "active_fault": "",
+      "fault_label": ""
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": "",
+      "fault_label": ""
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "host": "reactor",
+    "watch": [
+     "active_fault",
+     "fault_label"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.5
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 1.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 1.05
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 2.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 2.05
+       },
+       "faults": false
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "policy_reactor_inject_fault_unknown_or_without_a_name",
+   "spec": [
+    "pol.host-functions"
+   ],
+   "profile": "policy",
+   "source": "fault pump { }\nrule r { when true then inject_fault(\"nope\") inject_fault() }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "inject_fault(nope)",
+      "inject_fault()"
+     ],
+     "watch": {
+      "active_fault": ""
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "inject_fault(nope)",
+      "inject_fault()"
+     ],
+     "watch": {
+      "active_fault": ""
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "host": "reactor",
+    "watch": [
+     "active_fault"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 1.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 1.05
+       },
+       "faults": false
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "policy_reactor_inject_fault_name_is_text",
+   "spec": [
+    "pol.host-functions"
+   ],
+   "profile": "policy",
+   "source": "fault f1 { }\nrule r once { when true then inject_fault(\"f\" + 1) }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "inject_fault(f1)",
+      "log(ALARM: F1)"
+     ],
+     "watch": {
+      "active_fault": "f1"
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "host": "reactor",
+    "watch": [
+     "active_fault"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 1.0
+       },
+       "faults": false
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "policy_reactor_functions_are_ordinary_names",
+   "spec": [
+    "pol.host-functions"
+   ],
+   "profile": "policy",
+   "source": "let scram = false\nrule r { when true then scram(\"TRIP\") log(scram) }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "scram(TRIP)",
+      "log(true)"
+     ],
+     "watch": {
+      "scram": true
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "scram(TRIP)",
+      "log(true)"
+     ],
+     "watch": {
+      "scram": true
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "host": "reactor",
+    "watch": [
+     "scram"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 1.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 1.05
+       },
+       "faults": false
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "policy_reactor_reset_clears_the_host",
+   "spec": [
+    "pol.host-latch"
+   ],
+   "profile": "policy",
+   "source": "rule trip once { when true then scram(\"T\") }\nrule show priority 1 { when true then log(\"seen\", scram, scram_elapsed, game_over, victory, meltdown) }\n",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(seen, false, 0, false, false, false)",
+      "scram(T)"
+     ],
+     "watch": {
+      "scram": true
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(seen, true, 0.05, false, false, false)"
+     ],
+     "watch": {
+      "scram": true
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "scram": null
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(seen, false, 0, false, false, false)",
+      "scram(T)"
+     ],
+     "watch": {
+      "scram": true
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(seen, true, 0.05, false, false, false)"
+     ],
+     "watch": {
+      "scram": true
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "host": "reactor",
+    "watch": [
+     "scram"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 1.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 1.05
+       },
+       "faults": false
+      }
+     },
+     {
+      "reset": 0
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 2.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 2.05
+       },
+       "faults": false
+      }
+     }
+    ]
+   }
+  }
+ ]
+}

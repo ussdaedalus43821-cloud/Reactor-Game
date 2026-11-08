@@ -100,9 +100,10 @@ var _rules_path := RULES_PATH
 # Lifecycle
 # ==========================================================================
 
-func start(rules_path: String = RULES_PATH) -> void:
+func start(rules_path: String = RULES_PATH, use_bytecode_vm: bool = true) -> void:
 	_rules_path = rules_path
 	vm = NovaVM.new()
+	vm.use_bytecode_vm = use_bytecode_vm
 	_register_host_functions()
 
 	if not vm.load_file(rules_path):
@@ -170,7 +171,8 @@ func _register_host_functions() -> void:
 	vm.register_function("clear_fault", _fn_clear_fault)
 
 
-## Games embedding this bridge can add their own vocabulary on top.
+## Games embedding this bridge can add their own vocabulary on top -- this
+## is the seam daedalus_rules.nova uses.
 func register_function(fn_name: String, fn: Callable) -> void:
 	if vm != null:
 		vm.register_function(fn_name, fn)

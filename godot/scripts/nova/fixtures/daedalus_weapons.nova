@@ -1,0 +1,490 @@
+# ==========================================================================
+# daedalus_weapons.nova -- weapon systems: ballistics, energy drain, damage
+#                          falloff, and class-specific effectiveness.
+#
+# STAGE 3 of the Godot + NovaLang conversion. Six weapon systems, each with
+# its own hyper-arbitrary tuning table and its own damage-shaping formula --
+# a rocket's blast falls off with distance, a beam ramps up over time and
+# reads the target's hull class through its own multiplier table (not the
+# general one), a homing missile's turn authority depends on what it's
+# chasing.
+#
+# This file, like daedalus_ai.nova before it, is ship-registry-agnostic by
+# design: it knows nothing about SHIPS, ship_class(), or DAMAGE_SCALING,
+# and takes no ship key as an argument anywhere. Every function here takes
+# already-resolved numbers and class strings. That is what lets it import
+# nothing and stay importable by daedalus_rules.nova with no risk of a
+# cycle -- rules.nova resolves "which ship, therefore which raw damage and
+# which class" and this file resolves "given that raw damage, at this
+# range, against that class, what actually lands."
+#
+# The one asymmetry worth calling out up front: for every weapon except the
+# beam, the class multiplier comes from Stage 1's DAMAGE_SCALING matrix,
+# which lives in daedalus_rules.nova and is passed in here already
+# resolved (fire_ballistic's `class_mult` parameter). The beam is the
+# stated exception -- it carries its own vs-fighter/vs-battlecruiser/
+# vs-capital table and resolves it internally from a class string, because
+# the brief says so explicitly: "Asgard beam uses its own class-specific
+# multipliers instead of the general scaling."
+#
+# Also ship-registry-agnostic, and deliberately so: which ship is *allowed*
+# to fire which weapon (only Daedalus and Phoenix carry a beam emitter,
+# only Atlantis has omni ports, only Destiny has turrets) is a gating
+# question that needs SHIPS to answer, so it is resolved in
+# daedalus_rules.nova's fire_weapon(), not here.
+#
+# What Godot owns and this file does not: projectile flight (pos += vel *
+# dt, life countdown, smoke trails), collision detection, and per-frame
+# rendering. Firing a weapon is a call here roughly as often as its
+# cooldown allows (worst case ~14/s for the primary gun) -- comparable to
+# the reactor's 20 Hz tick, not a per-frame hot loop. A beam's continuous
+# damage-per-frame, by contrast, genuinely is a hot loop, so
+# weapons_bridge.gd caches the ramp/multiplier formulas as GDScript and
+# only calls into this file once per shot event, exactly like Stage 1's
+# damage_multiplier() and Stage 2's get_behavior().
+# ==========================================================================
+
+reactor "DAEDALUS WEAPONS DIRECTOR" version 1
+
+
+export let WEAPON_ORDER = ["primary", "rocket", "homing", "beam", "omni", "turret"]
+
+
+# ==========================================================================
+# WEAPON REGISTRY
+#
+# Per-ship damage (gun_dmg / rocket_dmg / homing_dmg / beam_dmg) stays where
+# Stage 1 put it, in SHIPS -- it is not repeated here. What lives here is
+# everything about a shot that does NOT vary by which ship is firing:
+# ballistics, cadence, energy cost, and the shaping curves.
+# ==========================================================================
+
+export let WEAPONS = {
+
+    # -- Primary Guns --------------------------------------------------------
+    # Every ship's default weapon except Atlantis, which fires this exact
+    # gun through eight rim ports instead of one forward emitter (see OMNI
+    # below -- it is the same barrel, not a second number to keep in sync).
+    primary: {
+        name: "Primary Guns",
+        role: "Direct Fire",
+
+        # 1024.3: coilgun muzzle velocity. Fast enough that lead is barely
+        # a factor inside standoff range.
+        velocity: 1024.3,
+
+        # 1.28s: flight time before the round loses coherence and expires.
+        # Effective range is therefore velocity * lifetime =~ 1311u.
+        lifetime: 1.28,
+
+        # 0.073s: capacitor recharge between rounds -- about 13.7 rounds/s
+        # sustained, the fastest trigger of any player weapon.
+        cooldown: 0.073,
+
+        # 1.9 deg: muzzle spread. Tight -- this is a precision weapon, not
+        # a spray one.
+        spread_deg: 1.9,
+
+        # 9.4: matches Stage 1's POWER.primary_cost exactly -- that number
+        # was never independent of this one, Stage 1 just needed it before
+        # Stage 3 existed to explain where it came from.
+        energy_cost: 9.4,
+
+        # 2.7: collision radius for Godot's hit-testing. Small -- this is a
+        # precise weapon, not an area one.
+        projectile_radius: 2.7,
+    },
+
+    # -- Rockets (dumb-fire) --------------------------------------------------
+    rocket: {
+        name: "Rockets",
+        role: "Area Denial (dumb-fire)",
+
+        # 617.8: well under the primary gun's muzzle velocity -- this is a
+        # rocket motor, not a railgun.
+        velocity: 617.8,
+
+        # 3.14s: flight time. Effective range =~ 1940u, comfortably past
+        # any ship's engage_range.
+        lifetime: 3.14,
+
+        # 0.82s: reload between tubes.
+        cooldown: 0.82,
+
+        # 31.2: matches Stage 1's POWER.rocket_cost.
+        energy_cost: 31.2,
+
+        # 97.4: blast radius. Anything inside this ring takes splash
+        # damage on top of a direct hit; nothing outside it does.
+        blast_radius: 97.4,
+
+        # 0.37: how much of the base damage a target at the very edge of
+        # the blast radius loses. damage = base * (1 - (dist/radius)*falloff),
+        # so the edge of the ring still carries 63% of a direct hit -- a
+        # near-miss on a rocket is still a real problem for you.
+        blast_falloff: 0.37,
+
+        # 5.2: bigger collision radius than the primary gun's 2.7 -- this
+        # is a warhead, easier to clip.
+        projectile_radius: 5.2,
+    },
+
+    # -- Homing Missiles (drone weapons, Ancient-derived guidance) ----------
+    homing: {
+        name: "Homing Missiles",
+        role: "Guided (Ancient drone tech)",
+
+        # 468.2: slower than a rocket -- the guidance package costs mass
+        # the motor doesn't get back.
+        velocity: 468.2,
+
+        # 5.47s: longest flight time of any player projectile.
+        lifetime: 5.47,
+
+        # 1.13s: slowest cadence of the ship-mounted weapons -- guidance
+        # packages take longer to spin up than a warhead does.
+        cooldown: 1.13,
+
+        # 212.4 deg/s: baseline steering authority before the target-class
+        # adjustment below is applied.
+        turn_rate: 212.4,
+
+        # 1482.6: lock-on range. Notably shorter than the missile's own
+        # flight envelope (468.2 * 5.47 =~ 2561u) -- it can physically fly
+        # further than its own seeker can find a lock at, which is exactly
+        # why it needs a target before launch, not a hope of finding one.
+        acquire_range: 1482.6,
+
+        # 22.7: matches Stage 1's POWER.homing_cost.
+        energy_cost: 22.7,
+
+        # 78.3 / 0.28: splash on impact, gentler falloff than a rocket's --
+        # a guided warhead is smaller than a dumb one, so the blast is
+        # smaller too, but the shaped charge carries further before it
+        # tapers off.
+        splash_radius: 78.3,
+        splash_falloff: 0.28,
+
+        projectile_radius: 4.8,
+
+        # Per-ship salvo size. 1 round per trigger pull for every hull
+        # except two drone carriers: Aurora, whose whole doctrine is the
+        # drone weapon, and Atlantis, which has the launch rail to match
+        # its six-drone broadside doctrine. Not in SHIPS -- this is a
+        # property of the launcher, not of the hull's raw stats, so it
+        # stays here with the rest of what makes a homing shot a homing
+        # shot.
+        salvo_overrides: { aurora: 3, atlantis: 6 },
+    },
+
+    # -- Asgard Beam (Daedalus & Phoenix only) ------------------------------
+    beam: {
+        name: "Asgard Beam",
+        role: "Directed Energy",
+
+        # 1.42s: how long the beam takes to reach full output after the
+        # trigger is pulled. Continuous fire is not instant -- see
+        # beam_ramp_frac().
+        ramp_time: 1.42,
+
+        # 942.7: engagement envelope. No falloff within it -- a beam
+        # either reaches or it doesn't, there is no "grazing" version of a
+        # directed-energy hit.
+        max_range: 942.7,
+
+        # 6.3: beam cross-section, for Godot's own line-vs-target
+        # collision test. Not used by any formula in this file.
+        beam_width: 6.3,
+
+        # 26.4/s: continuous power draw while firing. At Stage 1's 112/s
+        # reactor recharge, an unrestrained beam alone is sustainable
+        # (+85.6/s net) -- it is combined with shields and thrust that
+        # puts the bus in the red, same as every other system.
+        energy_drain: 26.4,
+
+        # 5.2: minimum reserve to open fire at all. Below this the
+        # capacitor cannot sustain the initial strike even for an instant.
+        min_energy: 5.2,
+
+        # Class-specific coupling, replacing the general damage matrix
+        # entirely for this one weapon (see the file header). A fighter's
+        # single emitter ring cannot dissipate a coherent beam at all --
+        # 2.8x is not "extra damage," it is what happens when a shield has
+        # no way to shed the energy. A capital's distributed lattice can
+        # shed most of it -- 0.64x is a beam that still burns, just not
+        # enough to be the answer at that scale.
+        class_multiplier: { fighter: 2.8, battlecruiser: 1.0, capital: 0.64 },
+    },
+
+    # -- Omni-Broadsides (Atlantis only, 8 ports around the rim) -----------
+    # Mechanically the primary gun, fired through eight ports as twin bolts
+    # instead of one emitter forward -- see the note on `primary` above.
+    # Everything ballistic here is genuinely different (faster, shorter-
+    # lived, wider spread, cheaper per bolt); only the base damage figure
+    # is the same number as the primary gun's, because it is the same gun.
+    omni: {
+        name: "Omni-Broadsides",
+        role: "Area Denial (broadside)",
+
+        port_count: 8,
+        twin_bolts: true,
+
+        # 1187.4: faster than the primary gun -- more ports sharing the
+        # same capacitor bank means less time-on-target per bolt needed.
+        velocity: 1187.4,
+
+        # 1.13s: shorter flight time than the primary gun's 1.28s.
+        lifetime: 1.13,
+
+        # 0.11s: slower cadence per port than the primary gun's 0.073s --
+        # sixteen bolts a volley is already a lot of fire without also
+        # cycling fast.
+        cooldown: 0.11,
+
+        # 4.3 deg: much wider spread than the primary gun's 1.9 -- a fan,
+        # not a beam of fire. Great for area denial, useless for picking
+        # one target out of a furball.
+        spread_deg: 4.3,
+
+        # 8.7 per bolt: cheaper than the primary gun's 9.4, because
+        # sixteen simultaneous bolts at 9.4 each would make one trigger
+        # pull cost 150.4 power -- more than the entire 1047 capacity in
+        # under seven pulls. 8.7 x 16 = 139.2 per volley: still enormous,
+        # deliberately so; this is the most power-hungry weapon in the
+        # game per trigger pull, and it should be.
+        energy_cost_per_bolt: 8.7,
+
+        # 2.7: same collision radius as the primary gun -- same bolt.
+        projectile_radius: 2.7,
+    },
+
+    # -- Auto-Turrets (Destiny only, 5 automated dorsal cannons) -----------
+    # Unlike omni, this is NOT the same gun as Destiny's primary -- Destiny
+    # carries both. The turrets are point-defense automation, tuned
+    # independently: slower muzzle velocity, shorter range, a different
+    # damage figure entirely (14.7, not Destiny's own 11.1 primary
+    # gun_dmg). Fixed here, not sourced from SHIPS, because it is not a
+    # property of Destiny's hull -- it is a property of the turret
+    # hardware bolted to it.
+    turret: {
+        name: "Auto-Turrets",
+        role: "Point Defense (automated)",
+
+        turret_count: 5,
+
+        # 938.6: slower than the primary gun -- these are legacy Ancient
+        # point-defense cannons, not a modern railgun.
+        velocity: 938.6,
+
+        lifetime: 1.08,
+
+        # 0.47s per turret. Five turrets firing independently means an
+        # effective five-round burst roughly every 0.47s, not one round.
+        cooldown: 0.47,
+
+        # 642.8: fire-control range, tighter than the shell's own flight
+        # envelope (938.6 * 1.08 =~ 1013.7u) -- the targeting system gives
+        # up on a shot it knows will miss well before the shell physically
+        # runs out of road.
+        range: 642.8,
+
+        # 14.7: independent of Destiny's own gun_dmg (11.1). Two different
+        # weapon systems on the same hull.
+        damage: 14.7,
+
+        # 4.2: cheapest shot in the game -- automated point defense has to
+        # be affordable to run continuously, or it is not point defense.
+        energy_cost: 4.2,
+    },
+}
+
+
+export func weapon_stat(weapon_type, stat, fallback) {
+    let w = get(WEAPONS, weapon_type, null)
+    if w == null {
+        return fallback
+    }
+    return get(w, stat, fallback)
+}
+
+export func weapon_name(weapon_type) {
+    return weapon_stat(weapon_type, "name", weapon_type)
+}
+
+## How far a shot can reach before it is out of the question entirely.
+## Weapons with an explicit range/acquire_range stat use that; everything
+## else is bounded by velocity * lifetime -- how far the round can
+## physically fly before it expires.
+export func effective_range(weapon_type) {
+    if weapon_type == "homing" {
+        return WEAPONS.homing.acquire_range
+    }
+    if weapon_type == "beam" {
+        return WEAPONS.beam.max_range
+    }
+    if weapon_type == "turret" {
+        return WEAPONS.turret.range
+    }
+    let w = get(WEAPONS, weapon_type, null)
+    if w == null {
+        return 0.0
+    }
+    return get(w, "velocity", 0.0) * get(w, "lifetime", 0.0)
+}
+
+
+# ==========================================================================
+# HOMING: salvo size and target-class turn authority
+# ==========================================================================
+
+export func homing_salvo_size(ship_key) {
+    return get(WEAPONS.homing.salvo_overrides, ship_key, 1)
+}
+
+## 212.4 baseline, +14% against a fighter (small targets are easier to lead
+## once you're actually tracking one -- a tighter turn radius matters more
+## than raw agility against something that size), -11% against a capital
+## (a big, slow hull needs less correction per second to stay locked, so
+## the guidance package spends less authority chasing it). A battlecruiser
+## target gets the unmodified baseline -- the neutral case, as everywhere
+## else player-class reactions appear in this project.
+export func homing_turn_rate(target_class) {
+    let base = WEAPONS.homing.turn_rate
+    if target_class == "fighter" {
+        return base * 1.14
+    }
+    if target_class == "capital" {
+        return base * 0.89
+    }
+    return base
+}
+
+
+# ==========================================================================
+# DAMAGE SHAPING
+# ==========================================================================
+
+## The one falloff formula, shared by rocket blast and homing splash --
+## both the brief's formulas have the same shape, just different radius
+## and falloff constants. Zero beyond `radius`: the brief's formula only
+## defines behavior *inside* the ring, and a hard cutoff at the boundary
+## is the sane way to complete it (the alternative -- extrapolating the
+## same linear formula past its own radius -- eventually goes negative,
+## which is not a thing a blast can do).
+export func falloff_damage(base_dmg, distance, radius, falloff) {
+    if radius <= 0.0 {
+        return base_dmg
+    }
+    if distance > radius {
+        return 0.0
+    }
+    let ratio = distance / radius
+    return base_dmg * (1.0 - ratio * falloff)
+}
+
+## Fraction of full beam output available at `elapsed` seconds into a
+## continuous burn: 60% the instant the beam strikes, ramping linearly to
+## 100% at ramp_time, held there for as long as the trigger stays down.
+export func beam_ramp_frac(elapsed) {
+    let ramp_time = WEAPONS.beam.ramp_time
+    if elapsed >= ramp_time {
+        return 1.0
+    }
+    if elapsed <= 0.0 {
+        return 0.6
+    }
+    return 0.6 + 0.4 * (elapsed / ramp_time)
+}
+
+export func beam_class_multiplier(target_class) {
+    return get(WEAPONS.beam.class_multiplier, target_class, 1.0)
+}
+
+## Damage per second of beam contact right now: base_dps (Stage 1's
+## SHIPS.<key>.beam_dmg, passed in by the caller) x the ramp fraction x
+## the beam's own class multiplier -- never Stage 1's general matrix; see
+## the file header. `damage_dealt` in fire_beam()'s return is this figure
+## for one reference second; Godot multiplies by its own dt to apply it
+## continuously, exactly the way weapons_bridge.gd's cached fast path does
+## every frame without calling back into this file at all.
+export func beam_damage_per_second(base_dps, elapsed, target_class) {
+    return base_dps * beam_ramp_frac(elapsed) * beam_class_multiplier(target_class)
+}
+
+
+# ==========================================================================
+# FIRE RESOLUTION
+#
+# Two entry points, not one, because the beam's class multiplier comes
+# from an entirely different table than everything else's does (the file
+# header explains why). daedalus_rules.nova's fire_weapon() is the single
+# public entry point Godot actually calls; these are what it dispatches to
+# once it has resolved a ship key down to a raw damage figure, a class (or
+# a class multiplier), and a distance.
+# ==========================================================================
+
+## Primary / Rocket / Homing / Omni / Turret. `class_mult` is Stage 1's
+## DAMAGE_SCALING[attacker_class][defender_class], resolved by the caller
+## -- this function does not know what a ship class is, only how to shape
+## a number it is handed.
+export func fire_ballistic(weapon_type, raw_damage, class_mult, distance) {
+    if raw_damage <= 0.0 {
+        return { hit: false, damage_dealt: 0.0, effect: "not equipped" }
+    }
+    if distance > effective_range(weapon_type) {
+        return { hit: false, damage_dealt: 0.0, effect: "out of range" }
+    }
+
+    let scaled = raw_damage * class_mult
+    let effect = "direct hit"
+
+    if weapon_type == "rocket" {
+        scaled = falloff_damage(scaled, distance, WEAPONS.rocket.blast_radius,
+                                WEAPONS.rocket.blast_falloff)
+        effect = "direct hit"
+        if distance > 0.001 {
+            effect = "blast hit"
+        }
+        if scaled <= 0.0 {
+            return { hit: false, damage_dealt: 0.0, effect: "out of blast radius" }
+        }
+    }
+
+    if weapon_type == "homing" {
+        scaled = falloff_damage(scaled, distance, WEAPONS.homing.splash_radius,
+                                WEAPONS.homing.splash_falloff)
+        effect = "direct hit"
+        if distance > 0.001 {
+            effect = "splash hit"
+        }
+        if scaled <= 0.0 {
+            return { hit: false, damage_dealt: 0.0, effect: "out of splash radius" }
+        }
+    }
+
+    return { hit: true, damage_dealt: scaled, effect: effect }
+}
+
+## The beam. `base_dps` is Stage 1's SHIPS.<key>.beam_dmg; `target_class`
+## drives this weapon's own multiplier table, never the general one.
+export func fire_beam(base_dps, target_class, distance, elapsed) {
+    if base_dps <= 0.0 {
+        return { hit: false, damage_dealt: 0.0, effect: "no beam emitter" }
+    }
+    if target_class == "" {
+        return { hit: false, damage_dealt: 0.0, effect: "no target" }
+    }
+    if distance > WEAPONS.beam.max_range {
+        return { hit: false, damage_dealt: 0.0, effect: "out of range" }
+    }
+
+    let dps = beam_damage_per_second(base_dps, elapsed, target_class)
+    let effect = "burned through"
+    if target_class == "fighter" {
+        effect = "vaporized"
+    }
+    if target_class == "capital" {
+        effect = "absorbed"
+    }
+    return { hit: true, damage_dealt: dps, effect: effect }
+}
