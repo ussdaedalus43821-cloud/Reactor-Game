@@ -236,7 +236,7 @@ func _resolve_stmt(node: Dictionary, frame: Frame) -> void:
 				"member":
 					_resolve_expr(target["obj"], frame)
 				_:
-					error = "cannot resolve assignment to a '%s'" % target["k"]
+					pass       # not assignable: the compiler makes it a run-time error
 		"block":
 			_resolve_nested_block(node, frame)
 		"if":

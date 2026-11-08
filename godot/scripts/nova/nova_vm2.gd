@@ -78,6 +78,7 @@ const _CALL := NovaOpcodes.OP.CALL
 const _CALL_NAME := NovaOpcodes.OP.CALL_NAME
 const _RETURN := NovaOpcodes.OP.RETURN
 const _IMPORT := NovaOpcodes.OP.IMPORT
+const _RAISE := NovaOpcodes.OP.RAISE
 
 
 ## One boxed local, shared by every LOAD_CELL/STORE_CELL/LOAD_FREE/
@@ -191,7 +192,7 @@ func _run(entry_frame: Frame) -> Variant:
 	while true:
 		_steps += 1
 		if _steps > MAX_STEPS:
-			return _err(_line(frame, ip), "step budget exhausted (%d) -- runaway loop?" % MAX_STEPS)
+			return _err(_budget_line(frame, ip), "step budget exhausted (%d) -- runaway loop?" % MAX_STEPS)
 
 		var op: int = frame.code.ops[ip]
 		var arg = frame.code.args[ip]
@@ -417,6 +418,10 @@ func _run(entry_frame: Frame) -> Variant:
 					return _err(line, owner_vm.error)
 				frame.stack.push_back(exports)
 
+			_RAISE:
+				# A runtime error the compiler already knows will happen (a bad assignment target).
+				return _err(line, String(arg))
+
 			_:
 				return _err(line, "VM bug: unknown opcode %d" % op)
 
@@ -588,7 +593,9 @@ func _get_element(obj, key, line: int) -> Variant:
 		var l: Array = obj
 		if NovaEvaluator.type_name(key) != "number":
 			return _err(line, "list index must be a number")
-		var raw := int(float(key))
+		var raw := _whole_int(key, line)
+		if error != "":
+			return null
 		var i := raw
 		if i < 0:
 			i += l.size()
@@ -599,7 +606,9 @@ func _get_element(obj, key, line: int) -> Variant:
 		var s := String(obj)
 		if NovaEvaluator.type_name(key) != "number":
 			return _err(line, "string index must be a number")
-		var raw2 := int(float(key))
+		var raw2 := _whole_int(key, line)
+		if error != "":
+			return null
 		var j := raw2
 		if j < 0:
 			j += s.length()
@@ -619,7 +628,9 @@ func _set_element(obj, key, value, line: int) -> void:
 		if NovaEvaluator.type_name(key) != "number":
 			_err(line, "list index must be a number")
 			return
-		var raw := int(float(key))
+		var raw := _whole_int(key, line)
+		if error != "":
+			return
 		var i := raw
 		if i < 0:
 			i += l.size()
@@ -634,6 +645,27 @@ func _set_element(obj, key, value, line: int) -> void:
 func _line(frame: Frame, ip: int) -> int:
 	var positions := frame.code.positions
 	return positions[ip] if ip < positions.size() else 0
+
+
+## The line to report a spent budget at: the instruction's own, else the nearest one before it
+## (a loop's jump back has none, and the error should still say where the program was).
+func _budget_line(frame: Frame, ip: int) -> int:
+	var positions := frame.code.positions
+	var i := mini(ip, positions.size() - 1)
+	while i >= 0:
+		if positions[i] > 0:
+			return positions[i]
+		i -= 1
+	return 0
+
+
+## A number used as an index, as a whole number; infinity and NaN have none and are an error.
+func _whole_int(key, line: int) -> int:
+	var x := float(key)
+	if is_nan(x) or is_inf(x):
+		_err(line, "expected a finite number, got %s" % NovaLexer.number_text(x))
+		return 0
+	return int(x)
 
 
 ## The display text of a value, or "" and an error if it would be longer than

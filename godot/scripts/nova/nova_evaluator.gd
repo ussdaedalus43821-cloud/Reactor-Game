@@ -466,7 +466,9 @@ func _set_element(obj, key, value, line: int) -> Variant:
 		var l: Array = obj
 		if type_name(key) != "number":
 			return fail(line, "list index must be a number")
-		var raw := int(float(key))
+		var raw := _whole_int(key, line)
+		if error != "":
+			return null
 		var i := raw
 		if i < 0:
 			i += l.size()
@@ -580,6 +582,26 @@ func _whole(v, line: int) -> float:
 	return floor(x) if x >= 0.0 else ceil(x)
 
 
+## A number used as an index or a position, as a whole number (a finite one: [pol.index]).
+func _whole_int(v, line: int) -> int:
+	return int(_whole(v, line))
+
+
+static var _number_text_regex: RegEx = null
+
+
+## num("text"): an optional sign, digits with an optional point, an optional exponent, ASCII
+## spaces around it; any other text reads as 0 (docs/spec/13-policy-values.md [pol.lib-convert]).
+static func read_number(s: String) -> float:
+	if _number_text_regex == null:
+		_number_text_regex = RegEx.new()
+		_number_text_regex.compile(
+				"^[ \\t\\r\\n]*[+-]?([0-9]+\\.?[0-9]*|\\.[0-9]+)([eE][+-]?[0-9]+)?[ \\t\\r\\n]*$")
+	if _number_text_regex.search(s) == null:
+		return 0.0
+	return s.strip_edges().to_float()
+
+
 func _get_element(obj, key, line: int) -> Variant:
 	if typeof(obj) == TYPE_DICTIONARY:
 		var d: Dictionary = obj
@@ -593,7 +615,9 @@ func _get_element(obj, key, line: int) -> Variant:
 		if type_name(key) != "number":
 			fail(line, "list index must be a number")
 			return null
-		var raw := int(float(key))
+		var raw := _whole_int(key, line)
+		if error != "":
+			return null
 		var i := raw
 		if i < 0:
 			i += l.size()
@@ -606,7 +630,9 @@ func _get_element(obj, key, line: int) -> Variant:
 		if type_name(key) != "number":
 			fail(line, "string index must be a number")
 			return null
-		var raw2 := int(float(key))
+		var raw2 := _whole_int(key, line)
+		if error != "":
+			return null
 		var j := raw2
 		if j < 0:
 			j += s.length()
@@ -848,12 +874,17 @@ func call_builtin(name: String, args: Array, line: int) -> Variant:
 			return _etext(args[0], line)
 		"num":
 			if typeof(args[0]) == TYPE_STRING:
-				return String(args[0]).to_float()
+				return read_number(String(args[0]))
 			return _num(args[0], line)
 		"bool":
 			return truthy(args[0])
 		"int":
-			return float(int(_num(args[0], line)))
+			# The whole part, as a number: nothing to cut off in infinity, NaN or a number that
+			# is already whole (and a 64-bit int would overflow on those).
+			var iv := _num(args[0], line)
+			if is_nan(iv) or is_inf(iv):
+				return iv
+			return floor(iv) if iv >= 0.0 else ceil(iv)
 
 		"len":
 			match typeof(args[0]):
@@ -911,7 +942,9 @@ func call_builtin(name: String, args: Array, line: int) -> Variant:
 				fail(line, "remove_at() needs a list")
 				return null
 			var rl: Array = args[0]
-			var ri := int(_num(args[1], line))
+			var ri := _whole_int(args[1], line)
+			if error != "":
+				return null
 			if ri < 0 or ri >= rl.size():
 				fail(line, "remove_at() index %d out of range (size %d)"
 						% [ri, rl.size()])
@@ -979,7 +1012,7 @@ func call_builtin(name: String, args: Array, line: int) -> Variant:
 					else _etext(args[0], line)
 			var needle: String = args[1] if typeof(args[1]) == TYPE_STRING \
 					else _etext(args[1], line)
-			return hay.contains(needle)
+			return needle == "" or hay.contains(needle)     # every text contains the empty one
 		"upper":
 			return _etext(args[0], line).to_upper()
 		"lower":
@@ -990,8 +1023,10 @@ func call_builtin(name: String, args: Array, line: int) -> Variant:
 
 
 func _builtin_slice(args: Array, line: int):
-	var start := int(_num(args[1], line))
-	var stop := int(_num(args[2], line))
+	var start := _whole_int(args[1], line)
+	var stop := _whole_int(args[2], line)
+	if error != "":
+		return null
 	if start < 0:
 		start = 0
 	if stop < 0:

@@ -94,7 +94,7 @@ const NAMES := [
 	"BUILD_LIST", "BUILD_DICT",
 	"INDEX", "GET_MEMBER", "STORE_INDEX", "STORE_MEMBER",
 	"MAKE_FUNCTION", "CALL", "CALL_NAME",
-	"RETURN", "IMPORT",
+	"RETURN", "IMPORT", "RAISE",
 ]
 
 ## name -> opcode number. Must stay in lockstep with NAMES above; the test
@@ -113,7 +113,7 @@ const OP := {
 	"BUILD_LIST": 28, "BUILD_DICT": 29,
 	"INDEX": 30, "GET_MEMBER": 31, "STORE_INDEX": 32, "STORE_MEMBER": 33,
 	"MAKE_FUNCTION": 34, "CALL": 35, "CALL_NAME": 36,
-	"RETURN": 37, "IMPORT": 38,
+	"RETURN": 37, "IMPORT": 38, "RAISE": 39,
 }
 
 

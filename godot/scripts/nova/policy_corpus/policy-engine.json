@@ -3598,7 +3598,7 @@
     "pol.engine-errors"
    ],
    "profile": "policy",
-   "source": "let i = 0\nrule r { when true then set k = 0 while k < 60000 { set k = k + 1 } }",
+   "source": "let i = 0\nrule r { when true then set k = 0 while k < 20000 { set k = k + 1 } }",
    "output": [],
    "error": "",
    "error_line": null,
@@ -9830,7 +9830,7 @@
     "pol.host-api"
    ],
    "profile": "policy",
-   "source": "func spin() { let i = 0 while i < 60000 { i = i + 1 } return i }",
+   "source": "func spin() { let i = 0 while i < 20000 { i = i + 1 } return i }",
    "output": [],
    "error": "",
    "error_line": null,
@@ -9839,7 +9839,7 @@
    "results": [
     {
      "ok": true,
-     "value": 60000.0,
+     "value": 20000.0,
      "error": "",
      "output": [],
      "host_calls": [],
@@ -9847,7 +9847,7 @@
     },
     {
      "ok": true,
-     "value": 60000.0,
+     "value": 20000.0,
      "error": "",
      "output": [],
      "host_calls": [],

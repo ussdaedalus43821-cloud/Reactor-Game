@@ -50,6 +50,7 @@ var evaluator: NovaEvaluator
 var vm2: NovaVM2
 var compiled: Dictionary = {}     # NovaCompiler.compile_program(program)'s result
 var error := ""
+var _running := false          # inside a tick or a call_function: a host function may reach back in
 var source_name := "<empty>"
 
 var _modules: Dictionary = {}     # path -> exports
@@ -250,9 +251,11 @@ func eval(source: String, name: String = "<source>") -> bool:
 
 ## Call a NovaLang function from GDScript.
 func call_function(name: String, args: Array = []):
-	if use_bytecode_vm:
-		return _call_function_vm2(name, args)
-	return _call_function_tree_walker(name, args)
+	_running = true
+	var result = _call_function_vm2(name, args) if use_bytecode_vm \
+			else _call_function_tree_walker(name, args)
+	_running = false
+	return result
 
 
 func _call_function_tree_walker(name: String, args: Array):
@@ -322,6 +325,7 @@ func drain_output() -> Array:
 ## Re-initialise: fresh globals, top-level statements re-run, params and
 ## effect defaults re-evaluated, every latch cleared.
 func reset(seed_value: int = 0) -> bool:
+	error = ""
 	if seed_value != 0:
 		rng.seed = seed_value
 	if use_bytecode_vm:
@@ -356,6 +360,8 @@ func _reset_tree_walker() -> bool:
 
 	_reset_rule_latches()
 	_reset_fault_schedule()
+	if error != "":
+		return false
 
 	if ev.error != "":
 		error = ev.error
@@ -396,7 +402,7 @@ func _reset_vm2() -> bool:
 
 	_reset_rule_latches()
 	_reset_fault_schedule()
-	return true
+	return error == ""
 
 
 func _reset_rule_latches() -> void:
@@ -410,8 +416,27 @@ func _reset_fault_schedule() -> void:
 	active_fault = null
 	fault_started_at = 0.0
 	next_fault_at = rng.randf_range(
-		float(get_global("fault_first_min_s", 45.0)),
-		float(get_global("fault_first_max_s", 90.0)))
+		_number("fault_first_min_s", 45.0),
+		_number("fault_first_max_s", 90.0))
+
+
+## A global the engine itself reads as a number (the time `t`, a fault duration, the fault timing
+## parameters): a number is itself and a boolean is 1 or 0; anything else is the ordinary error
+## "expected a number, got null" (docs/spec/14-policy-engine.md [pol.engine-errors]).
+func _number(name: String, fallback: float) -> float:
+	return _as_number(get_global(name, fallback))
+
+
+func _as_number(v) -> float:
+	if error != "":
+		return 0.0
+	match typeof(v):
+		TYPE_BOOL:
+			return 1.0 if v else 0.0
+		TYPE_INT, TYPE_FLOAT:
+			return float(v)
+	error = "expected a number, got %s" % NovaEvaluator.type_name(v)
+	return 0.0
 
 
 # ==========================================================================
@@ -437,15 +462,9 @@ func _fault_by_name(name: String):
 func _activate_fault(fault: Dictionary) -> void:
 	if active_fault != null:
 		return
-	active_fault = fault
-	fault_started_at = float(get_global("t", 0.0))
-	set_global("active_fault", fault["name"])
-	set_global("fault_label", fault["label"])
-	set_global("fault_elapsed", 0.0)
-
-	# float() is called only once the backend has confirmed there's a real
-	# value to convert -- a failed eval()/execute() returns null, and
-	# float(null) is not worth relying on either way.
+	# Work everything out before changing any state, so a fault whose duration (or the time) is
+	# not a number does not start at all ([pol.fault-schedule]).
+	var started := _number("t", 0.0)
 	var duration_value := 0.0
 	if use_bytecode_vm:
 		var cfault: Dictionary = _faults_by_name[String(fault["name"])]
@@ -453,13 +472,20 @@ func _activate_fault(fault: Dictionary) -> void:
 		if vm2.error != "":
 			error = vm2.error
 		else:
-			duration_value = float(raw)
+			duration_value = _as_number(raw)
 	else:
 		var raw2 = evaluator.eval(fault["duration"], evaluator.globals)
 		if evaluator.error != "":
 			error = evaluator.error
 		else:
-			duration_value = float(raw2)
+			duration_value = _as_number(raw2)
+	if error != "":
+		return
+	active_fault = fault
+	fault_started_at = started
+	set_global("active_fault", fault["name"])
+	set_global("fault_label", fault["label"])
+	set_global("fault_elapsed", 0.0)
 	set_global("fault_duration", duration_value)
 	_host_log("ALARM: " + String(fault["label"]))
 
@@ -474,9 +500,9 @@ func _clear_fault() -> void:
 	set_global("fault_label", "")
 	set_global("fault_elapsed", 0.0)
 	set_global("fault_duration", 0.0)
-	next_fault_at = float(get_global("t", 0.0)) + rng.randf_range(
-		float(get_global("fault_gap_min_s", 45.0)),
-		float(get_global("fault_gap_max_s", 90.0)))
+	next_fault_at = _number("t", 0.0) + rng.randf_range(
+		_number("fault_gap_min_s", 45.0),
+		_number("fault_gap_max_s", 90.0))
 
 
 func _pick_weighted_fault():
@@ -504,8 +530,12 @@ func inject_fault(name: String) -> bool:
 	if fault == null:
 		error = "no such fault '%s'" % name
 		return false
+	if not _running:
+		error = ""
+		evaluator.begin_run()
+		vm2.begin_run()
 	_activate_fault(fault)
-	return true
+	return error == ""
 
 
 func clear_fault() -> void:
@@ -521,7 +551,7 @@ func _update_faults(now: float, enabled: bool) -> void:
 	else:
 		var elapsed := now - fault_started_at
 		set_global("fault_elapsed", elapsed)
-		if elapsed >= float(get_global("fault_duration", 30.0)):
+		if elapsed >= _number("fault_duration", 30.0):
 			_clear_fault()
 
 	if active_fault == null:
@@ -543,9 +573,12 @@ func _update_faults(now: float, enabled: bool) -> void:
 ## rule in priority order. The host reads results back with get_global() and
 ## through the functions it registered.
 func tick(dt: float, inputs: Dictionary, faults_enabled: bool = true) -> bool:
-	if use_bytecode_vm:
-		return _tick_vm2(dt, inputs, faults_enabled)
-	return _tick_tree_walker(dt, inputs, faults_enabled)
+	error = ""            # a failed tick does not poison the next one
+	_running = true
+	var ok := _tick_vm2(dt, inputs, faults_enabled) if use_bytecode_vm \
+			else _tick_tree_walker(dt, inputs, faults_enabled)
+	_running = false
+	return ok
 
 
 func _tick_prelude(dt: float, inputs: Dictionary) -> void:
@@ -568,12 +601,17 @@ func _tick_tree_walker(dt: float, inputs: Dictionary, faults_enabled: bool) -> b
 	ev.dt = dt
 	_tick_prelude(dt, inputs)
 
-	_update_faults(float(get_global("t", 0.0)), faults_enabled)
+	_update_faults(_number("t", 0.0), faults_enabled)
 	if error != "":
 		return false
 
 	for entry in program["signal_defs"]:
 		ev.globals.declare(String(entry[0]), ev.eval(entry[1], ev.globals))
+	if ev.error != "":
+		# An error in a signal stops the tick as that signal's own error, not as the error of
+		# whichever rule is evaluated next ([pol.decl-signals]).
+		error = ev.error
+		return false
 
 	for entry in program["rules"]:
 		var rule: Dictionary = entry
@@ -600,7 +638,7 @@ func _tick_vm2(dt: float, inputs: Dictionary, faults_enabled: bool) -> bool:
 	vm2.dt = dt
 	_tick_prelude(dt, inputs)
 
-	_update_faults(float(get_global("t", 0.0)), faults_enabled)
+	_update_faults(_number("t", 0.0), faults_enabled)
 	if error != "":
 		return false
 
