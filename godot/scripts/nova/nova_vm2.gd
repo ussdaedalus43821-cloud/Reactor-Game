@@ -417,6 +417,8 @@ func _run(entry_frame: Frame) -> Variant:
 			_:
 				return _err(line, "VM bug: unknown opcode %d" % op)
 
+	return null     # never reached (the loop only ends through a return above); Godot 4.7 wants it
+
 
 ## Shared by CALL and CALL_NAME: build the callee's Frame, park the
 ## caller. Returns {"frame", "call_frames"} rather than mutating `frame`/

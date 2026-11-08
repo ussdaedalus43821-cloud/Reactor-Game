@@ -74,7 +74,7 @@ func parse(src: String, name: String = "<source>") -> Dictionary:
 				break
 			_prog["title"] = str(t["value"])
 			if _accept(NovaLexer.TOK_KEYWORD, "version"):
-				_prog["version"] = int(_expect(NovaLexer.TOK_NUMBER)["value"])
+				_prog["version"] = int(_number_literal())
 		elif _accept(NovaLexer.TOK_KEYWORD, "params"):
 			_assign_block(_prog["params"])
 		elif _accept(NovaLexer.TOK_KEYWORD, "signals"):
@@ -153,6 +153,16 @@ func _expect(kind: String, value = null) -> Dictionary:
 	return eof_tok
 
 
+## A number literal where one is required. When there is none, _expect has already
+## recorded the error and handed back the end-of-file token, which has no value to
+## convert (float(null) is a script error), so give 0 and let the parse unwind.
+func _number_literal() -> float:
+	var t := _expect(NovaLexer.TOK_NUMBER)
+	if error != "":
+		return 0.0
+	return float(t["value"])
+
+
 func _fail(message: String) -> void:
 	if error == "":
 		error = "line %d: %s" % [int(_cur()["line"]), message]
@@ -205,7 +215,7 @@ func _rule() -> Dictionary:
 	var edge := false
 	while error == "":
 		if _accept(NovaLexer.TOK_KEYWORD, "priority"):
-			priority = float(_expect(NovaLexer.TOK_NUMBER)["value"])
+			priority = _number_literal()
 		elif _accept(NovaLexer.TOK_KEYWORD, "once"):
 			once = true
 		elif _accept(NovaLexer.TOK_KEYWORD, "edge"):
@@ -232,7 +242,7 @@ func _fault() -> Dictionary:
 	var label := name.replace("_", " ").to_upper()
 	while error == "":
 		if _accept(NovaLexer.TOK_KEYWORD, "weight"):
-			weight = float(_expect(NovaLexer.TOK_NUMBER)["value"])
+			weight = _number_literal()
 		elif _accept(NovaLexer.TOK_KEYWORD, "duration"):
 			duration = _expr()
 		elif _accept(NovaLexer.TOK_KEYWORD, "label"):
