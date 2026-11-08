@@ -315,7 +315,9 @@ func _check_daedalus_data(data: Dictionary) -> void:
 	var got_sectors = vm.get_global("SECTORS", [])
 	var got_keys: Array = []
 	for entry in (got_sectors as Array):
-		got_keys.append(int(float((entry as Dictionary)["key"])))
+		# Floats, like the JSON the expected keys came from: Godot 4.7 does not call [1, 2] and
+		# [1.0, 2.0] equal, and every number in the oracle is a float.
+		got_keys.append(float((entry as Dictionary)["key"]))
 	checked += 1
 	if got_keys != want_keys:
 		_fail("daedalus SECTORS", "keys", want_keys, got_keys)
