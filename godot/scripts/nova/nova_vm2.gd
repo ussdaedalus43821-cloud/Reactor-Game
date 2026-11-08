@@ -92,12 +92,14 @@ class Frame:
 	var code: NovaCode
 	var slots: Array
 	var cells: Array
+	var globals: Dictionary      # the global scope of the module this code was written in
 	var stack: Array = []
 	var ip: int = 0
 
-	func _init(c: NovaCode, closure_cells: Array) -> void:
+	func _init(c: NovaCode, closure_cells: Array, scope: Dictionary) -> void:
 		code = c
 		cells = closure_cells
+		globals = scope
 		slots = []
 		slots.resize(c.nslots)
 
@@ -154,7 +156,7 @@ func begin_run() -> void:
 ## a closure, so it captures nothing (`cells` is always empty here).
 func execute(code: NovaCode, args: Array = []) -> Variant:
 	error = ""
-	var frame := Frame.new(code, [])
+	var frame := Frame.new(code, [], globals)
 	for i in range(mini(args.size(), code.param_count)):
 		frame.slots[i] = args[i]
 	return _run(frame)
@@ -171,7 +173,7 @@ func call_closure(fn, args: Array) -> Variant:
 	if args.size() != code.param_count:
 		return _err(0, "%s() takes %d argument(s), got %d" %
 				[fn.name if fn.name != "" else "anonymous", code.param_count, args.size()])
-	var frame := Frame.new(code, fn.cells)
+	var frame := Frame.new(code, fn.cells, fn.globals if fn.globals != null else globals)
 	for i in range(code.param_count):
 		frame.slots[i] = args[i]
 	return _run(frame)
@@ -227,12 +229,12 @@ func _run(entry_frame: Frame) -> Variant:
 
 			_LOAD_GLOBAL:
 				var gname: String = arg
-				if not globals.has(gname):
+				if not frame.globals.has(gname):
 					return _err(line, "unknown identifier '%s'" % gname)
-				frame.stack.push_back(globals[gname])
+				frame.stack.push_back(frame.globals[gname])
 
 			_STORE_GLOBAL:
-				globals[arg] = frame.stack.pop_back()
+				frame.globals[arg] = frame.stack.pop_back()
 
 			_NEW_CELLS:
 				var cell_slots: Array = arg
@@ -360,6 +362,7 @@ func _run(entry_frame: Frame) -> Variant:
 				fn.name = child.name
 				fn.code = child
 				fn.cells = captured
+				fn.globals = frame.globals     # a function sees the globals of the module it was written in
 				frame.stack.push_back(fn)
 
 			_CALL:
@@ -432,7 +435,7 @@ func _enter_call(fn, args: Array, call_frames: Array, frame: Frame, ip: int, lin
 	if call_frames.size() >= MAX_CALL_DEPTH:
 		_err(line, "call depth limit (%d) exceeded -- infinite recursion?" % MAX_CALL_DEPTH)
 		return {}
-	var new_frame := Frame.new(code, fn.cells)
+	var new_frame := Frame.new(code, fn.cells, fn.globals if fn.globals != null else globals)
 	for i in range(code.param_count):
 		new_frame.slots[i] = args[i]
 	frame.ip = ip
@@ -495,7 +498,7 @@ func _soft_read_loc(loc: Array, frame: Frame) -> Variant:
 			var fc: Cell = frame.cells[loc[1]]
 			return fc.value
 		"global":
-			return globals.get(loc[1])
+			return frame.globals.get(loc[1])
 	return null
 
 

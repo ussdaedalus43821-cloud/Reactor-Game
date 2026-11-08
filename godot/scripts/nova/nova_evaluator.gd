@@ -115,6 +115,7 @@ class NovaFunc:
 
 	var code = null          # NovaCode, when this is a VM2 closure
 	var cells: Array = []    # this closure's captured Cells, for VM2
+	var globals = null       # the global scope (a Dictionary) of the module it was written in, for VM2
 
 	func _init(n: String = "", p: Array = [], b: Dictionary = {}, c = null) -> void:
 		name = n
