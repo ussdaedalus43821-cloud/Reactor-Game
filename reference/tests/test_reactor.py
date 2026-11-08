@@ -480,6 +480,83 @@ class TestReactorDSL(unittest.TestCase):
 # Physics
 # ==========================================================================
 
+class TestHardening(unittest.TestCase):
+    """Behaviours the Nova_Lang specification pinned that the reference once got
+    wrong (docs/spec/13- and 14-policy-*.md there, divergences D-030 to D-035),
+    and the owner's limit on list size. None is in the recorded oracle."""
+
+    def run_src(self, source):
+        h = Harness(source)
+        return h.ok, h.vm.error, h.vm.drain_output()
+
+    def test_no_python_exception_on_non_finite_numbers(self):
+        ok, err, out = self.run_src(
+            "print(floor(1e400), round(-1e400), int(1e400), pow(0, -1), "
+            "pow(-8, 1/3), pow(-1e200, 2))")
+        self.assertTrue(ok, err)
+        self.assertEqual(out, ["inf -inf inf inf nan inf"])
+
+    def test_a_non_finite_index_or_count_is_an_error(self):
+        for src in ("print([1][1e400])", "print(range(1e400))",
+                    "print(slice([1], 0, 1e400))", "print(remove_at([1], 1e400))"):
+            ok, err, _ = self.run_src(src)
+            self.assertFalse(ok, src)
+            self.assertEqual(err, "line 1: expected a finite number, got inf", src)
+
+    def test_num_reads_one_grammar(self):
+        ok, err, out = self.run_src(
+            'print(num("2.5"), num(" 3 "), num("1e3"), num("inf"), num("nan"), '
+            'num("1_0"), num("12abc"), num("0x10"), num(""))')
+        self.assertTrue(ok, err)
+        self.assertEqual(out, ["2.5 3 1000 0 0 0 0 0 0"])
+
+    def test_names_and_keys_are_quoted_plainly(self):
+        ok, err, _ = self.run_src('let d = {} print(d["it\'s"])')
+        self.assertEqual(err, "line 1: dict has no key 'it's'")
+
+    def test_an_error_in_a_signal_is_its_own(self):
+        h = Harness("signals { s = nope }\nrule r { when true then log(1) }")
+        self.assertFalse(h.vm.tick(0.05, {"t": 0.0}))
+        self.assertEqual(h.vm.error, "line 1: unknown identifier 'nope'")
+
+    def test_a_fault_with_an_unusable_duration_does_not_start(self):
+        h = Harness("fault f duration nope { }")
+        h.vm.tick(0.05, {"t": 0.0}, False)
+        self.assertFalse(h.vm.inject_fault("f"))
+        self.assertIsNone(h.vm.active_fault)
+        h2 = Harness('fault f duration "long" { }')
+        h2.vm.tick(0.05, {"t": 0.0}, False)
+        self.assertFalse(h2.vm.inject_fault("f"))
+        self.assertEqual(h2.vm.error, "expected a number, got string")
+
+    def test_equal_priority_rules_keep_written_order(self):
+        h = Harness('rule a priority 5 { when true then log("a") }\n'
+                    'rule b priority 5 { when true then log("b") }\n'
+                    'rule c priority 9 { when true then log("c") }\n'
+                    'rule d priority 5 { when true then log("d") }')
+        h.tick()
+        self.assertEqual(h.events, ["c", "a", "b", "d"])
+
+    def test_list_size_limit(self):
+        ok, err, out = self.run_src("print(len(range(1000000)))")
+        self.assertTrue(ok, err)
+        self.assertEqual(out, ["1000000"])
+        for src, want in (
+                ("print(range(1000001))",
+                 "line 1: a list cannot have more than 1000000 items"),
+                ("print(range(1e12))",
+                 "line 1: a list cannot have more than 1000000 items"),
+                ("let a = range(500000) let b = range(500001) print(a + b)",
+                 "a list cannot have more than 1000000 items"),
+                ("let l = [1] let i = 0 while i < 30 { l = l + l  i = i + 1 }",
+                 "a list cannot have more than 1000000 items"),
+                ("let l = range(1000000) append(l, 1)",
+                 "line 1: a list cannot have more than 1000000 items")):
+            ok, err, _ = self.run_src(src)
+            self.assertFalse(ok, src)
+            self.assertEqual(err, want, src)
+
+
 class TestPhysics(unittest.TestCase):
 
     def test_rod_worth_is_monotonic_and_cubic(self):

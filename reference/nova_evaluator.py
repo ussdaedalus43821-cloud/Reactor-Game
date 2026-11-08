@@ -25,11 +25,14 @@ a call-depth limit (runaway recursion is an error, not a stack overflow).
 from __future__ import annotations
 
 import math
+import re
 
 from nova_lexer import NovaError, number_text
 
 MAX_CALL_DEPTH = 128
 MAX_STEPS = 500000
+LIST_TOO_LONG = "a list cannot have more than 1000000 items"
+MAX_LIST_ITEMS = 1000000      # no list may hold more (docs/spec/12-policy-syntax.md, [pol.limits])
 
 FLOW_RETURN = "return"
 FLOW_BREAK = "break"
@@ -51,6 +54,37 @@ BUILTIN_ARITY = {
     # output
     "print": 0,
 }
+
+
+# num("..."): optional sign, digits with an optional point, optional exponent,
+# ASCII whitespace around it ignored; anything else reads as 0
+# (docs/spec/13-policy-values.md, [pol.lib-convert]).
+_NUMBER_TEXT = re.compile(r"[ \t\r\n]*[+-]?(?:[0-9]+\.?[0-9]*|\.[0-9]+)(?:[eE][+-]?[0-9]+)?[ \t\r\n]*")
+
+
+def read_number(s: str) -> float:
+    if _NUMBER_TEXT.fullmatch(s) is None:
+        return 0.0
+    return float(s.strip(" \t\r\n"))
+
+
+def c_pow(base: float, expo: float) -> float:
+    """pow() as C and GDScript define it: overflow saturates to infinity, a
+    zero base with a negative exponent is infinity, and a negative base with
+    a fractional exponent is NaN (Python would raise or return a complex)."""
+    try:
+        r = base ** expo
+    except OverflowError:
+        odd = (expo == math.floor(expo) and abs(expo) < 2.0 ** 53
+               and int(expo) % 2 == 1)
+        return -math.inf if base < 0 and odd else math.inf
+    except ZeroDivisionError:
+        odd = (expo == math.floor(expo) and abs(expo) < 2.0 ** 53
+               and int(expo) % 2 == 1)
+        return -math.inf if math.copysign(1.0, base) < 0 and odd else math.inf
+    if isinstance(r, complex):
+        return math.nan
+    return float(r)
 
 
 class NovaFunction:
@@ -321,7 +355,7 @@ class Evaluator:
         if kind == "import":
             return self._import(node, env)
 
-        return self.fail(line, "cannot execute a %r statement" % kind)
+        return self.fail(line, "cannot execute a '%s' statement" % kind)
 
     def _assign(self, node, env: Env):
         target = node["target"]
@@ -343,7 +377,7 @@ class Evaluator:
             obj = self.eval(target["obj"], env)
             return self._set_element(obj, target["name"], value, line)
 
-        return self.fail(line, "cannot assign to a %r" % target["k"])
+        return self.fail(line, "cannot assign to a '%s'" % target["k"])
 
     def _set_element(self, obj, key, value, line):
         if isinstance(obj, dict):
@@ -352,12 +386,15 @@ class Evaluator:
         if isinstance(obj, list):
             if type_name(key) != "number":
                 return self.fail(line, "list index must be a number")
-            i = int(key)
+            i = self._int(key, line)
+            if self.error:
+                return {"flow": FLOW_RETURN, "value": None}
+            whole = i
             if i < 0:
                 i += len(obj)
             if i < 0 or i >= len(obj):
                 return self.fail(line, "list index %d out of range (size %d)"
-                                 % (int(key), len(obj)))
+                                 % (whole, len(obj)))
             obj[i] = value
             return None
         return self.fail(line, "cannot assign into a %s" % type_name(obj))
@@ -393,7 +430,7 @@ class Evaluator:
             name = node["name"]
             if env.has(name):
                 return env.get(name)
-            self.fail(node.get("line", 0), "unknown identifier %r" % name)
+            self.fail(node.get("line", 0), "unknown identifier '%s'" % name)
             return None
 
         if kind == "list":
@@ -430,7 +467,7 @@ class Evaluator:
             obj = self.eval(node["obj"], env)
             return self._get_element(obj, node["name"], node.get("line", 0))
 
-        self.fail(node.get("line", 0), "cannot evaluate a %r node" % kind)
+        self.fail(node.get("line", 0), "cannot evaluate a '%s' node" % kind)
         return None
 
     def _num(self, v, line: int) -> float:
@@ -441,35 +478,51 @@ class Evaluator:
         self.fail(line, "expected a number, got %s" % type_name(v))
         return 0.0
 
+    def _int(self, v, line: int) -> int:
+        """A number used as an index, a count or a position: its whole part,
+        truncated toward zero. Infinity and NaN have none, so they are an error
+        (docs/spec/13-policy-values.md, [pol.index])."""
+        x = self._num(v, line)
+        if x != x or x in (math.inf, -math.inf):
+            self.fail(line, "expected a finite number, got %s" % number_text(x))
+            return 0
+        return int(x)
+
     def _get_element(self, obj, key, line):
         if isinstance(obj, dict):
             k = key if isinstance(key, str) else text(key)
             if k not in obj:
-                self.fail(line, "dict has no key %r" % k)
+                self.fail(line, "dict has no key '%s'" % k)
                 return None
             return obj[k]
         if isinstance(obj, list):
             if type_name(key) != "number":
                 self.fail(line, "list index must be a number")
                 return None
-            i = int(key)
+            i = self._int(key, line)
+            if self.error:
+                return None
+            whole = i
             if i < 0:
                 i += len(obj)
             if i < 0 or i >= len(obj):
                 self.fail(line, "list index %d out of range (size %d)"
-                          % (int(key), len(obj)))
+                          % (whole, len(obj)))
                 return None
             return obj[i]
         if isinstance(obj, str):
             if type_name(key) != "number":
                 self.fail(line, "string index must be a number")
                 return None
-            i = int(key)
+            i = self._int(key, line)
+            if self.error:
+                return None
+            whole = i
             if i < 0:
                 i += len(obj)
             if i < 0 or i >= len(obj):
                 self.fail(line, "string index %d out of range (length %d)"
-                          % (int(key), len(obj)))
+                          % (whole, len(obj)))
                 return None
             return obj[i]
         self.fail(line, "cannot index a %s" % type_name(obj))
@@ -503,6 +556,9 @@ class Evaluator:
             if isinstance(a, str) or isinstance(b, str):
                 return text(a) + text(b)
             if isinstance(a, list) and isinstance(b, list):
+                if len(a) + len(b) > MAX_LIST_ITEMS:
+                    self.fail(line, LIST_TOO_LONG)
+                    return None
                 return a + b
 
         x = self._num(a, line)
@@ -525,7 +581,7 @@ class Evaluator:
             return x / y if y != 0.0 else 0.0
         if op == "%":
             return math.fmod(x, y) if y != 0.0 else 0.0
-        self.fail(line, "unknown operator %r" % op)
+        self.fail(line, "unknown operator '%s'" % op)
         return None
 
     # -- calls --------------------------------------------------------------
@@ -562,7 +618,7 @@ class Evaluator:
                 if bound is not None:
                     self.fail(line, "cannot call a %s" % type_name(bound))
                 else:
-                    self.fail(line, "unknown function %r" % name)
+                    self.fail(line, "unknown function '%s'" % name)
                 return None
 
         fn = self.eval(callee, env)
@@ -645,21 +701,19 @@ class Evaluator:
         if name == "sqrt":
             return math.sqrt(max(0.0, self._num(args[0], line)))
         if name == "floor":
-            return math.floor(self._num(args[0], line))
+            v = self._num(args[0], line)
+            if v != v or v in (math.inf, -math.inf):
+                return v                     # no whole part to take: unchanged
+            return float(math.floor(v))
         if name == "round":
             v = self._num(args[0], line)
-            return math.floor(v + 0.5) if v >= 0 else -math.floor(-v + 0.5)
+            if v != v or v in (math.inf, -math.inf):
+                return v
+            return float(math.floor(v + 0.5) if v >= 0 else -math.floor(-v + 0.5))
         if name == "pow":
             base = self._num(args[0], line)
             expo = self._num(args[1], line)
-            try:
-                return float(base ** expo)
-            except OverflowError:
-                # GDScript's pow() saturates to infinity rather than
-                # raising; match it so the two runtimes agree.
-                return float("inf") if base > 0 else float("-inf")
-            except ValueError:
-                return float("nan")
+            return c_pow(base, expo)
         if name == "ramp":
             v = self._num(args[0], line)
             return 0.0 if v < 0.0 else (1.0 if v > 1.0 else v)
@@ -680,15 +734,15 @@ class Evaluator:
         if name == "num":
             v = args[0]
             if isinstance(v, str):
-                try:
-                    return float(v)
-                except ValueError:
-                    return 0.0
+                return read_number(v)
             return self._num(v, line)
         if name == "bool":
             return truthy(args[0])
         if name == "int":
-            return float(int(self._num(args[0], line)))
+            v = self._num(args[0], line)
+            if v != v or v in (math.inf, -math.inf):
+                return v
+            return float(int(v))
 
         if name == "len":
             v = args[0]
@@ -720,13 +774,18 @@ class Evaluator:
             if not isinstance(args[0], list):
                 self.fail(line, "append() needs a list")
                 return None
+            if len(args[0]) >= MAX_LIST_ITEMS:
+                self.fail(line, LIST_TOO_LONG)
+                return None
             args[0].append(args[1])
             return args[0]
         if name == "remove_at":
             if not isinstance(args[0], list):
                 self.fail(line, "remove_at() needs a list")
                 return None
-            i = int(self._num(args[1], line))
+            i = self._int(args[1], line)
+            if self.error:
+                return None
             if i < 0 or i >= len(args[0]):
                 self.fail(line, "remove_at() index %d out of range (size %d)"
                           % (i, len(args[0])))
@@ -734,18 +793,24 @@ class Evaluator:
             return args[0].pop(i)
         if name == "slice":
             seq = args[0]
-            start = int(self._num(args[1], line))
-            end = int(self._num(args[2], line))
+            start = self._int(args[1], line)
+            end = self._int(args[2], line)
+            if self.error:
+                return None
             if isinstance(seq, (list, str)):
                 return seq[max(0, start):max(0, end)]
             self.fail(line, "slice() needs a list or string")
             return None
         if name == "range":
-            count = int(self._num(args[0], line))
-            start = int(self._num(args[1], line)) if len(args) > 1 else 0
-            if len(args) > 1:
-                return [float(x) for x in range(count, start)]
-            return [float(x) for x in range(count)]
+            count = self._int(args[0], line)
+            start = self._int(args[1], line) if len(args) > 1 else 0
+            if self.error:
+                return None
+            first, stop = (count, start) if len(args) > 1 else (0, count)
+            if stop - first > MAX_LIST_ITEMS:       # refuse before building anything
+                self.fail(line, LIST_TOO_LONG)
+                return None
+            return [float(x) for x in range(first, stop)]
         if name == "join":
             if not isinstance(args[0], list):
                 self.fail(line, "join() needs a list")
@@ -767,5 +832,5 @@ class Evaluator:
         if name == "lower":
             return text(args[0]).lower()
 
-        self.fail(line, "unknown builtin %r" % name)
+        self.fail(line, "unknown builtin '%s'" % name)
         return None

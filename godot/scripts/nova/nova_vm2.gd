@@ -518,6 +518,8 @@ func _binary_arith(op: int, a, b, line: int) -> Variant:
 		if typeof(a) == TYPE_ARRAY and typeof(b) == TYPE_ARRAY:
 			var left: Array = a
 			var right: Array = b
+			if left.size() + right.size() > NovaEvaluator.MAX_LIST_ITEMS:
+				return _err(line, NovaEvaluator.LIST_TOO_LONG)
 			var joined: Array = left.duplicate()
 			joined.append_array(right)
 			return joined

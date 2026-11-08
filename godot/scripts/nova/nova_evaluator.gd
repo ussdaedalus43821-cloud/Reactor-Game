@@ -24,6 +24,10 @@ extends RefCounted
 
 const MAX_CALL_DEPTH := 128
 const MAX_STEPS := 500000
+## No list may hold more than this many items; range, append and list + refuse
+## to make a longer one (the reference's MAX_LIST_ITEMS and LIST_TOO_LONG).
+const MAX_LIST_ITEMS := 1000000
+const LIST_TOO_LONG := "a list cannot have more than 1000000 items"
 
 const FLOW_RETURN := "return"
 const FLOW_BREAK := "break"
@@ -493,6 +497,16 @@ func _num(v, line: int) -> float:
 	return 0.0
 
 
+## A number used as a count: its whole part, truncated toward zero. Infinity and
+## NaN have none and are an error (docs/spec/13-policy-values.md [pol.index]).
+func _whole(v, line: int) -> float:
+	var x := _num(v, line)
+	if is_nan(x) or is_inf(x):
+		fail(line, "expected a finite number, got %s" % NovaLexer.number_text(x))
+		return 0.0
+	return floor(x) if x >= 0.0 else ceil(x)
+
+
 func _get_element(obj, key, line: int) -> Variant:
 	if typeof(obj) == TYPE_DICTIONARY:
 		var d: Dictionary = obj
@@ -562,6 +576,9 @@ func _eval_binary(node: Dictionary, env) -> Variant:
 		if typeof(a) == TYPE_ARRAY and typeof(b) == TYPE_ARRAY:
 			var left: Array = a
 			var right: Array = b
+			if left.size() + right.size() > MAX_LIST_ITEMS:
+				fail(line, LIST_TOO_LONG)
+				return null
 			var joined: Array = left.duplicate()
 			joined.append_array(right)
 			return joined
@@ -800,6 +817,9 @@ func call_builtin(name: String, args: Array, line: int) -> Variant:
 				fail(line, "append() needs a list")
 				return null
 			var al: Array = args[0]
+			if al.size() >= MAX_LIST_ITEMS:
+				fail(line, LIST_TOO_LONG)
+				return null
 			al.append(args[1])
 			return al
 		"remove_at":
@@ -818,19 +838,26 @@ func call_builtin(name: String, args: Array, line: int) -> Variant:
 		"slice":
 			return _builtin_slice(args, line)
 		"range":
-			var count := int(_num(args[0], line))
-			var out_range: Array = []
+			# Whole parts; infinity and NaN have none (docs/spec/13-policy-values.md
+			# [pol.index]). The size is checked from the arguments before anything is built.
+			var first := 0.0
+			var stop_at := 0.0
 			if args.size() > 1:
-				var stop := int(_num(args[1], line))
-				var i := count
-				while i < stop:
-					out_range.append(float(i))
-					i += 1
-				return out_range
-			var j := 0
-			while j < count:
-				out_range.append(float(j))
-				j += 1
+				first = _whole(args[0], line)
+				stop_at = _whole(args[1], line)
+			else:
+				stop_at = _whole(args[0], line)
+			if error != "":
+				return null
+			if stop_at - first > float(MAX_LIST_ITEMS):
+				fail(line, LIST_TOO_LONG)
+				return null
+			var out_range: Array = []
+			var i := int(first)
+			var stop := int(stop_at)
+			while i < stop:
+				out_range.append(float(i))
+				i += 1
 			return out_range
 		"join":
 			if typeof(args[0]) != TYPE_ARRAY:

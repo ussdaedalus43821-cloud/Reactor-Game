@@ -95,9 +95,29 @@ func parse(src: String, name: String = "<source>") -> Dictionary:
 				_prog["statements"].append(s)
 
 	if error == "":
-		_prog["rules"].sort_custom(
-			func(a, b): return float(a["priority"]) > float(b["priority"]))
+		# Highest priority first, and rules of equal priority in the order they
+		# were written. Array.sort_custom is not guaranteed stable, so the
+		# written position is part of the key (the reference's sort is stable;
+		# docs/spec/14-policy-engine.md [pol.decl-rule] in the Nova_Lang repo).
+		var keyed: Array = []
+		var written := 0
+		for rule in _prog["rules"]:
+			keyed.append([float(rule["priority"]), written, rule])
+			written += 1
+		keyed.sort_custom(_rule_comes_first)
+		var ordered: Array = []
+		for entry in keyed:
+			ordered.append(entry[2])
+		_prog["rules"] = ordered
 	return _prog
+
+
+## The order of two [priority, written position, rule] entries: higher priority
+## first, then the one written earlier.
+func _rule_comes_first(a: Array, b: Array) -> bool:
+	if a[0] != b[0]:
+		return a[0] > b[0]
+	return a[1] < b[1]
 
 
 # ==========================================================================
