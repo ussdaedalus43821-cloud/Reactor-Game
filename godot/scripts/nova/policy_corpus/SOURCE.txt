@@ -1,0 +1,3 @@
+The policy dialect conformance corpus of the Nova_Lang repository, tests/conformance/cases/policy-*.json.
+Copied by tools/export_policy_corpus.py at Nova_Lang commit fb85c6a88781b39e24b5fa0997cd61bed9cbed5f.
+769 cases in 5 files. Do not edit these files: change them in Nova_Lang and export again.

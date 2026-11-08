@@ -1,0 +1,11382 @@
+{
+ "area": "policy-engine",
+ "version": 1,
+ "cases": [
+  {
+   "name": "policy_engine_load_only",
+   "spec": [
+    "pol.engine"
+   ],
+   "profile": "policy",
+   "source": "reactor \"X\"\nprint(\"loaded\")",
+   "output": [
+    "loaded"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": []
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_engine_loads_runs_statements_once",
+   "spec": [
+    "pol.engine",
+    "pol.tick"
+   ],
+   "profile": "policy",
+   "source": "let n = 0\nn = n + 1\nprint(\"loaded\", n)\nrule r { when true then set n = n + 1 }",
+   "output": [
+    "loaded 1"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "n": 2.0
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "n": 3.0
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "n"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_engine_load_error_runs_no_steps",
+   "spec": [
+    "pol.engine"
+   ],
+   "profile": "policy",
+   "source": "print(\"a\")\nnope()\nrule r { when true then log(\"never\") }",
+   "output": [
+    "a"
+   ],
+   "error": "line 2: unknown function 'nope'",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": [],
+   "results": [],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_engine_syntax_error_at_load",
+   "spec": [
+    "pol.engine"
+   ],
+   "profile": "policy",
+   "source": "rule r { when true }",
+   "output": [],
+   "error": "line 1: expected 'then', got '}'",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": [],
+   "results": [],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_engine_title_and_version",
+   "spec": [
+    "pol.decl-reactor"
+   ],
+   "profile": "policy",
+   "source": "reactor \"CORE-1\" version 3\nrule r { when true then log(\"x\") }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(x)"
+     ],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_engine_version_whole_part",
+   "spec": [
+    "pol.decl-reactor"
+   ],
+   "profile": "policy",
+   "source": "reactor \"A\" version 2.9\nrule r { when true then log(1) }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(1)"
+     ],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_engine_reactor_later_wins",
+   "spec": [
+    "pol.decl-reactor"
+   ],
+   "profile": "policy",
+   "source": "reactor \"A\" version 2\nreactor \"B\"\nrule r { when true then log(\"x\") }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "value": {
+      "title": "B",
+      "version": 2,
+      "params": [],
+      "effects": [],
+      "signals": [],
+      "rules": [
+       "r"
+      ],
+      "faults": [],
+      "statements": 0,
+      "exports": [],
+      "held_slots": 0
+     },
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "describe": true
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_engine_reactor_later_version_wins",
+   "spec": [
+    "pol.decl-reactor"
+   ],
+   "profile": "policy",
+   "source": "reactor \"A\" version 2\nreactor \"B\" version 7",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "value": {
+      "title": "B",
+      "version": 7,
+      "params": [],
+      "effects": [],
+      "signals": [],
+      "rules": [],
+      "faults": [],
+      "statements": 0,
+      "exports": [],
+      "held_slots": 0
+     },
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "describe": true
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_engine_reactor_needs_string",
+   "spec": [
+    "pol.decl-reactor"
+   ],
+   "profile": "policy",
+   "source": "reactor 5",
+   "output": [],
+   "error": "line 1: expected 'string', got '5'",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": [],
+   "results": [],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": []
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_engine_reactor_version_needs_number",
+   "spec": [
+    "pol.decl-reactor"
+   ],
+   "profile": "policy",
+   "source": "reactor \"x\" version \"y\"",
+   "output": [],
+   "error": "line 1: expected 'number', got 'y'",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": [],
+   "results": [],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": []
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_engine_reactor_optional",
+   "spec": [
+    "pol.decl-reactor"
+   ],
+   "profile": "policy",
+   "source": "rule r { when true then log(\"no title\") }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(no title)"
+     ],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_params_evaluated_in_order",
+   "spec": [
+    "pol.decl-params"
+   ],
+   "profile": "policy",
+   "source": "let base = 10\nparams { a = base + 1  b = a * 2 }\nrule r { when true then log(a, b) }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(11, 22)"
+     ],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_params_are_globals",
+   "spec": [
+    "pol.decl-params"
+   ],
+   "profile": "policy",
+   "source": "params { limit = 5 }\nrule r { when x > limit then log(\"over\") }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(over)"
+     ],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0,
+        "x": 3
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05,
+        "x": 6
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_params_after_statements",
+   "spec": [
+    "pol.decl-params"
+   ],
+   "profile": "policy",
+   "source": "let q = 1\nparams { p = q + 1 }\nrule r { when p == 2 then log(\"ok\") }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(ok)"
+     ],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_params_statements_cannot_see_params",
+   "spec": [
+    "pol.decl-params"
+   ],
+   "profile": "policy",
+   "source": "params { p = 1 }\nlet q = p",
+   "output": [],
+   "error": "line 2: unknown identifier 'p'",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": [],
+   "results": [],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": []
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_params_error_at_load",
+   "spec": [
+    "pol.decl-params"
+   ],
+   "profile": "policy",
+   "source": "params { p = nope }",
+   "output": [],
+   "error": "line 1: unknown identifier 'nope'",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": [],
+   "results": [],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": []
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_params_name_must_be_a_name",
+   "spec": [
+    "pol.decl-params"
+   ],
+   "profile": "policy",
+   "source": "params { 1 = 2 }",
+   "output": [],
+   "error": "line 1: expected 'ident', got '1'",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": [],
+   "results": [],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": []
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_params_name_not_keyword",
+   "spec": [
+    "pol.decl-params"
+   ],
+   "profile": "policy",
+   "source": "params { label = 2 }",
+   "output": [],
+   "error": "line 1: expected 'ident', got 'label'",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": [],
+   "results": [],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": []
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_params_block_unclosed",
+   "spec": [
+    "pol.decl-params"
+   ],
+   "profile": "policy",
+   "source": "params { a = 1 b = 2",
+   "output": [],
+   "error": "line 1: unterminated block",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": [],
+   "results": [],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": []
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_params_blocks_accumulate",
+   "spec": [
+    "pol.decl-params"
+   ],
+   "profile": "policy",
+   "source": "params { a = 1 }\nparams { b = a + 1 }\nrule r { when true then log(a, b) }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(1, 2)"
+     ],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_params_can_change",
+   "spec": [
+    "pol.decl-params"
+   ],
+   "profile": "policy",
+   "source": "params { lim = 1 }\nrule r { when true then set lim = lim + 1 log(lim) }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(2)"
+     ],
+     "watch": {
+      "lim": 2.0
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(3)"
+     ],
+     "watch": {
+      "lim": 3.0
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(4)"
+     ],
+     "watch": {
+      "lim": 4.0
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "lim"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.1
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_params_restored_by_reset",
+   "spec": [
+    "pol.decl-params"
+   ],
+   "profile": "policy",
+   "source": "params { lim = 1 }\nrule r { when true then set lim = lim + 1 }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "lim": 2.0
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "lim": 3.0
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "lim": 1.0
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "lim"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05
+       },
+       "faults": false
+      }
+     },
+     {
+      "reset": 0
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_effects_default_each_tick",
+   "spec": [
+    "pol.decl-effects"
+   ],
+   "profile": "policy",
+   "source": "effects { e = 0 }\nrule r { when true then set e = e + 1 log(e) }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(1)"
+     ],
+     "watch": {
+      "e": 1.0
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(1)"
+     ],
+     "watch": {
+      "e": 1.0
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(1)"
+     ],
+     "watch": {
+      "e": 1.0
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "e"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.1
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_effects_persistent_keeps_value",
+   "spec": [
+    "pol.decl-effects"
+   ],
+   "profile": "policy",
+   "source": "effects { e = 0 persistent }\nrule r { when true then set e = e + 1 log(e) }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(1)"
+     ],
+     "watch": {
+      "e": 1.0
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(2)"
+     ],
+     "watch": {
+      "e": 2.0
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(3)"
+     ],
+     "watch": {
+      "e": 3.0
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "e"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.1
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_effects_mixed",
+   "spec": [
+    "pol.decl-effects",
+    "pol.tick"
+   ],
+   "profile": "policy",
+   "source": "effects { e = 1 persistent  f = 2 }\nrule r { when true then set e = e + 1 set f = f + 1 log(e, f, dt, t) }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(2, 3, 0.25, 0)"
+     ],
+     "watch": {
+      "e": 2.0,
+      "f": 3.0
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(3, 3, 0.25, 0.25)"
+     ],
+     "watch": {
+      "e": 3.0,
+      "f": 3.0
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(4, 3, 0.25, 0.5)"
+     ],
+     "watch": {
+      "e": 4.0,
+      "f": 3.0
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "e",
+     "f"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.25,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.25,
+       "inputs": {
+        "t": 0.25
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.25,
+       "inputs": {
+        "t": 0.5
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_effects_defaults_see_params",
+   "spec": [
+    "pol.decl-effects"
+   ],
+   "profile": "policy",
+   "source": "params { p = 3 }\neffects { e = p * 2 }\nrule r { when true then log(e) }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(6)"
+     ],
+     "watch": {
+      "e": 6.0
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "e"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_effects_default_value_reported",
+   "spec": [
+    "pol.decl-effects"
+   ],
+   "profile": "policy",
+   "source": "effects { e = 5 f = \"s\" g = [1] }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "e": 5.0,
+      "f": "s",
+      "g": [
+       1.0
+      ]
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "e",
+     "f",
+     "g"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_effects_error_at_load",
+   "spec": [
+    "pol.decl-effects"
+   ],
+   "profile": "policy",
+   "source": "effects { e = nope }",
+   "output": [],
+   "error": "line 1: unknown identifier 'nope'",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": [],
+   "results": [],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": []
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_effects_inputs_override_defaults",
+   "spec": [
+    "pol.decl-effects"
+   ],
+   "profile": "policy",
+   "source": "effects { x = 0 }\nrule r { when true then log(x) }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(9)"
+     ],
+     "watch": {
+      "x": 9
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "x"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0,
+        "x": 9
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_effects_default_listing",
+   "spec": [
+    "pol.decl-effects"
+   ],
+   "profile": "policy",
+   "source": "effects { e = 1 persistent  f = 2 }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": []
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_signals_recomputed_each_tick",
+   "spec": [
+    "pol.decl-signals"
+   ],
+   "profile": "policy",
+   "source": "signals { s = x * 2 }\nrule r { when true then log(s) }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(2)"
+     ],
+     "watch": {
+      "s": 2.0
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(10)"
+     ],
+     "watch": {
+      "s": 10.0
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "s"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0,
+        "x": 1
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05,
+        "x": 5
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_signals_in_order",
+   "spec": [
+    "pol.decl-signals"
+   ],
+   "profile": "policy",
+   "source": "signals { a = x + 1  b = a * 2 }\nrule r { when true then log(a, b) }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(2, 4)"
+     ],
+     "watch": {
+      "a": 2.0,
+      "b": 4.0
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "a",
+     "b"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0,
+        "x": 1
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_signals_see_effects",
+   "spec": [
+    "pol.decl-signals"
+   ],
+   "profile": "policy",
+   "source": "effects { e = 4 }\nsignals { s = e + 1 }\nrule r { when true then log(s) }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(5)"
+     ],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_signals_rules_do_not_change_them_until_next_tick",
+   "spec": [
+    "pol.decl-signals",
+    "pol.tick"
+   ],
+   "profile": "policy",
+   "source": "signals { s = x }\nrule r { when true then set x = 99 log(s) }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(1)"
+     ],
+     "watch": {
+      "s": 1,
+      "x": 99.0
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(2)"
+     ],
+     "watch": {
+      "s": 2,
+      "x": 99.0
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "s",
+     "x"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0,
+        "x": 1
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05,
+        "x": 2
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_signals_second_block",
+   "spec": [
+    "pol.decl-signals"
+   ],
+   "profile": "policy",
+   "source": "signals { s = 1 }\nsignals { s = 2 }\nrule r { when true then log(s) }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(2)"
+     ],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_signals_error_stops_tick",
+   "spec": [
+    "pol.decl-signals"
+   ],
+   "profile": "policy",
+   "source": "signals { s = nope }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": false,
+     "error": "line 1: unknown identifier 'nope'",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    },
+    {
+     "ok": false,
+     "error": "line 1: unknown identifier 'nope'",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_signals_error_not_blamed_on_a_rule",
+   "spec": [
+    "pol.decl-signals"
+   ],
+   "profile": "policy",
+   "source": "signals { s = nope }\nrule r { when true then log(\"r\") }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": false,
+     "error": "line 1: unknown identifier 'nope'",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_signals_error_line",
+   "spec": [
+    "pol.decl-signals"
+   ],
+   "profile": "policy",
+   "source": "signals {\n  a = 1\n  b = nope\n}",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": false,
+     "error": "line 3: unknown identifier 'nope'",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_rules_priority_order",
+   "spec": [
+    "pol.decl-rule"
+   ],
+   "profile": "policy",
+   "source": "rule low priority 1 { when true then log(\"low\") }\nrule high priority 5 { when true then log(\"high\") }\nrule mid { when true then log(\"mid\") }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(high)",
+      "log(low)",
+      "log(mid)"
+     ],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_rules_ties_keep_declaration_order",
+   "spec": [
+    "pol.decl-rule"
+   ],
+   "profile": "policy",
+   "source": "rule a priority 5 { when true then log(\"a\") }\nrule b priority 5 { when true then log(\"b\") }\nrule c priority 5 { when true then log(\"c\") }\nrule d priority 9 { when true then log(\"d\") }\nrule e { when true then log(\"e\") }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(d)",
+      "log(a)",
+      "log(b)",
+      "log(c)",
+      "log(e)"
+     ],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_rules_negative_and_fractional_priorities",
+   "spec": [
+    "pol.decl-rule"
+   ],
+   "profile": "policy",
+   "source": "rule a priority 0.5 { when true then log(\"a\") }\nrule b priority 0.25 { when true then log(\"b\") }\nrule c priority 100 { when true then log(\"c\") }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(c)",
+      "log(a)",
+      "log(b)"
+     ],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_rules_negative_priority_refused",
+   "spec": [
+    "pol.decl-rule"
+   ],
+   "profile": "policy",
+   "source": "rule r priority -1 { when true then log(\"m\") }",
+   "output": [],
+   "error": "line 1: expected 'number', got '-'",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": [],
+   "results": [],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": []
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_rules_modifiers_any_order",
+   "spec": [
+    "pol.decl-rule"
+   ],
+   "profile": "policy",
+   "source": "rule r edge priority 2 once { when true then log(\"m\") }\nrule s once edge { when true then log(\"s\") }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(m)",
+      "log(s)"
+     ],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_rules_modifiers_repeated",
+   "spec": [
+    "pol.decl-rule"
+   ],
+   "profile": "policy",
+   "source": "rule r priority 2 once once edge edge priority 3 { when true then log(\"m\") }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(m)"
+     ],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_rules_name_may_be_a_keyword",
+   "spec": [
+    "pol.decl-rule"
+   ],
+   "profile": "policy",
+   "source": "rule if { when true then log(\"kw name\") }\nrule edge { when true then log(\"edge\") }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(kw name)",
+      "log(edge)"
+     ],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_rules_name_required",
+   "spec": [
+    "pol.decl-rule"
+   ],
+   "profile": "policy",
+   "source": "rule { when true then log(1) }",
+   "output": [],
+   "error": "line 1: expected a name, got '{'",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": [],
+   "results": [],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": []
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_rules_when_required",
+   "spec": [
+    "pol.decl-rule"
+   ],
+   "profile": "policy",
+   "source": "rule r { }",
+   "output": [],
+   "error": "line 1: expected 'when', got '}'",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": [],
+   "results": [],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": []
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_rules_then_required",
+   "spec": [
+    "pol.decl-rule"
+   ],
+   "profile": "policy",
+   "source": "rule r { when true }",
+   "output": [],
+   "error": "line 1: expected 'then', got '}'",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": [],
+   "results": [],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": []
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_rules_empty_body",
+   "spec": [
+    "pol.decl-rule"
+   ],
+   "profile": "policy",
+   "source": "rule r { when true then }\nrule s { when true then log(\"s\") }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(s)"
+     ],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_rules_describe_order",
+   "spec": [
+    "pol.decl-rule"
+   ],
+   "profile": "policy",
+   "source": "rule b { when false then }\nrule a priority 3 { when false then }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_rules_fire_every_tick",
+   "spec": [
+    "pol.rule-fire"
+   ],
+   "profile": "policy",
+   "source": "rule r { when x > 1 then log(\"on\", x) }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(on, 2)"
+     ],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(on, 3)"
+     ],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(on, 5)"
+     ],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0,
+        "x": 0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05,
+        "x": 2
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.1,
+        "x": 3
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.15,
+        "x": 0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.2,
+        "x": 5
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_rules_once",
+   "spec": [
+    "pol.rule-fire"
+   ],
+   "profile": "policy",
+   "source": "rule r once { when true then log(\"once\") }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(once)"
+     ],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.1
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_rules_once_waits_for_condition",
+   "spec": [
+    "pol.rule-fire"
+   ],
+   "profile": "policy",
+   "source": "rule r once { when x > 1 then log(\"once\", x) }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(once, 2)"
+     ],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0,
+        "x": 0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05,
+        "x": 2
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.1,
+        "x": 3
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.15,
+        "x": 4
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_rules_edge",
+   "spec": [
+    "pol.rule-fire"
+   ],
+   "profile": "policy",
+   "source": "rule r edge { when x > 1 then log(\"edge\", x) }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(edge, 2)"
+     ],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(edge, 5)"
+     ],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0,
+        "x": 0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05,
+        "x": 2
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.1,
+        "x": 3
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.15,
+        "x": 0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.2,
+        "x": 5
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.25,
+        "x": 6
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_rules_edge_true_at_first_tick",
+   "spec": [
+    "pol.rule-fire"
+   ],
+   "profile": "policy",
+   "source": "rule r edge { when true then log(\"edge\") }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(edge)"
+     ],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.1
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_rules_once_and_edge",
+   "spec": [
+    "pol.rule-fire"
+   ],
+   "profile": "policy",
+   "source": "rule r once edge { when x > 1 then log(\"both\", x) }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(both, 2)"
+     ],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0,
+        "x": 2
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05,
+        "x": 0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.1,
+        "x": 3
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.15,
+        "x": 4
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_rules_condition_truthiness",
+   "spec": [
+    "pol.rule-fire"
+   ],
+   "profile": "policy",
+   "source": "rule a { when x then log(\"a\", x) }\nrule b { when \"\" then log(\"b\") }\nrule c { when [] then log(\"c\") }\nrule d { when [0] then log(\"d\") }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(d)"
+     ],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(a, 2)",
+      "log(d)"
+     ],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0,
+        "x": 0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05,
+        "x": 2
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_rules_fired_flag_survives_condition_false",
+   "spec": [
+    "pol.rule-fire"
+   ],
+   "profile": "policy",
+   "source": "rule r once { when x > 0 then log(\"r\") }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(r)"
+     ],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0,
+        "x": 1
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05,
+        "x": 0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.1,
+        "x": 1
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_rules_conditions_see_earlier_rules",
+   "spec": [
+    "pol.rule-fire"
+   ],
+   "profile": "policy",
+   "source": "rule a priority 2 { when true then set g = 5 }\nrule b priority 1 { when g == 5 then log(\"b saw g\") }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(b saw g)"
+     ],
+     "watch": {
+      "g": 5.0
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(b saw g)"
+     ],
+     "watch": {
+      "g": 5.0
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "g"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_rules_earlier_rule_changes_later_condition",
+   "spec": [
+    "pol.rule-fire"
+   ],
+   "profile": "policy",
+   "source": "let flag = false\nrule a priority 2 { when true then set flag = true }\nrule b priority 1 { when flag then log(\"b\") }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(b)"
+     ],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_rules_condition_with_side_effect",
+   "spec": [
+    "pol.rule-fire"
+   ],
+   "profile": "policy",
+   "source": "func probe() { log(\"probe\") return true }\nrule r { when probe() then log(\"body\") }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(probe)",
+      "log(body)"
+     ],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(probe)",
+      "log(body)"
+     ],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_rules_body_has_own_scope",
+   "spec": [
+    "pol.rule-fire"
+   ],
+   "profile": "policy",
+   "source": "rule r { when true then let z = 5 log(z) }\nrule s { when true then log(z) }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": false,
+     "error": "rule 's': line 2: unknown identifier 'z'",
+     "output": [],
+     "host_calls": [
+      "log(5)"
+     ],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_rules_set_reaches_global",
+   "spec": [
+    "pol.rule-fire"
+   ],
+   "profile": "policy",
+   "source": "rule r { when true then set g = 5 }\nrule s { when g == 5 then log(\"g\") }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(g)"
+     ],
+     "watch": {
+      "g": 5.0
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(g)"
+     ],
+     "watch": {
+      "g": 5.0
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "g"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_rules_return_ends_body_only",
+   "spec": [
+    "pol.rule-fire"
+   ],
+   "profile": "policy",
+   "source": "rule r { when true then log(\"a\") return log(\"b\") }\nrule s { when true then log(\"s\") }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(a)",
+      "log(b)",
+      "log(s)"
+     ],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_rules_break_ends_body_only",
+   "spec": [
+    "pol.rule-fire"
+   ],
+   "profile": "policy",
+   "source": "rule r { when true then break }\nrule s { when true then log(\"s\") }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(s)"
+     ],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_rules_condition_error",
+   "spec": [
+    "pol.engine-errors"
+   ],
+   "profile": "policy",
+   "source": "rule bad { when nope then log(\"x\") }\nrule good { when true then log(\"y\") }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": false,
+     "error": "rule 'bad': line 1: unknown identifier 'nope'",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    },
+    {
+     "ok": false,
+     "error": "rule 'bad': line 1: unknown identifier 'nope'",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_rules_body_error",
+   "spec": [
+    "pol.engine-errors"
+   ],
+   "profile": "policy",
+   "source": "rule a priority 2 { when true then log(\"a\") nope() log(\"never\") }\nrule b priority 1 { when true then log(\"b\") }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": false,
+     "error": "rule 'a': line 1: unknown function 'nope'",
+     "output": [],
+     "host_calls": [
+      "log(a)"
+     ],
+     "watch": {}
+    },
+    {
+     "ok": false,
+     "error": "rule 'a': line 1: unknown function 'nope'",
+     "output": [],
+     "host_calls": [
+      "log(a)"
+     ],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_rules_error_names_rule",
+   "spec": [
+    "pol.engine-errors"
+   ],
+   "profile": "policy",
+   "source": "rule first { when true then log(\"1\") }\nrule second {\n  when true\n  then nope()\n}",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": false,
+     "error": "rule 'second': line 4: unknown function 'nope'",
+     "output": [],
+     "host_calls": [
+      "log(1)"
+     ],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_rules_error_in_a_function_called_by_rule",
+   "spec": [
+    "pol.engine-errors"
+   ],
+   "profile": "policy",
+   "source": "func f() {\n  return nope\n}\nrule r { when f() then log(\"x\") }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": false,
+     "error": "rule 'r': line 2: unknown identifier 'nope'",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_rules_error_keeps_effects_of_earlier_rules",
+   "spec": [
+    "pol.engine-errors"
+   ],
+   "profile": "policy",
+   "source": "effects { e = 0 }\nrule a priority 2 { when true then set e = 7 }\nrule b priority 1 { when nope then set e = 9 }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": false,
+     "error": "rule 'b': line 3: unknown identifier 'nope'",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "e": 7.0
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "e"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_rules_budget_per_tick",
+   "spec": [
+    "pol.engine-errors"
+   ],
+   "profile": "policy",
+   "source": "rule r { when true then while true { } }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": false,
+     "error": "rule 'r': line 1: step budget exhausted (500000) -- runaway loop?",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    },
+    {
+     "ok": false,
+     "error": "rule 'r': line 1: step budget exhausted (500000) -- runaway loop?",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_rules_budget_resets_each_tick",
+   "spec": [
+    "pol.engine-errors"
+   ],
+   "profile": "policy",
+   "source": "let i = 0\nrule r { when true then set k = 0 while k < 60000 { set k = k + 1 } }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_rules_depth_limit",
+   "spec": [
+    "pol.engine-errors"
+   ],
+   "profile": "policy",
+   "source": "func f(n) { return f(n + 1) }\nrule r { when true then f(0) }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": false,
+     "error": "rule 'r': line 1: call depth limit (128) exceeded -- infinite recursion?",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_held_accumulates_while_true",
+   "spec": [
+    "pol.held"
+   ],
+   "profile": "policy",
+   "source": "rule r { when held(x > 0, 0.15) then log(\"held\", t) }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(held, 0.1)"
+     ],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(held, 0.15)"
+     ],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(held, 0.2)"
+     ],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0,
+        "x": 1
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05,
+        "x": 1
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.1,
+        "x": 1
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.15,
+        "x": 1
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.2,
+        "x": 1
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_held_resets_when_false",
+   "spec": [
+    "pol.held"
+   ],
+   "profile": "policy",
+   "source": "rule r { when held(x > 0, 0.15) then log(\"held\", t) }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(held, 0.25)"
+     ],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(held, 0.3)"
+     ],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0,
+        "x": 1
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05,
+        "x": 1
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.1,
+        "x": 0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.15,
+        "x": 1
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.2,
+        "x": 1
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.25,
+        "x": 1
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.3,
+        "x": 1
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_held_stays_true_once_reached",
+   "spec": [
+    "pol.held"
+   ],
+   "profile": "policy",
+   "source": "rule r { when held(true, 0.1) then log(\"held\") }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(held)"
+     ],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(held)"
+     ],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(held)"
+     ],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(held)"
+     ],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.1
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.15
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.2
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_held_first_tick_counts",
+   "spec": [
+    "pol.held"
+   ],
+   "profile": "policy",
+   "source": "rule r { when held(true, 0.05) then log(\"held\") }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(held)"
+     ],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(held)"
+     ],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_held_zero_seconds",
+   "spec": [
+    "pol.held"
+   ],
+   "profile": "policy",
+   "source": "rule r { when held(true, 0) then log(\"held\") }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(held)"
+     ],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_held_false_with_zero_seconds_is_still_true",
+   "spec": [
+    "pol.held"
+   ],
+   "profile": "policy",
+   "source": "rule r { when held(false, 0) then log(\"held\") }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(held)"
+     ],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_held_uses_the_tick_dt",
+   "spec": [
+    "pol.held"
+   ],
+   "profile": "policy",
+   "source": "rule r { when held(true, 1) then log(\"held\", t) }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(held, 0.5)"
+     ],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(held, 1)"
+     ],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 0.5
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 1.0
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_held_each_call_site_has_its_own_timer",
+   "spec": [
+    "pol.held"
+   ],
+   "profile": "policy",
+   "source": "rule a { when held(true, 0.05) then log(\"a\") }\nrule b { when held(x > 0, 0.1) then log(\"b\") }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(a)"
+     ],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(a)",
+      "log(b)"
+     ],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(a)",
+      "log(b)"
+     ],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0,
+        "x": 1
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05,
+        "x": 1
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.1,
+        "x": 1
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_held_same_condition_two_sites",
+   "spec": [
+    "pol.held"
+   ],
+   "profile": "policy",
+   "source": "rule a { when held(x, 0.1) then log(\"a\") }\nrule b { when held(x, 0.1) then log(\"b\") }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(a)",
+      "log(b)"
+     ],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(a)",
+      "log(b)"
+     ],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0,
+        "x": 1
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05,
+        "x": 1
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.1,
+        "x": 1
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_held_only_advances_when_reached",
+   "spec": [
+    "pol.held"
+   ],
+   "profile": "policy",
+   "source": "rule r { when x > 0 and held(true, 0.1) then log(\"held\") }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(held)"
+     ],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(held)"
+     ],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0,
+        "x": 1
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05,
+        "x": 0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.1,
+        "x": 0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.15,
+        "x": 1
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.2,
+        "x": 1
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_held_not_reached_keeps_its_timer",
+   "spec": [
+    "pol.held"
+   ],
+   "profile": "policy",
+   "source": "rule r { when x > 0 and held(true, 0.1) then log(\"held\") }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(held)"
+     ],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(held)"
+     ],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0,
+        "x": 1
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05,
+        "x": 0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.1,
+        "x": 1
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.15,
+        "x": 1
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_held_inside_function",
+   "spec": [
+    "pol.held"
+   ],
+   "profile": "policy",
+   "source": "func hot() { return held(x > 0, 0.1) }\nrule r { when hot() then log(\"hot\") }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(hot)"
+     ],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(hot)"
+     ],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0,
+        "x": 1
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05,
+        "x": 1
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.1,
+        "x": 1
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_held_in_a_signal",
+   "spec": [
+    "pol.held"
+   ],
+   "profile": "policy",
+   "source": "signals { s = held(x > 0, 0.1) }\nrule r { when s then log(\"s\") }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "s": false
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(s)"
+     ],
+     "watch": {
+      "s": true
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(s)"
+     ],
+     "watch": {
+      "s": true
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "s"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0,
+        "x": 1
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05,
+        "x": 1
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.1,
+        "x": 1
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_held_user_variable_named_held",
+   "spec": [
+    "pol.held"
+   ],
+   "profile": "policy",
+   "source": "let held = false\nrule r { when held(true, 0.05) then log(\"held\") }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(held)"
+     ],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_held_user_function_named_held_wins",
+   "spec": [
+    "pol.held"
+   ],
+   "profile": "policy",
+   "source": "func held(a, b) { return \"mine\" }\nrule r { when true then log(held(1, 2)) }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(mine)"
+     ],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_held_argument_count",
+   "spec": [
+    "pol.held"
+   ],
+   "profile": "policy",
+   "source": "rule r { when held(true) then log(\"m\") }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": false,
+     "error": "rule 'r': line 1: held(cond, seconds) takes 2 argument(s), got 1",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_held_too_many_arguments",
+   "spec": [
+    "pol.held"
+   ],
+   "profile": "policy",
+   "source": "rule r { when held(true, 1, 2) then log(\"m\") }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": false,
+     "error": "rule 'r': line 1: held(cond, seconds) takes 2 argument(s), got 3",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_held_seconds_must_be_number",
+   "spec": [
+    "pol.held"
+   ],
+   "profile": "policy",
+   "source": "rule r { when held(true, \"x\") then log(\"m\") }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": false,
+     "error": "rule 'r': line 1: expected a number, got string",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_held_condition_is_not_evaluated_as_a_value_first",
+   "spec": [
+    "pol.held"
+   ],
+   "profile": "policy",
+   "source": "func probe() { log(\"probe\") return true }\nrule r { when held(probe(), 0.05) then log(\"held\") }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(probe)",
+      "log(held)"
+     ],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(probe)",
+      "log(held)"
+     ],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_held_cleared_by_reset",
+   "spec": [
+    "pol.held"
+   ],
+   "profile": "policy",
+   "source": "rule r { when held(true, 0.1) then log(\"held\") }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(held)"
+     ],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(held)"
+     ],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.1
+       },
+       "faults": false
+      }
+     },
+     {
+      "reset": 0
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_fault_declaration_defaults",
+   "spec": [
+    "pol.decl-fault"
+   ],
+   "profile": "policy",
+   "source": "fault cool_down { set a = 1 }\nfault b weight 2 duration 5 label \"Custom\" { }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": []
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_fault_declaration_listing",
+   "spec": [
+    "pol.decl-fault"
+   ],
+   "profile": "policy",
+   "source": "fault f1 { }\nfault f2 weight 0.5 { }\nrule r { when false then }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_fault_modifiers_any_order",
+   "spec": [
+    "pol.decl-fault"
+   ],
+   "profile": "policy",
+   "source": "fault f label \"L\" duration 4 weight 2 { }\nfault g duration 1 { }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": []
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_fault_name_may_be_a_keyword",
+   "spec": [
+    "pol.decl-fault"
+   ],
+   "profile": "policy",
+   "source": "fault when { }\nfault weight { }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": []
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_fault_weight_needs_number",
+   "spec": [
+    "pol.decl-fault"
+   ],
+   "profile": "policy",
+   "source": "fault f weight { }",
+   "output": [],
+   "error": "line 1: expected 'number', got '{'",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": [],
+   "results": [],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": []
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_fault_label_needs_string",
+   "spec": [
+    "pol.decl-fault"
+   ],
+   "profile": "policy",
+   "source": "fault f label 5 { }",
+   "output": [],
+   "error": "line 1: expected 'string', got '5'",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": [],
+   "results": [],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": []
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_fault_body_unclosed",
+   "spec": [
+    "pol.decl-fault"
+   ],
+   "profile": "policy",
+   "source": "fault f { set a = 1",
+   "output": [],
+   "error": "line 1: unterminated block",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": [],
+   "results": [],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": []
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_fault_scheduled_activation_and_clear",
+   "spec": [
+    "pol.fault-schedule"
+   ],
+   "profile": "policy",
+   "source": "params { fault_first_min_s = 1.0  fault_first_max_s = 1.0  fault_gap_min_s = 2.0  fault_gap_max_s = 2.0 }\neffects { flow = 1.0 }\nfault pump weight 1 duration 1.0 label \"PUMP FAILURE\" { set flow = 0.5 }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": "",
+      "fault_label": "",
+      "fault_elapsed": 0.0,
+      "fault_duration": 0.0,
+      "flow": 1.0
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": "",
+      "fault_label": "",
+      "fault_elapsed": 0.0,
+      "fault_duration": 0.0,
+      "flow": 1.0
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(ALARM: PUMP FAILURE)"
+     ],
+     "watch": {
+      "active_fault": "pump",
+      "fault_label": "PUMP FAILURE",
+      "fault_elapsed": 0.0,
+      "fault_duration": 1.0,
+      "flow": 0.5
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": "pump",
+      "fault_label": "PUMP FAILURE",
+      "fault_elapsed": 0.5,
+      "fault_duration": 1.0,
+      "flow": 0.5
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(PUMP FAILURE CLEARED)"
+     ],
+     "watch": {
+      "active_fault": "",
+      "fault_label": "",
+      "fault_elapsed": 0.0,
+      "fault_duration": 0.0,
+      "flow": 1.0
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": "",
+      "fault_label": "",
+      "fault_elapsed": 0.0,
+      "fault_duration": 0.0,
+      "flow": 1.0
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": "",
+      "fault_label": "",
+      "fault_elapsed": 0.0,
+      "fault_duration": 0.0,
+      "flow": 1.0
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": "",
+      "fault_label": "",
+      "fault_elapsed": 0.0,
+      "fault_duration": 0.0,
+      "flow": 1.0
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(ALARM: PUMP FAILURE)"
+     ],
+     "watch": {
+      "active_fault": "pump",
+      "fault_label": "PUMP FAILURE",
+      "fault_elapsed": 0.0,
+      "fault_duration": 1.0,
+      "flow": 0.5
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": "pump",
+      "fault_label": "PUMP FAILURE",
+      "fault_elapsed": 0.5,
+      "fault_duration": 1.0,
+      "flow": 0.5
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "active_fault",
+     "fault_label",
+     "fault_elapsed",
+     "fault_duration",
+     "flow"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 0.5
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 1.0
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 1.5
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 2.0
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 2.5
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 3.0
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 3.5
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 4.0
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 4.5
+       },
+       "faults": true
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_fault_not_before_the_first_time",
+   "spec": [
+    "pol.fault-schedule"
+   ],
+   "profile": "policy",
+   "source": "params { fault_first_min_s = 1.0  fault_first_max_s = 1.0  fault_gap_min_s = 2.0  fault_gap_max_s = 2.0 }\neffects { flow = 1.0 }\nfault pump duration 1.0 { set flow = 0.5 }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": "",
+      "fault_label": "",
+      "fault_elapsed": 0.0,
+      "fault_duration": 0.0,
+      "flow": 1.0
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": "",
+      "fault_label": "",
+      "fault_elapsed": 0.0,
+      "fault_duration": 0.0,
+      "flow": 1.0
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "active_fault",
+     "fault_label",
+     "fault_elapsed",
+     "fault_duration",
+     "flow"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 0.5
+       },
+       "faults": true
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_fault_disabled_never_starts",
+   "spec": [
+    "pol.fault-schedule"
+   ],
+   "profile": "policy",
+   "source": "params { fault_first_min_s = 1.0  fault_first_max_s = 1.0  fault_gap_min_s = 2.0  fault_gap_max_s = 2.0 }\neffects { flow = 1.0 }\nfault pump duration 1.0 { set flow = 0.5 }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": ""
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": ""
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": ""
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": ""
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": ""
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": ""
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": ""
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": ""
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": ""
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": ""
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": ""
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": ""
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "active_fault"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 0.5
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 1.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 1.5
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 2.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 2.5
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 3.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 3.5
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 4.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 4.5
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 5.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 5.5
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_fault_zero_weight_never_picked",
+   "spec": [
+    "pol.fault-schedule"
+   ],
+   "profile": "policy",
+   "source": "params { fault_first_min_s = 1.0  fault_first_max_s = 1.0  fault_gap_min_s = 2.0  fault_gap_max_s = 2.0 }\neffects { flow = 1.0 }\nfault never weight 0 { set flow = 9 }\nfault pump weight 1 duration 0.5 { set flow = 0.5 }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": "",
+      "fault_label": "",
+      "fault_elapsed": 0.0,
+      "fault_duration": 0.0,
+      "flow": 1.0
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": "",
+      "fault_label": "",
+      "fault_elapsed": 0.0,
+      "fault_duration": 0.0,
+      "flow": 1.0
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(ALARM: PUMP)"
+     ],
+     "watch": {
+      "active_fault": "pump",
+      "fault_label": "PUMP",
+      "fault_elapsed": 0.0,
+      "fault_duration": 0.5,
+      "flow": 0.5
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(PUMP CLEARED)"
+     ],
+     "watch": {
+      "active_fault": "",
+      "fault_label": "",
+      "fault_elapsed": 0.0,
+      "fault_duration": 0.0,
+      "flow": 1.0
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": "",
+      "fault_label": "",
+      "fault_elapsed": 0.0,
+      "fault_duration": 0.0,
+      "flow": 1.0
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": "",
+      "fault_label": "",
+      "fault_elapsed": 0.0,
+      "fault_duration": 0.0,
+      "flow": 1.0
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "active_fault",
+     "fault_label",
+     "fault_elapsed",
+     "fault_duration",
+     "flow"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 0.5
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 1.0
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 1.5
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 2.0
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 2.5
+       },
+       "faults": true
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_fault_only_zero_weights_means_none",
+   "spec": [
+    "pol.fault-schedule"
+   ],
+   "profile": "policy",
+   "source": "params { fault_first_min_s = 1.0  fault_first_max_s = 1.0  fault_gap_min_s = 2.0  fault_gap_max_s = 2.0 }\neffects { flow = 1.0 }\nfault never weight 0 { set flow = 9 }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": "",
+      "fault_label": "",
+      "fault_elapsed": 0.0,
+      "fault_duration": 0.0,
+      "flow": 1.0
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": "",
+      "fault_label": "",
+      "fault_elapsed": 0.0,
+      "fault_duration": 0.0,
+      "flow": 1.0
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": "",
+      "fault_label": "",
+      "fault_elapsed": 0.0,
+      "fault_duration": 0.0,
+      "flow": 1.0
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": "",
+      "fault_label": "",
+      "fault_elapsed": 0.0,
+      "fault_duration": 0.0,
+      "flow": 1.0
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": "",
+      "fault_label": "",
+      "fault_elapsed": 0.0,
+      "fault_duration": 0.0,
+      "flow": 1.0
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": "",
+      "fault_label": "",
+      "fault_elapsed": 0.0,
+      "fault_duration": 0.0,
+      "flow": 1.0
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "active_fault",
+     "fault_label",
+     "fault_elapsed",
+     "fault_duration",
+     "flow"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 0.5
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 1.0
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 1.5
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 2.0
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 2.5
+       },
+       "faults": true
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_fault_default_duration_and_label",
+   "spec": [
+    "pol.fault-schedule"
+   ],
+   "profile": "policy",
+   "source": "params { fault_first_min_s = 1.0  fault_first_max_s = 1.0  fault_gap_min_s = 2.0  fault_gap_max_s = 2.0 }\neffects { flow = 1.0 }\nfault rod_stuck_a { set flow = 0.1 }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": "",
+      "fault_label": "",
+      "fault_elapsed": 0.0,
+      "fault_duration": 0.0,
+      "flow": 1.0
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": "",
+      "fault_label": "",
+      "fault_elapsed": 0.0,
+      "fault_duration": 0.0,
+      "flow": 1.0
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(ALARM: ROD STUCK A)"
+     ],
+     "watch": {
+      "active_fault": "rod_stuck_a",
+      "fault_label": "ROD STUCK A",
+      "fault_elapsed": 0.0,
+      "fault_duration": 30.0,
+      "flow": 0.1
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": "rod_stuck_a",
+      "fault_label": "ROD STUCK A",
+      "fault_elapsed": 0.5,
+      "fault_duration": 30.0,
+      "flow": 0.1
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "active_fault",
+     "fault_label",
+     "fault_elapsed",
+     "fault_duration",
+     "flow"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 0.5
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 1.0
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 1.5
+       },
+       "faults": true
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_fault_duration_expression",
+   "spec": [
+    "pol.fault-schedule"
+   ],
+   "profile": "policy",
+   "source": "params { fault_first_min_s = 1.0  fault_first_max_s = 1.0  fault_gap_min_s = 2.0  fault_gap_max_s = 2.0 }\nparams { d = 0.5 }\neffects { flow = 1.0 }\nfault pump duration d * 2 label \"P\" { set flow = 0.5 }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": "",
+      "fault_label": "",
+      "fault_elapsed": 0.0,
+      "fault_duration": 0.0,
+      "flow": 1.0
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": "",
+      "fault_label": "",
+      "fault_elapsed": 0.0,
+      "fault_duration": 0.0,
+      "flow": 1.0
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(ALARM: P)"
+     ],
+     "watch": {
+      "active_fault": "pump",
+      "fault_label": "P",
+      "fault_elapsed": 0.0,
+      "fault_duration": 1.0,
+      "flow": 0.5
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": "pump",
+      "fault_label": "P",
+      "fault_elapsed": 0.5,
+      "fault_duration": 1.0,
+      "flow": 0.5
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(P CLEARED)"
+     ],
+     "watch": {
+      "active_fault": "",
+      "fault_label": "",
+      "fault_elapsed": 0.0,
+      "fault_duration": 0.0,
+      "flow": 1.0
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "active_fault",
+     "fault_label",
+     "fault_elapsed",
+     "fault_duration",
+     "flow"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 0.5
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 1.0
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 1.5
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 2.0
+       },
+       "faults": true
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_fault_duration_sees_inputs",
+   "spec": [
+    "pol.fault-schedule"
+   ],
+   "profile": "policy",
+   "source": "params { fault_first_min_s = 1.0  fault_first_max_s = 1.0  fault_gap_min_s = 2.0  fault_gap_max_s = 2.0 }\neffects { flow = 1.0 }\nfault pump duration t { set flow = 0.5 }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": "",
+      "fault_label": "",
+      "fault_elapsed": 0.0,
+      "fault_duration": 0.0,
+      "flow": 1.0
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": "",
+      "fault_label": "",
+      "fault_elapsed": 0.0,
+      "fault_duration": 0.0,
+      "flow": 1.0
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(ALARM: PUMP)"
+     ],
+     "watch": {
+      "active_fault": "pump",
+      "fault_label": "PUMP",
+      "fault_elapsed": 0.0,
+      "fault_duration": 1.0,
+      "flow": 0.5
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": "pump",
+      "fault_label": "PUMP",
+      "fault_elapsed": 0.5,
+      "fault_duration": 1.0,
+      "flow": 0.5
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(PUMP CLEARED)"
+     ],
+     "watch": {
+      "active_fault": "",
+      "fault_label": "",
+      "fault_elapsed": 0.0,
+      "fault_duration": 0.0,
+      "flow": 1.0
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "active_fault",
+     "fault_label",
+     "fault_elapsed",
+     "fault_duration",
+     "flow"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 0.5
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 1.0
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 1.5
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 2.0
+       },
+       "faults": true
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_fault_body_runs_each_tick_while_active",
+   "spec": [
+    "pol.fault-schedule"
+   ],
+   "profile": "policy",
+   "source": "params { fault_first_min_s = 1.0  fault_first_max_s = 1.0  fault_gap_min_s = 2.0  fault_gap_max_s = 2.0 }\neffects { flow = 1.0 }\nfault pump duration 1.5 { set flow = flow - 0.1 log(\"body\", fault_elapsed) }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "flow": 1.0,
+      "active_fault": ""
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "flow": 1.0,
+      "active_fault": ""
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(ALARM: PUMP)",
+      "log(body, 0)"
+     ],
+     "watch": {
+      "flow": 0.9,
+      "active_fault": "pump"
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(body, 0.5)"
+     ],
+     "watch": {
+      "flow": 0.9,
+      "active_fault": "pump"
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(body, 1)"
+     ],
+     "watch": {
+      "flow": 0.9,
+      "active_fault": "pump"
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(PUMP CLEARED)"
+     ],
+     "watch": {
+      "flow": 1.0,
+      "active_fault": ""
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "flow": 1.0,
+      "active_fault": ""
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "flow",
+     "active_fault"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 0.5
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 1.0
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 1.5
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 2.0
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 2.5
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 3.0
+       },
+       "faults": true
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_fault_effects_return_to_default_after_clear",
+   "spec": [
+    "pol.fault-schedule"
+   ],
+   "profile": "policy",
+   "source": "params { fault_first_min_s = 1.0  fault_first_max_s = 1.0  fault_gap_min_s = 2.0  fault_gap_max_s = 2.0 }\neffects { flow = 1.0 }\nfault pump duration 1.0 { set flow = 0.5 }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "flow": 1.0,
+      "active_fault": ""
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "flow": 1.0,
+      "active_fault": ""
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(ALARM: PUMP)"
+     ],
+     "watch": {
+      "flow": 0.5,
+      "active_fault": "pump"
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "flow": 0.5,
+      "active_fault": "pump"
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(PUMP CLEARED)"
+     ],
+     "watch": {
+      "flow": 1.0,
+      "active_fault": ""
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "flow": 1.0,
+      "active_fault": ""
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "flow": 1.0,
+      "active_fault": ""
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "flow": 1.0,
+      "active_fault": ""
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "flow",
+     "active_fault"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 0.5
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 1.0
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 1.5
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 2.0
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 2.5
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 3.0
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 3.5
+       },
+       "faults": true
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_fault_rules_see_the_active_fault",
+   "spec": [
+    "pol.fault-schedule"
+   ],
+   "profile": "policy",
+   "source": "params { fault_first_min_s = 1.0  fault_first_max_s = 1.0  fault_gap_min_s = 2.0  fault_gap_max_s = 2.0 }\neffects { flow = 1.0 }\nfault pump duration 1.0 label \"PUMP\" { set flow = 0.5 }\nrule r { when active_fault == \"pump\" then log(\"rule sees\", fault_label, fault_elapsed) }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(ALARM: PUMP)",
+      "log(rule sees, PUMP, 0)"
+     ],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(rule sees, PUMP, 0.5)"
+     ],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(PUMP CLEARED)"
+     ],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 0.5
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 1.0
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 1.5
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 2.0
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 2.5
+       },
+       "faults": true
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_fault_body_runs_before_signals",
+   "spec": [
+    "pol.fault-schedule",
+    "pol.tick"
+   ],
+   "profile": "policy",
+   "source": "params { fault_first_min_s = 1.0  fault_first_max_s = 1.0  fault_gap_min_s = 2.0  fault_gap_max_s = 2.0 }\neffects { flow = 1.0 }\nfault pump duration 1.0 { set flow = 0.5 }\nsignals { seen = flow }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "seen": 1.0,
+      "flow": 1.0
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "seen": 1.0,
+      "flow": 1.0
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(ALARM: PUMP)"
+     ],
+     "watch": {
+      "seen": 0.5,
+      "flow": 0.5
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "seen": 0.5,
+      "flow": 0.5
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(PUMP CLEARED)"
+     ],
+     "watch": {
+      "seen": 1.0,
+      "flow": 1.0
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "seen",
+     "flow"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 0.5
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 1.0
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 1.5
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 2.0
+       },
+       "faults": true
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_fault_next_after_the_gap",
+   "spec": [
+    "pol.fault-schedule"
+   ],
+   "profile": "policy",
+   "source": "params { fault_first_min_s = 1.0  fault_first_max_s = 1.0  fault_gap_min_s = 2.0  fault_gap_max_s = 2.0 }\neffects { flow = 1.0 }\nfault pump duration 0.5 { set flow = 0.5 }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": ""
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": ""
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(ALARM: PUMP)"
+     ],
+     "watch": {
+      "active_fault": "pump"
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(PUMP CLEARED)"
+     ],
+     "watch": {
+      "active_fault": ""
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": ""
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": ""
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": ""
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(ALARM: PUMP)"
+     ],
+     "watch": {
+      "active_fault": "pump"
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(PUMP CLEARED)"
+     ],
+     "watch": {
+      "active_fault": ""
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": ""
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": ""
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": ""
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(ALARM: PUMP)"
+     ],
+     "watch": {
+      "active_fault": "pump"
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(PUMP CLEARED)"
+     ],
+     "watch": {
+      "active_fault": ""
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "active_fault"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 0.5
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 1.0
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 1.5
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 2.0
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 2.5
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 3.0
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 3.5
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 4.0
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 4.5
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 5.0
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 5.5
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 6.0
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 6.5
+       },
+       "faults": true
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_fault_globals_exist_from_the_first_tick",
+   "spec": [
+    "pol.fault-schedule"
+   ],
+   "profile": "policy",
+   "source": "fault f { }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": "",
+      "fault_label": "",
+      "fault_elapsed": 0.0,
+      "fault_duration": 0.0,
+      "flow": null
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "active_fault",
+     "fault_label",
+     "fault_elapsed",
+     "fault_duration",
+     "flow"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_fault_scheduler_uses_the_t_input",
+   "spec": [
+    "pol.fault-schedule"
+   ],
+   "profile": "policy",
+   "source": "params { fault_first_min_s = 1.0  fault_first_max_s = 1.0  fault_gap_min_s = 2.0  fault_gap_max_s = 2.0 }\neffects { flow = 1.0 }\nfault pump duration 1.0 { }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(ALARM: PUMP)"
+     ],
+     "watch": {
+      "active_fault": "pump",
+      "fault_elapsed": 0.0
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": "pump",
+      "fault_elapsed": 0.5
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(PUMP CLEARED)"
+     ],
+     "watch": {
+      "active_fault": "",
+      "fault_elapsed": 0.0
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "active_fault",
+     "fault_elapsed"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 5.0
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 5.5
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 7.0
+       },
+       "faults": true
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_fault_inject_by_name",
+   "spec": [
+    "pol.fault-api"
+   ],
+   "profile": "policy",
+   "source": "fault pump duration 1.0 label \"PUMP\" { set flow = 0.5 }\neffects { flow = 1.0 }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": "",
+      "fault_label": "",
+      "fault_elapsed": 0.0,
+      "fault_duration": 0.0,
+      "flow": 1.0
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(ALARM: PUMP)"
+     ],
+     "watch": {
+      "active_fault": "pump",
+      "fault_label": "PUMP",
+      "fault_elapsed": 0.0,
+      "fault_duration": 1.0,
+      "flow": 1.0
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": "pump",
+      "fault_label": "PUMP",
+      "fault_elapsed": 0.05,
+      "fault_duration": 1.0,
+      "flow": 0.5
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": "pump",
+      "fault_label": "PUMP",
+      "fault_elapsed": 0.1,
+      "fault_duration": 1.0,
+      "flow": 0.5
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "active_fault",
+     "fault_label",
+     "fault_elapsed",
+     "fault_duration",
+     "flow"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "inject_fault": "pump"
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.1
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_fault_inject_unknown",
+   "spec": [
+    "pol.fault-api"
+   ],
+   "profile": "policy",
+   "source": "fault pump { }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": ""
+     }
+    },
+    {
+     "ok": false,
+     "error": "no such fault 'nope'",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": ""
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "active_fault"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "inject_fault": "nope"
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_fault_inject_while_active_is_ignored",
+   "spec": [
+    "pol.fault-api"
+   ],
+   "profile": "policy",
+   "source": "fault a duration 1.0 { }\nfault b duration 1.0 { }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": "",
+      "fault_label": ""
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(ALARM: A)"
+     ],
+     "watch": {
+      "active_fault": "a",
+      "fault_label": "A"
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": "a",
+      "fault_label": "A"
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "active_fault",
+     "fault_label"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "inject_fault": "a"
+     },
+     {
+      "inject_fault": "b"
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_fault_inject_works_with_scheduler_disabled",
+   "spec": [
+    "pol.fault-api"
+   ],
+   "profile": "policy",
+   "source": "fault a duration 0.1 { }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": ""
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(ALARM: A)"
+     ],
+     "watch": {
+      "active_fault": "a"
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": "a"
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(A CLEARED)"
+     ],
+     "watch": {
+      "active_fault": ""
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": ""
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "active_fault"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "inject_fault": "a"
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.1
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.15
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_fault_clear_early",
+   "spec": [
+    "pol.fault-api"
+   ],
+   "profile": "policy",
+   "source": "params { fault_first_min_s = 1.0  fault_first_max_s = 1.0  fault_gap_min_s = 2.0  fault_gap_max_s = 2.0 }\neffects { flow = 1.0 }\nfault pump duration 10 label \"PUMP\" { set flow = 0.5 }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": "",
+      "fault_label": "",
+      "fault_elapsed": 0.0,
+      "fault_duration": 0.0,
+      "flow": 1.0
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(ALARM: PUMP)"
+     ],
+     "watch": {
+      "active_fault": "pump",
+      "fault_label": "PUMP",
+      "fault_elapsed": 0.0,
+      "fault_duration": 10.0,
+      "flow": 1.0
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": "pump",
+      "fault_label": "PUMP",
+      "fault_elapsed": 0.05,
+      "fault_duration": 10.0,
+      "flow": 0.5
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(PUMP CLEARED)"
+     ],
+     "watch": {
+      "active_fault": "",
+      "fault_label": "",
+      "fault_elapsed": 0.0,
+      "fault_duration": 0.0,
+      "flow": 0.5
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": "",
+      "fault_label": "",
+      "fault_elapsed": 0.0,
+      "fault_duration": 0.0,
+      "flow": 1.0
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "active_fault",
+     "fault_label",
+     "fault_elapsed",
+     "fault_duration",
+     "flow"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "inject_fault": "pump"
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05
+       },
+       "faults": false
+      }
+     },
+     {
+      "clear_fault": true
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.1
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_fault_clear_when_none_active",
+   "spec": [
+    "pol.fault-api"
+   ],
+   "profile": "policy",
+   "source": "fault pump { }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": ""
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": ""
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "active_fault"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "clear_fault": true
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_fault_clear_schedules_the_next",
+   "spec": [
+    "pol.fault-api"
+   ],
+   "profile": "policy",
+   "source": "params { fault_first_min_s = 1.0  fault_first_max_s = 1.0  fault_gap_min_s = 2.0  fault_gap_max_s = 2.0 }\neffects { flow = 1.0 }\nfault pump duration 10 { }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(ALARM: PUMP)"
+     ],
+     "watch": {
+      "active_fault": "pump"
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(PUMP CLEARED)"
+     ],
+     "watch": {
+      "active_fault": ""
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": ""
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": ""
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(ALARM: PUMP)"
+     ],
+     "watch": {
+      "active_fault": "pump"
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "active_fault"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 1.0
+       },
+       "faults": true
+      }
+     },
+     {
+      "clear_fault": true
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 1.5
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 2.5
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 3.0
+       },
+       "faults": true
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_fault_messages_use_the_host_log",
+   "spec": [
+    "pol.fault-api"
+   ],
+   "profile": "policy",
+   "source": "params { fault_first_min_s = 1.0  fault_first_max_s = 1.0  fault_gap_min_s = 2.0  fault_gap_max_s = 2.0 }\neffects { flow = 1.0 }\nfault pump duration 0.5 label \"PUMP\" { }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(ALARM: PUMP)"
+     ],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(PUMP CLEARED)"
+     ],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 0.5
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 1.0
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 1.5
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 2.0
+       },
+       "faults": true
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log",
+    "alarm"
+   ]
+  },
+  {
+   "name": "policy_fault_without_a_host_log_is_silent",
+   "spec": [
+    "pol.fault-api"
+   ],
+   "profile": "policy",
+   "source": "params { fault_first_min_s = 1.0  fault_first_max_s = 1.0  fault_gap_min_s = 2.0  fault_gap_max_s = 2.0 }\neffects { flow = 1.0 }\nfault pump duration 0.5 label \"PUMP\" { set flow = 0.2 }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": "",
+      "flow": 1.0
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": "",
+      "flow": 1.0
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": "pump",
+      "flow": 0.2
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": "",
+      "flow": 1.0
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": "",
+      "flow": 1.0
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "active_fault",
+     "flow"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 0.5
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 1.0
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 1.5
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 2.0
+       },
+       "faults": true
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "policy_fault_body_error",
+   "spec": [
+    "pol.engine-errors"
+   ],
+   "profile": "policy",
+   "source": "params { fault_first_min_s = 1.0  fault_first_max_s = 1.0  fault_gap_min_s = 2.0  fault_gap_max_s = 2.0 }\neffects { flow = 1.0 }\nfault pump duration 5 { nope() }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    },
+    {
+     "ok": false,
+     "error": "line 3: unknown function 'nope'",
+     "output": [],
+     "host_calls": [
+      "log(ALARM: PUMP)"
+     ],
+     "watch": {}
+    },
+    {
+     "ok": false,
+     "error": "line 3: unknown function 'nope'",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 0.5
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 1.0
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 1.5
+       },
+       "faults": true
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_fault_body_error_line",
+   "spec": [
+    "pol.engine-errors"
+   ],
+   "profile": "policy",
+   "source": "fault pump {\n  set a = 1\n  set b = nope\n}",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(ALARM: PUMP)"
+     ],
+     "watch": {}
+    },
+    {
+     "ok": false,
+     "error": "line 3: unknown identifier 'nope'",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "inject_fault": "pump"
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_fault_duration_error",
+   "spec": [
+    "pol.engine-errors"
+   ],
+   "profile": "policy",
+   "source": "fault pump duration nope { }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    },
+    {
+     "ok": false,
+     "error": "line 1: unknown identifier 'nope'",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "inject_fault": "pump"
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_reset_restores_the_start",
+   "spec": [
+    "pol.reset"
+   ],
+   "profile": "policy",
+   "source": "let n = 0\nparams { p = 3 }\neffects { e = p }\nrule once1 once { when true then set n = n + 1 log(\"fired\", n) }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(fired, 1)"
+     ],
+     "watch": {
+      "n": 1.0,
+      "e": 3.0,
+      "p": 3.0
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "n": 1.0,
+      "e": 3.0,
+      "p": 3.0
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "n": 0.0,
+      "e": 3.0,
+      "p": 3.0
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(fired, 1)"
+     ],
+     "watch": {
+      "n": 1.0,
+      "e": 3.0,
+      "p": 3.0
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "n",
+     "e",
+     "p"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05
+       },
+       "faults": false
+      }
+     },
+     {
+      "reset": 0
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_reset_reruns_statements",
+   "spec": [
+    "pol.reset"
+   ],
+   "profile": "policy",
+   "source": "print(\"start\")\nlet n = 0\nrule r { when true then set n = n + 1 }",
+   "output": [
+    "start"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "n": 1.0
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "n": 2.0
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [
+      "start"
+     ],
+     "host_calls": [],
+     "watch": {
+      "n": 0.0
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "n"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05
+       },
+       "faults": false
+      }
+     },
+     {
+      "reset": 0
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_reset_forgets_inputs",
+   "spec": [
+    "pol.reset"
+   ],
+   "profile": "policy",
+   "source": "rule r { when true then set seen = x }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "x": 5,
+      "seen": 5,
+      "t": 0.0,
+      "dt": 0.05
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "x": null,
+      "seen": null,
+      "t": null,
+      "dt": null
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "x",
+     "seen",
+     "t",
+     "dt"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0,
+        "x": 5
+       },
+       "faults": false
+      }
+     },
+     {
+      "reset": 0
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_reset_forgets_other_globals",
+   "spec": [
+    "pol.reset"
+   ],
+   "profile": "policy",
+   "source": "rule r { when true then set made = 1 }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "made": 1.0
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "made": null
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "made"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "reset": 0
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_reset_clears_once_and_edge",
+   "spec": [
+    "pol.reset"
+   ],
+   "profile": "policy",
+   "source": "rule a once { when true then log(\"a\") }\nrule b edge { when true then log(\"b\") }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(a)",
+      "log(b)"
+     ],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(a)",
+      "log(b)"
+     ],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05
+       },
+       "faults": false
+      }
+     },
+     {
+      "reset": 0
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_reset_clears_the_active_fault",
+   "spec": [
+    "pol.reset"
+   ],
+   "profile": "policy",
+   "source": "params { fault_first_min_s = 1.0  fault_first_max_s = 1.0  fault_gap_min_s = 2.0  fault_gap_max_s = 2.0 }\neffects { flow = 1.0 }\nfault pump duration 10 { set flow = 0.5 }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(ALARM: PUMP)"
+     ],
+     "watch": {
+      "active_fault": "pump",
+      "fault_label": "PUMP",
+      "fault_elapsed": 0.0,
+      "fault_duration": 10.0,
+      "flow": 0.5
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": null,
+      "fault_label": null,
+      "fault_elapsed": null,
+      "fault_duration": null,
+      "flow": 1.0
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "active_fault",
+     "fault_label",
+     "fault_elapsed",
+     "fault_duration",
+     "flow"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 1.0
+       },
+       "faults": true
+      }
+     },
+     {
+      "reset": 0
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_reset_redraws_the_first_fault_time",
+   "spec": [
+    "pol.reset"
+   ],
+   "profile": "policy",
+   "source": "params { fault_first_min_s = 1.0  fault_first_max_s = 1.0  fault_gap_min_s = 2.0  fault_gap_max_s = 2.0 }\neffects { flow = 1.0 }\nfault pump duration 1 { }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": ""
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": ""
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(ALARM: PUMP)"
+     ],
+     "watch": {
+      "active_fault": "pump"
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": "pump"
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": null
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": ""
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": ""
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(ALARM: PUMP)"
+     ],
+     "watch": {
+      "active_fault": "pump"
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": "pump"
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "active_fault"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 0.5
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 1.0
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 1.5
+       },
+       "faults": true
+      }
+     },
+     {
+      "reset": 0
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 0.5
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 1.0
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 1.5
+       },
+       "faults": true
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_api_call_function",
+   "spec": [
+    "pol.host-api"
+   ],
+   "profile": "policy",
+   "source": "func twice(a) { return a * 2 }\nfunc greet(n) { return \"hi \" + n }\nfunc none() { }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "value": 42.0,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "value": "hi bob",
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "value": null,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "call": [
+       "twice",
+       21
+      ]
+     },
+     {
+      "call": [
+       "greet",
+       "bob"
+      ]
+     },
+     {
+      "call": [
+       "none"
+      ]
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_api_call_unknown",
+   "spec": [
+    "pol.host-api"
+   ],
+   "profile": "policy",
+   "source": "let z = 5",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": false,
+     "value": null,
+     "error": "no such function 'nope'",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "call": [
+       "nope"
+      ]
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_api_call_not_a_function",
+   "spec": [
+    "pol.host-api"
+   ],
+   "profile": "policy",
+   "source": "let z = 5",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": false,
+     "value": null,
+     "error": "'z' is not a function",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "call": [
+       "z"
+      ]
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_api_call_arity",
+   "spec": [
+    "pol.host-api"
+   ],
+   "profile": "policy",
+   "source": "func f(a) { return a }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": false,
+     "value": null,
+     "error": "f() takes 1 argument(s), got 0",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    },
+    {
+     "ok": false,
+     "value": null,
+     "error": "f() takes 1 argument(s), got 2",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "call": [
+       "f"
+      ]
+     },
+     {
+      "call": [
+       "f",
+       1,
+       2
+      ]
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_api_call_error_in_function",
+   "spec": [
+    "pol.host-api"
+   ],
+   "profile": "policy",
+   "source": "func f() {\n  return nope\n}",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": false,
+     "value": null,
+     "error": "line 2: unknown identifier 'nope'",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "call": [
+       "f"
+      ]
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_api_call_sees_state",
+   "spec": [
+    "pol.host-api"
+   ],
+   "profile": "policy",
+   "source": "let n = 0\nfunc bump() { n = n + 1 return n }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "value": 1.0,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "n": 1.0
+     }
+    },
+    {
+     "ok": true,
+     "value": 2.0,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "n": 2.0
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "n"
+    ],
+    "steps": [
+     {
+      "call": [
+       "bump"
+      ]
+     },
+     {
+      "call": [
+       "bump"
+      ]
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_api_call_sees_tick_inputs",
+   "spec": [
+    "pol.host-api",
+    "pol.tick"
+   ],
+   "profile": "policy",
+   "source": "func get_x() { return x }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "value": 7,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0,
+        "x": 7
+       },
+       "faults": false
+      }
+     },
+     {
+      "call": [
+       "get_x"
+      ]
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_api_call_budget_is_per_call",
+   "spec": [
+    "pol.host-api"
+   ],
+   "profile": "policy",
+   "source": "func spin() { let i = 0 while i < 60000 { i = i + 1 } return i }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "value": 60000.0,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "value": 60000.0,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "call": [
+       "spin"
+      ]
+     },
+     {
+      "call": [
+       "spin"
+      ]
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_api_call_runaway",
+   "spec": [
+    "pol.host-api"
+   ],
+   "profile": "policy",
+   "source": "func spin() { while true { } }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": false,
+     "value": null,
+     "error": "line 1: step budget exhausted (500000) -- runaway loop?",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    },
+    {
+     "ok": false,
+     "value": null,
+     "error": "line 1: step budget exhausted (500000) -- runaway loop?",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "call": [
+       "spin"
+      ]
+     },
+     {
+      "call": [
+       "spin"
+      ]
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_api_call_depth",
+   "spec": [
+    "pol.host-api"
+   ],
+   "profile": "policy",
+   "source": "func f(n) { return f(n + 1) }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": false,
+     "value": null,
+     "error": "line 1: call depth limit (128) exceeded -- infinite recursion?",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "call": [
+       "f",
+       0
+      ]
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_api_call_host_function",
+   "spec": [
+    "pol.host-api"
+   ],
+   "profile": "policy",
+   "source": "func shout(s) { log(s) return 1 }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "value": 1.0,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(x)"
+     ],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "call": [
+       "shout",
+       "x"
+      ]
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_api_call_output",
+   "spec": [
+    "pol.host-api"
+   ],
+   "profile": "policy",
+   "source": "func p() { print(\"from call\") return 1 }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "value": 1.0,
+     "error": "",
+     "output": [
+      "from call"
+     ],
+     "host_calls": [],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "call": [
+       "p"
+      ]
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_api_call_collections",
+   "spec": [
+    "pol.host-api"
+   ],
+   "profile": "policy",
+   "source": "func f(l, d) { append(l, 1) d.k = 2 return [l, d] }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "value": [
+      [
+       0,
+       1.0
+      ],
+      {
+       "a": 1,
+       "k": 2.0
+      }
+     ],
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "call": [
+       "f",
+       [
+        0
+       ],
+       {
+        "a": 1
+       }
+      ]
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_api_set_global",
+   "spec": [
+    "pol.host-api"
+   ],
+   "profile": "policy",
+   "source": "rule r { when true then log(gv) }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "gv": 7,
+      "other": null
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(7)"
+     ],
+     "watch": {
+      "gv": 7,
+      "other": null
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "gv": "s",
+      "other": [
+       1
+      ]
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(s)"
+     ],
+     "watch": {
+      "gv": "s",
+      "other": [
+       1
+      ]
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "gv",
+     "other"
+    ],
+    "steps": [
+     {
+      "set": {
+       "gv": 7
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "set": {
+       "gv": "s",
+       "other": [
+        1
+       ]
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_api_set_global_replaces_inputs_next_tick",
+   "spec": [
+    "pol.host-api"
+   ],
+   "profile": "policy",
+   "source": "rule r { when true then log(x) }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "x": 1
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(2)"
+     ],
+     "watch": {
+      "x": 2
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "x"
+    ],
+    "steps": [
+     {
+      "set": {
+       "x": 1
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0,
+        "x": 2
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_api_output_goes_to_the_host",
+   "spec": [
+    "pol.host-api"
+   ],
+   "profile": "policy",
+   "source": "rule r { when true then print(\"tick\", t) }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [
+      "tick 0"
+     ],
+     "host_calls": [],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [
+      "tick 0.05"
+     ],
+     "host_calls": [],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_api_tick_before_anything",
+   "spec": [
+    "pol.host-api"
+   ],
+   "profile": "policy",
+   "source": "",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_api_failed_tick_then_ok_tick",
+   "spec": [
+    "pol.host-api"
+   ],
+   "profile": "policy",
+   "source": "rule r { when x > 0 then nope() }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": false,
+     "error": "rule 'r': line 1: unknown function 'nope'",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    },
+    {
+     "ok": false,
+     "error": "rule 'r': line 1: unknown function 'nope'",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0,
+        "x": 1
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05,
+        "x": 0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.1,
+        "x": 1
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_api_modules_in_rule_files",
+   "spec": [
+    "pol.host-api"
+   ],
+   "profile": "policy",
+   "source": "import \"lib.nova\" as lib\nrule r { when true then log(lib.twice(x)) }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "files": {
+    "lib.nova": "export func twice(a) { return a * 2 }\n"
+   },
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(8)"
+     ],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0,
+        "x": 4
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_api_bare_import_in_rule_files",
+   "spec": [
+    "pol.host-api"
+   ],
+   "profile": "policy",
+   "source": "import \"lib.nova\"\nparams { k = twice(2) }\nrule r { when true then log(k) }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "files": {
+    "lib.nova": "export func twice(a) { return a * 2 }\n"
+   },
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(4)"
+     ],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_fault_default_first_time_window",
+   "spec": [
+    "pol.fault-schedule"
+   ],
+   "profile": "policy",
+   "source": "fault f duration 5 { }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": ""
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(ALARM: F)"
+     ],
+     "watch": {
+      "active_fault": "f"
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "active_fault"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 1.0,
+       "inputs": {
+        "t": 44.9
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 1.0,
+       "inputs": {
+        "t": 90.0
+       },
+       "faults": true
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_fault_default_gap_window",
+   "spec": [
+    "pol.fault-schedule"
+   ],
+   "profile": "policy",
+   "source": "fault f duration 5 { }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": ""
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(ALARM: F)"
+     ],
+     "watch": {
+      "active_fault": "f"
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(F CLEARED)"
+     ],
+     "watch": {
+      "active_fault": ""
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": ""
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(ALARM: F)"
+     ],
+     "watch": {
+      "active_fault": "f"
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "active_fault"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 1.0,
+       "inputs": {
+        "t": 10.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "inject_fault": "f"
+     },
+     {
+      "clear_fault": true
+     },
+     {
+      "tick": {
+       "dt": 1.0,
+       "inputs": {
+        "t": 54.9
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 1.0,
+       "inputs": {
+        "t": 100.0
+       },
+       "faults": true
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_held_at_load_time_dt_is_zero",
+   "spec": [
+    "pol.held"
+   ],
+   "profile": "policy",
+   "source": "print(held(true, 1), held(true, 0))",
+   "output": [
+    "false true"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": []
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_engine_describe",
+   "spec": [
+    "pol.host-api"
+   ],
+   "profile": "policy",
+   "source": "reactor \"CORE\" version 2\nlet n = 1\nparams { a = 1 }\nsignals { s = a }\neffects { e = 0 persistent  f = 1 }\nrule low { when held(true, 1) then }\nrule high priority 5 { when false then }\nfault pump { }\nexport let X = 1\nexport func g() { }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "value": {
+      "title": "CORE",
+      "version": 2,
+      "params": [
+       "a"
+      ],
+      "effects": [
+       "e",
+       "f"
+      ],
+      "signals": [
+       "s"
+      ],
+      "rules": [
+       "high",
+       "low"
+      ],
+      "faults": [
+       "pump"
+      ],
+      "statements": 3,
+      "exports": [
+       "X",
+       "g"
+      ],
+      "held_slots": 1
+     },
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "describe": true
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_engine_describe_defaults",
+   "spec": [
+    "pol.host-api"
+   ],
+   "profile": "policy",
+   "source": "",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "value": {
+      "title": "UNNAMED REACTOR",
+      "version": 1,
+      "params": [],
+      "effects": [],
+      "signals": [],
+      "rules": [],
+      "faults": [],
+      "statements": 0,
+      "exports": [],
+      "held_slots": 0
+     },
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "describe": true
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_fault_inject_duration_error",
+   "spec": [
+    "pol.fault-api"
+   ],
+   "profile": "policy",
+   "source": "fault pump duration nope { }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": ""
+     }
+    },
+    {
+     "ok": false,
+     "error": "line 1: unknown identifier 'nope'",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": ""
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": ""
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "active_fault"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "inject_fault": "pump"
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_fault_duration_not_a_number",
+   "spec": [
+    "pol.engine-errors"
+   ],
+   "profile": "policy",
+   "source": "fault pump duration \"long\" { }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": ""
+     }
+    },
+    {
+     "ok": false,
+     "error": "expected a number, got string",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": ""
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "active_fault"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "inject_fault": "pump"
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_fault_scheduled_duration_error_fails_the_tick",
+   "spec": [
+    "pol.engine-errors"
+   ],
+   "profile": "policy",
+   "source": "params { fault_first_min_s = 1.0  fault_first_max_s = 1.0  fault_gap_min_s = 2.0  fault_gap_max_s = 2.0 }\neffects { flow = 1.0 }\nfault pump duration nope { }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": ""
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": ""
+     }
+    },
+    {
+     "ok": false,
+     "error": "line 3: unknown identifier 'nope'",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": ""
+     }
+    },
+    {
+     "ok": false,
+     "error": "line 3: unknown identifier 'nope'",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": ""
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "active_fault"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 0.5
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 1.0
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.5,
+       "inputs": {
+        "t": 1.5
+       },
+       "faults": true
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_fault_timing_param_not_a_number",
+   "spec": [
+    "pol.engine-errors"
+   ],
+   "profile": "policy",
+   "source": "params { fault_first_min_s = \"soon\" }\nfault f { }",
+   "output": [],
+   "error": "expected a number, got string",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": [],
+   "results": [],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": []
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_fault_time_input_not_a_number",
+   "spec": [
+    "pol.engine-errors"
+   ],
+   "profile": "policy",
+   "source": "fault f { }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": false,
+     "error": "expected a number, got string",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": ""
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "active_fault": ""
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "active_fault"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": "now"
+       },
+       "faults": true
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_tick_order_of_a_cycle",
+   "spec": [
+    "pol.tick"
+   ],
+   "profile": "policy",
+   "source": "params { fault_first_min_s = 0.0  fault_first_max_s = 0.0 }\neffects { e = \"default\" }\nfault f duration 9 { log(\"fault body\", e, x) set e = \"from fault\" }\nsignals { s = e + \"!\" }\nrule r { when true then log(\"rule\", e, s, x) }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(ALARM: F)",
+      "log(fault body, default, input)",
+      "log(rule, from fault, from fault!, input)"
+     ],
+     "watch": {
+      "e": "from fault",
+      "s": "from fault!"
+     }
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "e",
+     "s"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0,
+        "x": "input"
+       },
+       "faults": true
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_tick_time_is_read_from_t",
+   "spec": [
+    "pol.tick"
+   ],
+   "profile": "policy",
+   "source": "rule r { when true then log(t) }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": false,
+     "error": "rule 'r': line 1: unknown identifier 't'",
+     "output": [],
+     "host_calls": [],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(2.5)"
+     ],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 1.0,
+       "inputs": {},
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 2.5
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_tick_dt_is_a_global",
+   "spec": [
+    "pol.tick"
+   ],
+   "profile": "policy",
+   "source": "rule r { when true then log(dt) }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(0.2)"
+     ],
+     "watch": {}
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(0.125)"
+     ],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.2,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.125,
+       "inputs": {
+        "t": 0.2
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  },
+  {
+   "name": "policy_tick_inputs_of_any_kind",
+   "spec": [
+    "pol.tick"
+   ],
+   "profile": "policy",
+   "source": "rule r { when true then log(type(a), type(b), type(c), type(d), type(e), a, b, c, d) }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(number, string, list, dict, null, 1.5, s, [1, \"x\"], {k: true})"
+     ],
+     "watch": {}
+    }
+   ],
+   "engine": {
+    "seed": 1,
+    "watch": [],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0,
+        "a": 1.5,
+        "b": "s",
+        "c": [
+         1,
+         "x"
+        ],
+        "d": {
+         "k": true
+        },
+        "e": null
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ]
+  }
+ ]
+}

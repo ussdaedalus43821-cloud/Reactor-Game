@@ -1,0 +1,4769 @@
+{
+ "area": "policy-values",
+ "version": 1,
+ "cases": [
+  {
+   "name": "policy_types_literals",
+   "spec": [
+    "pol.types"
+   ],
+   "profile": "policy",
+   "source": "print(1, 2.5, \"s\", true, false, null)",
+   "output": [
+    "1 2.5 s true false null"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "oracle": "literals"
+  },
+  {
+   "name": "policy_types_type_names",
+   "spec": [
+    "pol.types"
+   ],
+   "profile": "policy",
+   "source": "func f() { }  print(type(1), type(\"s\"), type([]), type({}), type(null), type(f), type(true))",
+   "output": [
+    "number string list dict null func bool"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "oracle": "builtins_types"
+  },
+  {
+   "name": "policy_types_anonymous_function_type",
+   "spec": [
+    "pol.types"
+   ],
+   "profile": "policy",
+   "source": "print(type(func() { }), type(1 / 3), type(1e400))",
+   "output": [
+    "func number number"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_types_lists_and_dicts_are_shared",
+   "spec": [
+    "pol.types"
+   ],
+   "profile": "policy",
+   "source": "let a = [1] let b = a append(b, 2) let d = {} let e = d e.k = 1 print(a, d)",
+   "output": [
+    "[1, 2] {k: 1}"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_types_strings_are_values",
+   "spec": [
+    "pol.types"
+   ],
+   "profile": "policy",
+   "source": "let a = \"x\" let b = a + \"y\" print(a, b)",
+   "output": [
+    "x xy"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_types_string_length_in_characters",
+   "spec": [
+    "pol.types"
+   ],
+   "profile": "policy",
+   "source": "print(len(\"héllo\"), len(\"😀\"), len(\"\"))",
+   "output": [
+    "5 1 0"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_types_builtins_not_values",
+   "spec": [
+    "pol.types"
+   ],
+   "profile": "policy",
+   "source": "print(type(len))",
+   "output": [],
+   "error": "line 1: unknown identifier 'len'",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_num_whole_numbers",
+   "spec": [
+    "pol.num-display"
+   ],
+   "profile": "policy",
+   "source": "print(0, 1, -1, 42, 1000000, 123456789012345, 14 / 2)",
+   "output": [
+    "0 1 -1 42 1000000 123456789012345 7"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_num_fractions",
+   "spec": [
+    "pol.num-display"
+   ],
+   "profile": "policy",
+   "source": "print(1.5, 0.25, -0.25, 100.5, 10 / 4, 1 / 3, 2 / 3, 0.1 + 0.2)",
+   "output": [
+    "1.5 0.25 -0.25 100.5 2.5 0.333333 0.666667 0.3"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_num_six_places",
+   "spec": [
+    "pol.num-display"
+   ],
+   "profile": "policy",
+   "source": "print(1234.5678912, 123456789.123456789, 0.000001, 0.0000006, 1.0000004, 2.5000004)",
+   "output": [
+    "1234.567891 123456789.123457 0.000001 0.000001 1 2.5"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_num_below_six_places_is_zero",
+   "spec": [
+    "pol.num-display"
+   ],
+   "profile": "policy",
+   "source": "print(0.0000004, 0.0000001, 1.0000004 - 1)",
+   "output": [
+    "0 0 0"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_num_negative_zero_text",
+   "spec": [
+    "pol.num-display"
+   ],
+   "profile": "policy",
+   "source": "print(-0.0000004, -0, 0 * -1, -0.0)",
+   "output": [
+    "-0 0 0 0"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_num_large_whole",
+   "spec": [
+    "pol.num-display"
+   ],
+   "profile": "policy",
+   "source": "print(1e14, 1e15, 1e16, 1e20, 1e22, -1e15)",
+   "output": [
+    "100000000000000 1000000000000000 10000000000000000 100000000000000000000 10000000000000000000000 -1000000000000000"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_num_precision_boundary",
+   "spec": [
+    "pol.num-display"
+   ],
+   "profile": "policy",
+   "source": "print(999999999999999, 999999999999999.5, 4503599627370497.5)",
+   "output": [
+    "999999999999999 999999999999999.5 4503599627370498"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_num_non_finite",
+   "spec": [
+    "pol.num-display"
+   ],
+   "profile": "policy",
+   "source": "print(1e400, -1e400, 1e400 - 1e400)",
+   "output": [
+    "inf -inf nan"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_num_oracle_formats",
+   "spec": [
+    "pol.num-display"
+   ],
+   "profile": "policy",
+   "source": "print(1, 1.5, 1/3, -0.25, 1000000, 2/3 * 3)",
+   "output": [
+    "1 1.5 0.333333 -0.25 1000000 2"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "oracle": "number_format"
+  },
+  {
+   "name": "policy_num_in_text",
+   "spec": [
+    "pol.num-display"
+   ],
+   "profile": "policy",
+   "source": "print(\"n=\" + 1.5, \"n=\" + 1/3, str(2/3), join([0.5, 100], \",\"))",
+   "output": [
+    "n=1.5 n=0.333333 0.666667 0.5,100"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_text_scalars",
+   "spec": [
+    "pol.text"
+   ],
+   "profile": "policy",
+   "source": "print(null, true, false, \"s\", 1, 1.5)",
+   "output": [
+    "null true false s 1 1.5"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_text_list",
+   "spec": [
+    "pol.text"
+   ],
+   "profile": "policy",
+   "source": "print([1, \"a\", [true, null], 2.5])",
+   "output": [
+    "[1, \"a\", [true, null], 2.5]"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_text_dict",
+   "spec": [
+    "pol.text"
+   ],
+   "profile": "policy",
+   "source": "print({a: 1, \"b c\": \"x\", n: null})",
+   "output": [
+    "{a: 1, b c: \"x\", n: null}"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_text_nested_quoting",
+   "spec": [
+    "pol.text"
+   ],
+   "profile": "policy",
+   "source": "print([\"a\", {k: [\"b\"]}], str([\"a\"]), \"x\" + [\"a\"])",
+   "output": [
+    "[\"a\", {k: [\"b\"]}] [\"a\"] x[\"a\"]"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_text_no_escaping_inside",
+   "spec": [
+    "pol.text"
+   ],
+   "profile": "policy",
+   "source": "print([\"a\\nb\", \"q\\\"q\"], {\"it's\": \"v\"})",
+   "output": [
+    "[\"a\nb\", \"q\"q\"] {it's: \"v\"}"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_text_empty_collections",
+   "spec": [
+    "pol.text"
+   ],
+   "profile": "policy",
+   "source": "print([], {}, [[]], [{}], {a: []})",
+   "output": [
+    "[] {} [[]] [{}] {a: []}"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_text_function",
+   "spec": [
+    "pol.text"
+   ],
+   "profile": "policy",
+   "source": "func f() { } print(f, func() { }, [f], {g: f})",
+   "output": [
+    "<func f> <func anonymous> [<func f>] {g: <func f>}"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_text_strings_unquoted_at_top",
+   "spec": [
+    "pol.text"
+   ],
+   "profile": "policy",
+   "source": "print(\"a\", [\"a\"], str(\"a\"), \"a\" + \"b\")",
+   "output": [
+    "a [\"a\"] a ab"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_truthy_false_values",
+   "spec": [
+    "pol.truthiness"
+   ],
+   "profile": "policy",
+   "source": "print(bool(false), bool(null), bool(0), bool(0.0), bool(\"\"), bool([]), bool({}))",
+   "output": [
+    "false false false false false false false"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_truthy_true_values",
+   "spec": [
+    "pol.truthiness"
+   ],
+   "profile": "policy",
+   "source": "func f() { } print(bool(true), bool(1), bool(-1), bool(0.001), bool(\"0\"), bool(\" \"), bool(\"false\"), bool([0]), bool([null]), bool({a: 0}), bool(f))",
+   "output": [
+    "true true true true true true true true true true true"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_truthy_not",
+   "spec": [
+    "pol.truthiness"
+   ],
+   "profile": "policy",
+   "source": "print(not 0, not 1, not \"\", not \"a\", not [], not [0], not {}, not {a: 1}, not null, not 0.0, not 1e-9)",
+   "output": [
+    "true false true false true false true false true true false"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_truthy_unary",
+   "spec": [
+    "pol.truthiness"
+   ],
+   "profile": "policy",
+   "source": "print(-(2 + 3), - -4, not 0, not \"\", not [])",
+   "output": [
+    "-5 4 true true true"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "oracle": "unary"
+  },
+  {
+   "name": "policy_truthy_not_function",
+   "spec": [
+    "pol.truthiness"
+   ],
+   "profile": "policy",
+   "source": "func f() { } print(not f, not true, not false, not -1)",
+   "output": [
+    "false false true false"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_truthy_if",
+   "spec": [
+    "pol.truthiness"
+   ],
+   "profile": "policy",
+   "source": "if 0 { print(\"t\") } else { print(\"f\") }\nif \"\" { print(\"t\") } else { print(\"f\") }\nif [] { print(\"t\") } else { print(\"f\") }\nif {} { print(\"t\") } else { print(\"f\") }\nif null { print(\"t\") } else { print(\"f\") }\nif \"0\" { print(\"t\") } else { print(\"f\") }\nif [0] { print(\"t\") } else { print(\"f\") }\nif 0.5 { print(\"t\") } else { print(\"f\") }",
+   "output": [
+    "f",
+    "f",
+    "f",
+    "f",
+    "f",
+    "t",
+    "t",
+    "t"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_truthy_while",
+   "spec": [
+    "pol.truthiness"
+   ],
+   "profile": "policy",
+   "source": "let i = 3 while i { i = i - 1 } print(i)",
+   "output": [
+    "0"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_truthy_while_list",
+   "spec": [
+    "pol.truthiness"
+   ],
+   "profile": "policy",
+   "source": "let l = [1, 2, 3] while l { remove_at(l, 0) } print(len(l))",
+   "output": [
+    "0"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_truthy_nan_is_true",
+   "spec": [
+    "pol.truthiness"
+   ],
+   "profile": "policy",
+   "source": "print(bool(1e400 - 1e400), bool(1e400))",
+   "output": [
+    "true true"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_eq_scalars",
+   "spec": [
+    "pol.equality"
+   ],
+   "profile": "policy",
+   "source": "print(1 == 1.0, 1 == \"1\", \"a\" == \"a\", \"a\" == \"A\", true == true, null == null)",
+   "output": [
+    "true false true false true true"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_eq_no_coercion",
+   "spec": [
+    "pol.equality"
+   ],
+   "profile": "policy",
+   "source": "print(true == 1, false == 0, null == false, null == 0, \"\" == null, 0 == \"\")",
+   "output": [
+    "false false false false false false"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_eq_not_equal",
+   "spec": [
+    "pol.equality"
+   ],
+   "profile": "policy",
+   "source": "print(1 != 2, 1 != 1, \"a\" != \"b\", null != 0, [1] != [1], {} != [])",
+   "output": [
+    "true false true true false true"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_eq_lists",
+   "spec": [
+    "pol.equality"
+   ],
+   "profile": "policy",
+   "source": "print([1, [2]] == [1, [2]], [1] == [1, 2], [] == [], [1, 2] == [2, 1])",
+   "output": [
+    "true false true false"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_eq_dicts",
+   "spec": [
+    "pol.equality"
+   ],
+   "profile": "policy",
+   "source": "print({a: 1, b: 2} == {b: 2, a: 1}, {a: 1} == {a: 2}, {} == {}, {a: 1} == {b: 1}, {} == [])",
+   "output": [
+    "true false true false false"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_eq_deep",
+   "spec": [
+    "pol.equality"
+   ],
+   "profile": "policy",
+   "source": "print([1,[2]] == [1,[2]], {a:1} == {a:1}, [1] == [1,2], 1 == \"1\", null == null)",
+   "output": [
+    "true true false false true"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "oracle": "deep_equality"
+  },
+  {
+   "name": "policy_eq_nested_dict_list",
+   "spec": [
+    "pol.equality"
+   ],
+   "profile": "policy",
+   "source": "print({a: {b: [1]}} == {a: {b: [1]}}, {a: [1, {c: 2}]} == {a: [1, {c: 3}]})",
+   "output": [
+    "true false"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_eq_functions_by_identity",
+   "spec": [
+    "pol.equality"
+   ],
+   "profile": "policy",
+   "source": "func f() { } let g = f print(f == g, f == func() { }, func() { } == func() { }, f != g)",
+   "output": [
+    "true false false false"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_eq_nan",
+   "spec": [
+    "pol.equality"
+   ],
+   "profile": "policy",
+   "source": "let n = 1e400 - 1e400 print(n == n, n != n, 1e400 == 1e400, 1e400 == -1e400)",
+   "output": [
+    "false true true false"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_eq_shared_list",
+   "spec": [
+    "pol.equality"
+   ],
+   "profile": "policy",
+   "source": "let a = [1] let b = a append(b, 2) print(a == b, a == [1, 2])",
+   "output": [
+    "true true"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_eq_short_circuit_unaffected",
+   "spec": [
+    "pol.equality"
+   ],
+   "profile": "policy",
+   "source": "print(1 == 1 == true, 1 == 2 == false)",
+   "output": [
+    "true true"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_arith_basic",
+   "spec": [
+    "pol.arith"
+   ],
+   "profile": "policy",
+   "source": "print(7 + 2, 7 - 2, 7 * 2, 7 / 2, 7 % 2, -7 - -2)",
+   "output": [
+    "9 5 14 3.5 1 -5"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_arith_floats",
+   "spec": [
+    "pol.arith"
+   ],
+   "profile": "policy",
+   "source": "print(0.5 + 0.25, 1.5 * 2, 1 / 4, 3 - 3.5, 0.1 * 3)",
+   "output": [
+    "0.75 3 0.25 -0.5 0.3"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_arith_division_by_zero_is_zero",
+   "spec": [
+    "pol.arith"
+   ],
+   "profile": "policy",
+   "source": "print(1 / 0, -1 / 0, 0 / 0, 1 / 0.0, 1e400 / 0)",
+   "output": [
+    "0 0 0 0 0"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_arith_modulo_by_zero_is_zero",
+   "spec": [
+    "pol.arith"
+   ],
+   "profile": "policy",
+   "source": "print(7 % 0, 0 % 0, -7 % 0, 7.5 % 0)",
+   "output": [
+    "0 0 0 0"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_arith_modulo_sign_follows_dividend",
+   "spec": [
+    "pol.arith"
+   ],
+   "profile": "policy",
+   "source": "print(-7 % 3, 7 % -3, -7 % -3, 7 % 3)",
+   "output": [
+    "-1 1 -1 1"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_arith_modulo_fractions",
+   "spec": [
+    "pol.arith"
+   ],
+   "profile": "policy",
+   "source": "print(7.5 % 2, -7.5 % 2, 5 % 0.5, 1 % 0.3)",
+   "output": [
+    "1.5 -1.5 0 0.1"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_arith_booleans_are_numbers",
+   "spec": [
+    "pol.arith"
+   ],
+   "profile": "policy",
+   "source": "print(2 + true, true + true, true * 5, -true, 1 - false, false / 2)",
+   "output": [
+    "3 2 5 -1 1 0"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_arith_zero_division_result_used",
+   "spec": [
+    "pol.arith"
+   ],
+   "profile": "policy",
+   "source": "let r = 10 / 0 print(r + 1, r == 0)",
+   "output": [
+    "1 true"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_arith_infinity",
+   "spec": [
+    "pol.arith"
+   ],
+   "profile": "policy",
+   "source": "let inf = 1e400 print(inf + 1, inf - inf, inf * 0, -inf, inf / inf, 1 / inf)",
+   "output": [
+    "inf nan nan -inf nan 0"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_arith_unary_minus_zero",
+   "spec": [
+    "pol.arith"
+   ],
+   "profile": "policy",
+   "source": "print(-0 + 0, 0 * -5)",
+   "output": [
+    "0 0"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_arith_error_null",
+   "spec": [
+    "pol.arith"
+   ],
+   "profile": "policy",
+   "source": "print(1 + null)",
+   "output": [],
+   "error": "expected a number, got null",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_arith_error_string",
+   "spec": [
+    "pol.arith"
+   ],
+   "profile": "policy",
+   "source": "print(\"a\" - 1)",
+   "output": [],
+   "error": "expected a number, got string",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": [],
+   "oracle": "err_type"
+  },
+  {
+   "name": "policy_arith_error_string_multiply",
+   "spec": [
+    "pol.arith"
+   ],
+   "profile": "policy",
+   "source": "print(2 * \"3\")",
+   "output": [],
+   "error": "expected a number, got string",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_arith_error_list",
+   "spec": [
+    "pol.arith"
+   ],
+   "profile": "policy",
+   "source": "print([1] - 1)",
+   "output": [],
+   "error": "expected a number, got list",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_arith_error_dict",
+   "spec": [
+    "pol.arith"
+   ],
+   "profile": "policy",
+   "source": "print(1 / {})",
+   "output": [],
+   "error": "expected a number, got dict",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_arith_error_function",
+   "spec": [
+    "pol.arith"
+   ],
+   "profile": "policy",
+   "source": "func f() { } print(f % 2)",
+   "output": [],
+   "error": "expected a number, got func",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_arith_error_unary_minus",
+   "spec": [
+    "pol.arith"
+   ],
+   "profile": "policy",
+   "source": "print(-\"a\")",
+   "output": [],
+   "error": "expected a number, got string",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_arith_error_unary_minus_null",
+   "spec": [
+    "pol.arith"
+   ],
+   "profile": "policy",
+   "source": "print(-null)",
+   "output": [],
+   "error": "expected a number, got null",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_arith_error_left_operand_first",
+   "spec": [
+    "pol.arith"
+   ],
+   "profile": "policy",
+   "source": "print(null - \"a\")",
+   "output": [],
+   "error": "expected a number, got null",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_arith_error_has_no_line",
+   "spec": [
+    "pol.arith"
+   ],
+   "profile": "policy",
+   "source": "print(1)\nprint(2)\nprint(null + 1)",
+   "output": [
+    "1",
+    "2"
+   ],
+   "error": "expected a number, got null",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_arith_error_operand_error_first",
+   "spec": [
+    "pol.arith"
+   ],
+   "profile": "policy",
+   "source": "print(nope + null)",
+   "output": [],
+   "error": "line 1: unknown identifier 'nope'",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_concat_strings",
+   "spec": [
+    "pol.concat"
+   ],
+   "profile": "policy",
+   "source": "print(\"a\" + \"b\", \"\" + \"\", \"ab\" + \"\")",
+   "output": [
+    "ab  ab"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_concat_string_and_values",
+   "spec": [
+    "pol.concat"
+   ],
+   "profile": "policy",
+   "source": "print(\"n=\" + 42, \"f=\" + 1.5, \"b=\" + true, \"x\" + null)",
+   "output": [
+    "n=42 f=1.5 b=true xnull"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "oracle": "string_concat"
+  },
+  {
+   "name": "policy_concat_either_side",
+   "spec": [
+    "pol.concat"
+   ],
+   "profile": "policy",
+   "source": "print(1 + \"a\", true + \"a\", null + \"a\", 2.5 + \"x\")",
+   "output": [
+    "1a truea nulla 2.5x"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_concat_collections",
+   "spec": [
+    "pol.concat"
+   ],
+   "profile": "policy",
+   "source": "print(\"a\" + [1, \"x\"], [1] + \"a\", \"a\" + {k: \"v\"}, \"a\" + [])",
+   "output": [
+    "a[1, \"x\"] [1]a a{k: \"v\"} a[]"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_concat_nested_text",
+   "spec": [
+    "pol.concat"
+   ],
+   "profile": "policy",
+   "source": "print(\"v=\" + [1, [2, \"z\"]], \"f=\" + func() { })",
+   "output": [
+    "v=[1, [2, \"z\"]] f=<func anonymous>"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_concat_numbers_use_display_text",
+   "spec": [
+    "pol.concat"
+   ],
+   "profile": "policy",
+   "source": "print(\"a\" + 1/3, \"a\" + 1e15, \"a\" + -0.0000004)",
+   "output": [
+    "a0.333333 a1000000000000000 a-0"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_concat_chain",
+   "spec": [
+    "pol.concat"
+   ],
+   "profile": "policy",
+   "source": "print(\"a\" + 1 + 2, 1 + 2 + \"a\", \"a\" + (1 + 2))",
+   "output": [
+    "a12 3a a3"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_concat_lists",
+   "spec": [
+    "pol.concat"
+   ],
+   "profile": "policy",
+   "source": "print([1] + [2], [] + [], [1] + [[2]], [[1]] + [[2]])",
+   "output": [
+    "[1, 2] [] [1, [2]] [[1], [2]]"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_concat_lists_oracle",
+   "spec": [
+    "pol.concat"
+   ],
+   "profile": "policy",
+   "source": "print([1,2] + [3], [] + [])",
+   "output": [
+    "[1, 2, 3] []"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "oracle": "list_concat"
+  },
+  {
+   "name": "policy_concat_list_makes_new_list",
+   "spec": [
+    "pol.concat"
+   ],
+   "profile": "policy",
+   "source": "let a = [1] let b = a + [2] append(a, 9) print(a, b)",
+   "output": [
+    "[1, 9] [1, 2]"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_concat_list_and_number",
+   "spec": [
+    "pol.concat"
+   ],
+   "profile": "policy",
+   "source": "print([1] + 2)",
+   "output": [],
+   "error": "expected a number, got list",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_concat_two_dicts",
+   "spec": [
+    "pol.concat"
+   ],
+   "profile": "policy",
+   "source": "print({} + {})",
+   "output": [],
+   "error": "expected a number, got dict",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_concat_null_and_list",
+   "spec": [
+    "pol.concat"
+   ],
+   "profile": "policy",
+   "source": "print(null + [1])",
+   "output": [],
+   "error": "expected a number, got null",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_concat_string_minus",
+   "spec": [
+    "pol.concat"
+   ],
+   "profile": "policy",
+   "source": "print(\"a\" * 2)",
+   "output": [],
+   "error": "expected a number, got string",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_compare_numbers",
+   "spec": [
+    "pol.compare"
+   ],
+   "profile": "policy",
+   "source": "print(1 < 2, 2 <= 2, 3 > 4, 3 >= 3, 1 == 1, 1 != 2)",
+   "output": [
+    "true true false true true true"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "oracle": "comparisons"
+  },
+  {
+   "name": "policy_compare_floats",
+   "spec": [
+    "pol.compare"
+   ],
+   "profile": "policy",
+   "source": "print(0.1 + 0.2 > 0.3, 0.5 < 0.75, -1 < -0.5, 1e400 > 1e300, -1e400 < -1e300)",
+   "output": [
+    "true true true true true"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_compare_booleans_are_numbers",
+   "spec": [
+    "pol.compare"
+   ],
+   "profile": "policy",
+   "source": "print(true < 2, false < true, true >= 1, false > -1, true <= true)",
+   "output": [
+    "true true true true true"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_compare_nan",
+   "spec": [
+    "pol.compare"
+   ],
+   "profile": "policy",
+   "source": "let n = 1e400 - 1e400 print(n < 1, n > 1, n <= n, n >= n)",
+   "output": [
+    "false false false false"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_compare_strings_refused",
+   "spec": [
+    "pol.compare"
+   ],
+   "profile": "policy",
+   "source": "print(\"a\" < \"b\")",
+   "output": [],
+   "error": "expected a number, got string",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_compare_string_and_number",
+   "spec": [
+    "pol.compare"
+   ],
+   "profile": "policy",
+   "source": "print(1 < \"a\")",
+   "output": [],
+   "error": "expected a number, got string",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_compare_string_right",
+   "spec": [
+    "pol.compare"
+   ],
+   "profile": "policy",
+   "source": "print(\"a\" > 1)",
+   "output": [],
+   "error": "expected a number, got string",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_compare_lists_refused",
+   "spec": [
+    "pol.compare"
+   ],
+   "profile": "policy",
+   "source": "print([1] < [2])",
+   "output": [],
+   "error": "expected a number, got list",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_compare_null_refused",
+   "spec": [
+    "pol.compare"
+   ],
+   "profile": "policy",
+   "source": "print(null < 1)",
+   "output": [],
+   "error": "expected a number, got null",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_compare_null_right",
+   "spec": [
+    "pol.compare"
+   ],
+   "profile": "policy",
+   "source": "print(1 >= null)",
+   "output": [],
+   "error": "expected a number, got null",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_compare_dict_refused",
+   "spec": [
+    "pol.compare"
+   ],
+   "profile": "policy",
+   "source": "print({} <= {})",
+   "output": [],
+   "error": "expected a number, got dict",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_compare_chain_coerces_bool",
+   "spec": [
+    "pol.compare"
+   ],
+   "profile": "policy",
+   "source": "print(1 < 2 < 3, 3 > 2 > 1, 2 < 1 < 3)",
+   "output": [
+    "true false true"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_logic_results_are_booleans",
+   "spec": [
+    "pol.logic"
+   ],
+   "profile": "policy",
+   "source": "print(0 and 1, 1 and 2, 0 or 3, \"\" or \"x\", null or false, [] and 1, \"a\" and \"b\", \"a\" or \"b\")",
+   "output": [
+    "false true true true false false true true"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_logic_and_or_not",
+   "spec": [
+    "pol.logic"
+   ],
+   "profile": "policy",
+   "source": "print(true and false, true or false, not true, false or false, true and true)",
+   "output": [
+    "false true false false true"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_logic_short_circuit",
+   "spec": [
+    "pol.logic"
+   ],
+   "profile": "policy",
+   "source": "print(false and nope(), true or nope())",
+   "output": [
+    "false true"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "oracle": "short_circuit"
+  },
+  {
+   "name": "policy_logic_short_circuit_zero",
+   "spec": [
+    "pol.logic"
+   ],
+   "profile": "policy",
+   "source": "print(0 and nope(), 1 or nope(), null and nope(), 5 or nope())",
+   "output": [
+    "false true false true"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_logic_right_evaluated_when_needed",
+   "spec": [
+    "pol.logic"
+   ],
+   "profile": "policy",
+   "source": "print(1 and nope())",
+   "output": [],
+   "error": "line 1: unknown function 'nope'",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_logic_right_evaluated_for_or",
+   "spec": [
+    "pol.logic"
+   ],
+   "profile": "policy",
+   "source": "print(0 or nope())",
+   "output": [],
+   "error": "line 1: unknown function 'nope'",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_logic_side_effects_only_when_evaluated",
+   "spec": [
+    "pol.logic"
+   ],
+   "profile": "policy",
+   "source": "func t(x) { print(\"t\", x) return x }\nprint(t(0) and t(1), t(1) or t(2), t(1) and t(2))",
+   "output": [
+    "t 0",
+    "t 1",
+    "t 1",
+    "t 2",
+    "false true true"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_logic_left_to_right",
+   "spec": [
+    "pol.logic"
+   ],
+   "profile": "policy",
+   "source": "func t(x) { print(\"t\", x) return x }\nprint(t(1) or t(2) and t(3), (t(0) or t(0)) and t(9))",
+   "output": [
+    "t 1",
+    "t 0",
+    "t 0",
+    "true false"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_logic_and_binds_tighter",
+   "spec": [
+    "pol.logic"
+   ],
+   "profile": "policy",
+   "source": "print(1 or 0 and 0, (1 or 0) and 0, 0 and 0 or 1)",
+   "output": [
+    "true false true"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_logic_not_precedence",
+   "spec": [
+    "pol.logic"
+   ],
+   "profile": "policy",
+   "source": "print(not 1 and 0, not (1 and 0), not 0 == 0)",
+   "output": [
+    "false true false"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_logic_comparisons_as_conditions",
+   "spec": [
+    "pol.logic"
+   ],
+   "profile": "policy",
+   "source": "let x = 5 print(x > 1 and x < 10, x < 1 or x > 10)",
+   "output": [
+    "true false"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_index_list",
+   "spec": [
+    "pol.index"
+   ],
+   "profile": "policy",
+   "source": "let a = [10, 20, 30] print(a[0], a[2], a[-1], a[-3])",
+   "output": [
+    "10 30 30 10"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_index_list_whole_part",
+   "spec": [
+    "pol.index"
+   ],
+   "profile": "policy",
+   "source": "let a = [10, 20, 30] print(a[1.9], a[-0.5], a[-1.5], a[0.99])",
+   "output": [
+    "20 10 30 10"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_index_list_out_of_range",
+   "spec": [
+    "pol.index"
+   ],
+   "profile": "policy",
+   "source": "let a = [1] print(a[1])",
+   "output": [],
+   "error": "line 1: list index 1 out of range (size 1)",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_index_list_negative_out_of_range",
+   "spec": [
+    "pol.index"
+   ],
+   "profile": "policy",
+   "source": "let a = [1] print(a[-2])",
+   "output": [],
+   "error": "line 1: list index -2 out of range (size 1)",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_index_list_oracle_error",
+   "spec": [
+    "pol.index"
+   ],
+   "profile": "policy",
+   "source": "let l = [1]  print(l[5])",
+   "output": [],
+   "error": "line 1: list index 5 out of range (size 1)",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": [],
+   "oracle": "err_list_range"
+  },
+  {
+   "name": "policy_index_list_empty",
+   "spec": [
+    "pol.index"
+   ],
+   "profile": "policy",
+   "source": "print([][0])",
+   "output": [],
+   "error": "line 1: list index 0 out of range (size 0)",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_index_list_string_index",
+   "spec": [
+    "pol.index"
+   ],
+   "profile": "policy",
+   "source": "let a = [1] print(a[\"x\"])",
+   "output": [],
+   "error": "line 1: list index must be a number",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_index_list_bool_index",
+   "spec": [
+    "pol.index"
+   ],
+   "profile": "policy",
+   "source": "let a = [1] print(a[true])",
+   "output": [],
+   "error": "line 1: list index must be a number",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_index_list_null_index",
+   "spec": [
+    "pol.index"
+   ],
+   "profile": "policy",
+   "source": "let a = [1] print(a[null])",
+   "output": [],
+   "error": "line 1: list index must be a number",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_index_list_member",
+   "spec": [
+    "pol.index"
+   ],
+   "profile": "policy",
+   "source": "let a = [1] print(a.x)",
+   "output": [],
+   "error": "line 1: list index must be a number",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_index_list_infinity",
+   "spec": [
+    "pol.index"
+   ],
+   "profile": "policy",
+   "source": "print([1][1e400])",
+   "output": [],
+   "error": "line 1: expected a finite number, got inf",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_index_list_nan",
+   "spec": [
+    "pol.index"
+   ],
+   "profile": "policy",
+   "source": "print([1][1e400 - 1e400])",
+   "output": [],
+   "error": "line 1: expected a finite number, got nan",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_index_string",
+   "spec": [
+    "pol.index"
+   ],
+   "profile": "policy",
+   "source": "let s = \"héy\" print(s[0], s[1], s[-1], s[2], s[-3])",
+   "output": [
+    "h é y y h"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_index_string_out_of_range",
+   "spec": [
+    "pol.index"
+   ],
+   "profile": "policy",
+   "source": "let s = \"ab\" print(s[2])",
+   "output": [],
+   "error": "line 1: string index 2 out of range (length 2)",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_index_string_negative_out_of_range",
+   "spec": [
+    "pol.index"
+   ],
+   "profile": "policy",
+   "source": "let s = \"ab\" print(s[-3])",
+   "output": [],
+   "error": "line 1: string index -3 out of range (length 2)",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_index_string_index_type",
+   "spec": [
+    "pol.index"
+   ],
+   "profile": "policy",
+   "source": "let s = \"ab\" print(s[\"a\"])",
+   "output": [],
+   "error": "line 1: string index must be a number",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_index_string_member",
+   "spec": [
+    "pol.index"
+   ],
+   "profile": "policy",
+   "source": "let s = \"ab\" print(s.length)",
+   "output": [],
+   "error": "line 1: string index must be a number",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_index_dict",
+   "spec": [
+    "pol.index"
+   ],
+   "profile": "policy",
+   "source": "let d = {a: 1, \"b c\": 2} print(d.a, d[\"a\"], d[\"b c\"])",
+   "output": [
+    "1 1 2"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_index_dict_missing_member",
+   "spec": [
+    "pol.index"
+   ],
+   "profile": "policy",
+   "source": "let d = {a: 1} print(d.z)",
+   "output": [],
+   "error": "line 1: dict has no key 'z'",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_index_dict_missing_key",
+   "spec": [
+    "pol.index"
+   ],
+   "profile": "policy",
+   "source": "let d = {a: 1} print(d[\"z\"])",
+   "output": [],
+   "error": "line 1: dict has no key 'z'",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_index_dict_missing_oracle",
+   "spec": [
+    "pol.index"
+   ],
+   "profile": "policy",
+   "source": "let d = {}  print(d.missing)",
+   "output": [],
+   "error": "line 1: dict has no key 'missing'",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": [],
+   "oracle": "err_dict_key"
+  },
+  {
+   "name": "policy_index_dict_missing_key_with_quote",
+   "spec": [
+    "pol.index"
+   ],
+   "profile": "policy",
+   "source": "let d = {} print(d[\"it's\"])",
+   "output": [],
+   "error": "line 1: dict has no key 'it's'",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_index_dict_missing_key_with_backslash",
+   "spec": [
+    "pol.index"
+   ],
+   "profile": "policy",
+   "source": "let d = {} print(d[\"a\\\\b\"])",
+   "output": [],
+   "error": "line 1: dict has no key 'a\\b'",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_index_dict_missing_number_key",
+   "spec": [
+    "pol.index"
+   ],
+   "profile": "policy",
+   "source": "let d = {} print(d[1.5])",
+   "output": [],
+   "error": "line 1: dict has no key '1.5'",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_index_dict_missing_bool_key",
+   "spec": [
+    "pol.index"
+   ],
+   "profile": "policy",
+   "source": "let d = {} print(d[true])",
+   "output": [],
+   "error": "line 1: dict has no key 'true'",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_index_dict_missing_null_key",
+   "spec": [
+    "pol.index"
+   ],
+   "profile": "policy",
+   "source": "let d = {} print(d[null])",
+   "output": [],
+   "error": "line 1: dict has no key 'null'",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_index_chained",
+   "spec": [
+    "pol.index"
+   ],
+   "profile": "policy",
+   "source": "print([[1, 2], [3]][0][1], {a: {b: 2}}.a.b, [{k: [5, 6]}][0].k[1])",
+   "output": [
+    "2 2 6"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_index_number",
+   "spec": [
+    "pol.index"
+   ],
+   "profile": "policy",
+   "source": "let n = 5 print(n[0])",
+   "output": [],
+   "error": "line 1: cannot index a number",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_index_member_of_number",
+   "spec": [
+    "pol.index"
+   ],
+   "profile": "policy",
+   "source": "let n = 5 print(n.x)",
+   "output": [],
+   "error": "line 1: cannot index a number",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_index_null",
+   "spec": [
+    "pol.index"
+   ],
+   "profile": "policy",
+   "source": "print(null[0])",
+   "output": [],
+   "error": "line 1: cannot index a null",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_index_null_member",
+   "spec": [
+    "pol.index"
+   ],
+   "profile": "policy",
+   "source": "let n = null print(n.x)",
+   "output": [],
+   "error": "line 1: cannot index a null",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_index_bool",
+   "spec": [
+    "pol.index"
+   ],
+   "profile": "policy",
+   "source": "print(true.x)",
+   "output": [],
+   "error": "line 1: cannot index a bool",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_index_function",
+   "spec": [
+    "pol.index"
+   ],
+   "profile": "policy",
+   "source": "func f() { } print(f[0])",
+   "output": [],
+   "error": "line 1: cannot index a func",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_index_string_result_is_string",
+   "spec": [
+    "pol.index"
+   ],
+   "profile": "policy",
+   "source": "print(\"abc\"[1] + \"d\", type(\"abc\"[0]))",
+   "output": [
+    "bd string"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_index_set_rebinding_visible",
+   "spec": [
+    "pol.index"
+   ],
+   "profile": "policy",
+   "source": "let a = [1, 2] let b = a b[0] = 9 print(a[0])",
+   "output": [
+    "9"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_index_set_infinity",
+   "spec": [
+    "pol.index"
+   ],
+   "profile": "policy",
+   "source": "let l = [1] l[1e400] = 1",
+   "output": [],
+   "error": "line 1: expected a finite number, got inf",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_keys_from_numbers",
+   "spec": [
+    "pol.dict-keys"
+   ],
+   "profile": "policy",
+   "source": "let k = 1 let d = {[k]: \"one\", [k + 0.5]: \"x\"} print(d, d[1], d[\"1\"], d[1.0], d[1.5], keys(d))",
+   "output": [
+    "{1: \"one\", 1.5: \"x\"} one one one x [\"1\", \"1.5\"]"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_keys_from_other_values",
+   "spec": [
+    "pol.dict-keys"
+   ],
+   "profile": "policy",
+   "source": "let d = {} d[true] = \"t\" d[null] = \"n\" d[[1, \"a\"]] = \"l\" print(d, keys(d))",
+   "output": [
+    "{true: \"t\", null: \"n\", [1, \"a\"]: \"l\"} [\"true\", \"null\", \"[1, \"a\"]\"]"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_keys_assignment_converts",
+   "spec": [
+    "pol.dict-keys"
+   ],
+   "profile": "policy",
+   "source": "let d = {} d[1] = \"a\" d[\"1\"] = \"b\" d[1.0] = \"c\" print(d, len(d))",
+   "output": [
+    "{1: \"c\"} 1"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_keys_read_converts",
+   "spec": [
+    "pol.dict-keys"
+   ],
+   "profile": "policy",
+   "source": "let d = {} d[\"2\"] = \"two\" print(d[2], d[2.0], has(d, 2), get(d, 2, \"none\"))",
+   "output": [
+    "two two true two"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_keys_always_strings",
+   "spec": [
+    "pol.dict-keys"
+   ],
+   "profile": "policy",
+   "source": "let d = {} d[3] = 1 print(type(keys(d)[0]))",
+   "output": [
+    "string"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_keys_member_is_a_string_key",
+   "spec": [
+    "pol.dict-keys"
+   ],
+   "profile": "policy",
+   "source": "let d = {} d.x = 1 d[\"x\"] = 2 print(d, len(d))",
+   "output": [
+    "{x: 2} 1"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_keys_order_of_first_insertion",
+   "spec": [
+    "pol.dict-keys"
+   ],
+   "profile": "policy",
+   "source": "let d = {b: 1, a: 2} d.c = 3 d.b = 9 print(d, keys(d))",
+   "output": [
+    "{b: 9, a: 2, c: 3} [\"b\", \"a\", \"c\"]"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_keys_dict_as_key",
+   "spec": [
+    "pol.dict-keys"
+   ],
+   "profile": "policy",
+   "source": "let d = {} d[{a: 1}] = 1 print(d)",
+   "output": [
+    "{{a: 1}: 1}"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_lib_extra_arguments_ignored",
+   "spec": [
+    "pol.lib"
+   ],
+   "profile": "policy",
+   "source": "print(abs(-1, 2), len([1], 5), type(1, 2), str(1, 2), bool(0, 1))",
+   "output": [
+    "1 1 number 1 false"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_lib_too_few_arguments",
+   "spec": [
+    "pol.lib"
+   ],
+   "profile": "policy",
+   "source": "print(abs())",
+   "output": [],
+   "error": "line 1: abs() needs 1 argument(s), got 0",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_lib_too_few_arguments_two",
+   "spec": [
+    "pol.lib"
+   ],
+   "profile": "policy",
+   "source": "print(has([1]))",
+   "output": [],
+   "error": "line 1: has() needs 2 argument(s), got 1",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_lib_too_few_arguments_three",
+   "spec": [
+    "pol.lib"
+   ],
+   "profile": "policy",
+   "source": "print(slice([1], 0))",
+   "output": [],
+   "error": "line 1: slice() needs 3 argument(s), got 2",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_lib_too_few_message_names_function",
+   "spec": [
+    "pol.lib"
+   ],
+   "profile": "policy",
+   "source": "print(type())",
+   "output": [],
+   "error": "line 1: type() needs 1 argument(s), got 0",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_lib_arguments_evaluated_first",
+   "spec": [
+    "pol.lib"
+   ],
+   "profile": "policy",
+   "source": "print(abs(nope))",
+   "output": [],
+   "error": "line 1: unknown identifier 'nope'",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_lib_vocabulary",
+   "spec": [
+    "pol.lib"
+   ],
+   "profile": "policy",
+   "source": "print(len(\"x\"), abs(1), min(1), max(1), clamp(1, 0, 2), floor(1), round(1), pow(1, 1), ramp(1), lerp(1, 1, 1), int(1), str(1), num(1), bool(1), type(1), keys({}), has([], 1), get({}, \"a\", 1), append([], 1), remove_at([1], 0), slice([], 0, 0), range(0), join([], \"\"), split(\"\", \"\"), contains(\"\", \"\"), upper(\"\"), lower(\"\"))",
+   "output": [
+    "1 1 1 1 1 1 1 1 1 1 1 1 1 true number [] false 1 [1] 1 [] []  [] true  "
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_lib_error_carries_call_line",
+   "spec": [
+    "pol.lib"
+   ],
+   "profile": "policy",
+   "source": "print(1)\n\nprint(len(5))",
+   "output": [
+    "1"
+   ],
+   "error": "line 3: len() needs a list, dict or string",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_lib_shadowed_by_local",
+   "spec": [
+    "pol.lib"
+   ],
+   "profile": "policy",
+   "source": "func f() { let abs = func(x) { return 0 } return abs(-5) } print(f(), abs(-5))",
+   "output": [
+    "0 5"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_math_abs",
+   "spec": [
+    "pol.lib-math"
+   ],
+   "profile": "policy",
+   "source": "print(abs(-2.5), abs(3), abs(0), abs(-0), abs(true), abs(-true))",
+   "output": [
+    "2.5 3 0 0 1 1"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_math_abs_infinity",
+   "spec": [
+    "pol.lib-math"
+   ],
+   "profile": "policy",
+   "source": "print(abs(1e400), abs(-1e400))",
+   "output": [
+    "inf inf"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_math_abs_string",
+   "spec": [
+    "pol.lib-math"
+   ],
+   "profile": "policy",
+   "source": "print(abs(\"a\"))",
+   "output": [],
+   "error": "line 1: expected a number, got string",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_math_abs_null",
+   "spec": [
+    "pol.lib-math"
+   ],
+   "profile": "policy",
+   "source": "print(abs(null))",
+   "output": [],
+   "error": "line 1: expected a number, got null",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_math_min_max",
+   "spec": [
+    "pol.lib-math"
+   ],
+   "profile": "policy",
+   "source": "print(min(3, 1, 2), min(5), min(1.5, -2), max(3, 1, 2), max(5), max(-1, -2))",
+   "output": [
+    "1 5 -2 3 5 -1"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_math_min_max_many",
+   "spec": [
+    "pol.lib-math"
+   ],
+   "profile": "policy",
+   "source": "print(min(5, 4, 3, 2, 1, 6), max(1, 2, 3, 4, 5, 0))",
+   "output": [
+    "1 5"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_math_min_max_booleans",
+   "spec": [
+    "pol.lib-math"
+   ],
+   "profile": "policy",
+   "source": "print(min(true, 2), max(false, -1), type(min(true, 2)))",
+   "output": [
+    "1 0 number"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_math_min_max_infinity",
+   "spec": [
+    "pol.lib-math"
+   ],
+   "profile": "policy",
+   "source": "print(min(1e400, 1), max(-1e400, 1), max(1e400, 1), min(-1e400, 1))",
+   "output": [
+    "1 1 inf -inf"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_math_min_of_list_refused",
+   "spec": [
+    "pol.lib-math"
+   ],
+   "profile": "policy",
+   "source": "print(min([1, 2]))",
+   "output": [],
+   "error": "line 1: expected a number, got list",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_math_min_mixed_refused",
+   "spec": [
+    "pol.lib-math"
+   ],
+   "profile": "policy",
+   "source": "print(min(1, \"a\"))",
+   "output": [],
+   "error": "line 1: expected a number, got string",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_math_min_no_arguments",
+   "spec": [
+    "pol.lib-math"
+   ],
+   "profile": "policy",
+   "source": "print(min())",
+   "output": [],
+   "error": "line 1: min() needs 1 argument(s), got 0",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_math_max_no_arguments",
+   "spec": [
+    "pol.lib-math"
+   ],
+   "profile": "policy",
+   "source": "print(max())",
+   "output": [],
+   "error": "line 1: max() needs 1 argument(s), got 0",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_math_clamp",
+   "spec": [
+    "pol.lib-math"
+   ],
+   "profile": "policy",
+   "source": "print(clamp(5, 0, 1), clamp(-5, 0, 1), clamp(0.5, 0, 1), clamp(1, 0, 1), clamp(0, 0, 1))",
+   "output": [
+    "1 0 0.5 1 0"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_math_clamp_reversed_bounds",
+   "spec": [
+    "pol.lib-math"
+   ],
+   "profile": "policy",
+   "source": "print(clamp(5, 1, 0), clamp(-5, 1, 0), clamp(0.5, 1, 0))",
+   "output": [
+    "0 1 1"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_math_clamp_infinity",
+   "spec": [
+    "pol.lib-math"
+   ],
+   "profile": "policy",
+   "source": "print(clamp(1e400, 0, 10), clamp(-1e400, 0, 10))",
+   "output": [
+    "10 0"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_math_clamp_arity",
+   "spec": [
+    "pol.lib-math"
+   ],
+   "profile": "policy",
+   "source": "print(clamp(1))",
+   "output": [],
+   "error": "line 1: clamp() needs 3 argument(s), got 1",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": [],
+   "oracle": "err_builtin_arity"
+  },
+  {
+   "name": "policy_math_exp",
+   "spec": [
+    "pol.lib-math"
+   ],
+   "profile": "policy",
+   "source": "print(exp(0), exp(1), exp(-1), exp(2), exp(-2))",
+   "output": [
+    "1 2.718282 0.367879 7.389056 0.135335"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_math_exp_clamped",
+   "spec": [
+    "pol.lib-math"
+   ],
+   "profile": "policy",
+   "source": "print(exp(1000) == exp(700), exp(-1000) == exp(-700), exp(700) > 1e300, exp(-700) < 1e-300, exp(701) == exp(700))",
+   "output": [
+    "true true true true true"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_math_sqrt",
+   "spec": [
+    "pol.lib-math"
+   ],
+   "profile": "policy",
+   "source": "print(sqrt(9), sqrt(2), sqrt(0), sqrt(0.25), sqrt(1e400))",
+   "output": [
+    "3 1.414214 0 0.5 inf"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_math_sqrt_negative_is_zero",
+   "spec": [
+    "pol.lib-math"
+   ],
+   "profile": "policy",
+   "source": "print(sqrt(-4), sqrt(-0.0), sqrt(-1e400))",
+   "output": [
+    "0 0 0"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_math_floor",
+   "spec": [
+    "pol.lib-math"
+   ],
+   "profile": "policy",
+   "source": "print(floor(1.7), floor(-1.2), floor(2), floor(-0.5), floor(0), floor(-2))",
+   "output": [
+    "1 -2 2 -1 0 -2"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_math_floor_non_finite",
+   "spec": [
+    "pol.lib-math"
+   ],
+   "profile": "policy",
+   "source": "print(floor(1e400), floor(-1e400))",
+   "output": [
+    "inf -inf"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_math_round_half_away_from_zero",
+   "spec": [
+    "pol.lib-math"
+   ],
+   "profile": "policy",
+   "source": "print(round(1.5), round(-1.5), round(2.5), round(-2.5), round(0.5), round(-0.5), round(0.4), round(-0.4))",
+   "output": [
+    "2 -2 3 -3 1 -1 0 0"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_math_round_formula",
+   "spec": [
+    "pol.lib-math"
+   ],
+   "profile": "policy",
+   "source": "print(round(0.49999999999999994), round(-0.49999999999999994), round(1e15 + 0.5), round(2.5000000001))",
+   "output": [
+    "1 -1 1000000000000001 3"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_math_round_non_finite",
+   "spec": [
+    "pol.lib-math"
+   ],
+   "profile": "policy",
+   "source": "print(round(1e400), round(-1e400))",
+   "output": [
+    "inf -inf"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_math_pow",
+   "spec": [
+    "pol.lib-math"
+   ],
+   "profile": "policy",
+   "source": "print(pow(2, 10), pow(2, 0.5), pow(2, -1), pow(0, 0), pow(9, 0.5), pow(-2, 3), pow(-2, 2), pow(2, 0))",
+   "output": [
+    "1024 1.414214 0.5 1 3 -8 4 1"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_math_pow_overflow_saturates",
+   "spec": [
+    "pol.lib-math"
+   ],
+   "profile": "policy",
+   "source": "print(pow(10, 400), pow(-10, 401), pow(-10, 400), pow(1e200, 2), pow(-1e200, 3), pow(-1e200, 2))",
+   "output": [
+    "inf -inf inf inf -inf inf"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_math_pow_zero_base",
+   "spec": [
+    "pol.lib-math"
+   ],
+   "profile": "policy",
+   "source": "print(pow(0, -1), pow(0, 1), pow(0, 0.5))",
+   "output": [
+    "inf 0 0"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_math_pow_negative_base_fractional",
+   "spec": [
+    "pol.lib-math"
+   ],
+   "profile": "policy",
+   "source": "print(pow(-8, 1/3), pow(-2, 0.5))",
+   "output": [
+    "nan nan"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_math_pow_infinite",
+   "spec": [
+    "pol.lib-math"
+   ],
+   "profile": "policy",
+   "source": "print(pow(2, 1e400), pow(2, -1e400), pow(0.5, 1e400), pow(1e400, 0), pow(1e400, 2))",
+   "output": [
+    "inf 0 0 1 inf"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_math_ramp",
+   "spec": [
+    "pol.lib-math"
+   ],
+   "profile": "policy",
+   "source": "print(ramp(0.5), ramp(-1), ramp(2), ramp(0), ramp(1), ramp(1e400), ramp(-1e400))",
+   "output": [
+    "0.5 0 1 0 1 1 0"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_math_lerp",
+   "spec": [
+    "pol.lib-math"
+   ],
+   "profile": "policy",
+   "source": "print(lerp(0, 10, 0.25), lerp(0, 10, 2), lerp(0, 10, -1), lerp(5, 5, 0.5), lerp(10, 0, 0.3), lerp(2, 4, 0.5))",
+   "output": [
+    "2.5 10 0 5 7 3"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_math_oracle_math",
+   "spec": [
+    "pol.lib-math"
+   ],
+   "profile": "policy",
+   "source": "print(abs(-2), min(3,1,2), max(3,1,2), clamp(5,0,1), floor(1.7), round(1.5), round(-1.5), pow(2,10))",
+   "output": [
+    "2 1 3 1 1 2 -2 1024"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "oracle": "builtins_math"
+  },
+  {
+   "name": "policy_math_oracle_more",
+   "spec": [
+    "pol.lib-math"
+   ],
+   "profile": "policy",
+   "source": "print(exp(0), sqrt(9), ramp(1.5), ramp(-1), lerp(0, 10, 0.25), lerp(0, 10, 2))",
+   "output": [
+    "1 3 1 0 2.5 10"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "oracle": "builtins_more"
+  },
+  {
+   "name": "policy_math_argument_must_be_number",
+   "spec": [
+    "pol.lib-math"
+   ],
+   "profile": "policy",
+   "source": "print(sqrt(\"4\"))",
+   "output": [],
+   "error": "line 1: expected a number, got string",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_math_argument_list",
+   "spec": [
+    "pol.lib-math"
+   ],
+   "profile": "policy",
+   "source": "print(floor([1]))",
+   "output": [],
+   "error": "line 1: expected a number, got list",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_math_booleans_count_as_numbers",
+   "spec": [
+    "pol.lib-math"
+   ],
+   "profile": "policy",
+   "source": "print(sqrt(true), floor(true), round(false), ramp(true), clamp(true, 0, 5))",
+   "output": [
+    "1 1 0 1 1"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_conv_int",
+   "spec": [
+    "pol.lib-convert"
+   ],
+   "profile": "policy",
+   "source": "print(int(2.9), int(-2.9), int(0.5), int(-0.5), int(7), int(true), int(0))",
+   "output": [
+    "2 -2 0 0 7 1 0"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_conv_int_large",
+   "spec": [
+    "pol.lib-convert"
+   ],
+   "profile": "policy",
+   "source": "print(int(1e15 + 0.5), int(-1e15 - 0.5), int(123456789.99))",
+   "output": [
+    "1000000000000000 -1000000000000000 123456789"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_conv_int_non_finite",
+   "spec": [
+    "pol.lib-convert"
+   ],
+   "profile": "policy",
+   "source": "print(int(1e400), int(-1e400))",
+   "output": [
+    "inf -inf"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_conv_int_of_string_refused",
+   "spec": [
+    "pol.lib-convert"
+   ],
+   "profile": "policy",
+   "source": "print(int(\"7\"))",
+   "output": [],
+   "error": "line 1: expected a number, got string",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_conv_num_text",
+   "spec": [
+    "pol.lib-convert"
+   ],
+   "profile": "policy",
+   "source": "print(num(\"2.5\"), num(\"-4\"), num(\"+5\"), num(\"5.\"), num(\".5\"), num(\"1e3\"), num(\"2E-2\"), num(\"007\"), num(\"1.5e+2\"))",
+   "output": [
+    "2.5 -4 5 5 0.5 1000 0.02 7 150"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_conv_num_whitespace",
+   "spec": [
+    "pol.lib-convert"
+   ],
+   "profile": "policy",
+   "source": "print(num(\" 3 \"), num(\"\\t4\\n\"), num(\"  -2.5  \"), num(\"\\r1\\r\"))",
+   "output": [
+    "3 4 -2.5 1"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_conv_num_unreadable_is_zero",
+   "spec": [
+    "pol.lib-convert"
+   ],
+   "profile": "policy",
+   "source": "print(num(\"bad\"), num(\"\"), num(\" \"), num(\"0x10\"), num(\"1_0\"), num(\"12abc\"), num(\"abc12\"), num(\"1e\"), num(\"--1\"), num(\"1 2\"), num(\".\"), num(\"+\"), num(\"1,5\"))",
+   "output": [
+    "0 0 0 0 0 0 0 0 0 0 0 0 0"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_conv_num_not_words",
+   "spec": [
+    "pol.lib-convert"
+   ],
+   "profile": "policy",
+   "source": "print(num(\"inf\"), num(\"nan\"), num(\"infinity\"), num(\"true\"), num(\"null\"))",
+   "output": [
+    "0 0 0 0 0"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_conv_num_overflow",
+   "spec": [
+    "pol.lib-convert"
+   ],
+   "profile": "policy",
+   "source": "print(num(\"1e999\"), num(\"-1e999\"))",
+   "output": [
+    "inf -inf"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_conv_num_other_types",
+   "spec": [
+    "pol.lib-convert"
+   ],
+   "profile": "policy",
+   "source": "print(num(true), num(false), num(7), num(2.5))",
+   "output": [
+    "1 0 7 2.5"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_conv_num_null_refused",
+   "spec": [
+    "pol.lib-convert"
+   ],
+   "profile": "policy",
+   "source": "print(num(null))",
+   "output": [],
+   "error": "line 1: expected a number, got null",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_conv_num_list_refused",
+   "spec": [
+    "pol.lib-convert"
+   ],
+   "profile": "policy",
+   "source": "print(num([1]))",
+   "output": [],
+   "error": "line 1: expected a number, got list",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_conv_num_dict_refused",
+   "spec": [
+    "pol.lib-convert"
+   ],
+   "profile": "policy",
+   "source": "print(num({}))",
+   "output": [],
+   "error": "line 1: expected a number, got dict",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_conv_num_unicode_digits",
+   "spec": [
+    "pol.lib-convert"
+   ],
+   "profile": "policy",
+   "source": "print(num(\"١٢٣\"), num(\"１２\"))",
+   "output": [
+    "0 0"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_conv_str",
+   "spec": [
+    "pol.lib-convert"
+   ],
+   "profile": "policy",
+   "source": "print(str(3), str(1.5), str(\"s\"), str(true), str(null), str([1, \"a\"]), str({a: 1}), str(1/3), str(1e400))",
+   "output": [
+    "3 1.5 s true null [1, \"a\"] {a: 1} 0.333333 inf"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_conv_str_function",
+   "spec": [
+    "pol.lib-convert"
+   ],
+   "profile": "policy",
+   "source": "func f() { } print(str(f), str(func() { }))",
+   "output": [
+    "<func f> <func anonymous>"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_conv_str_of_string_is_unchanged",
+   "spec": [
+    "pol.lib-convert"
+   ],
+   "profile": "policy",
+   "source": "print(str(\"a\\\"b\") == \"a\\\"b\", len(str(\"\")))",
+   "output": [
+    "true 0"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_conv_bool",
+   "spec": [
+    "pol.lib-convert"
+   ],
+   "profile": "policy",
+   "source": "print(bool(0), bool(1), bool(\"\"), bool(\"0\"), bool([]), bool([0]), bool({}), bool(null), bool(0.0), bool(-1))",
+   "output": [
+    "false true false true false true false false false true"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_conv_bool_is_boolean",
+   "spec": [
+    "pol.lib-convert"
+   ],
+   "profile": "policy",
+   "source": "print(type(bool(5)), bool(5) == true, bool(\"\") == false)",
+   "output": [
+    "bool true true"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_conv_type",
+   "spec": [
+    "pol.lib-convert"
+   ],
+   "profile": "policy",
+   "source": "print(type(1), type(\"s\"), type([]), type({}), type(null), type(true), type(type(1)))",
+   "output": [
+    "number string list dict null bool string"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_conv_oracle",
+   "spec": [
+    "pol.lib-convert"
+   ],
+   "profile": "policy",
+   "source": "print(num(\"2.5\"), num(\"bad\"), int(2.9), int(-2.9), str(3), str([1]), bool(\"\"), bool(0), bool([1]))",
+   "output": [
+    "2.5 0 2 -2 3 [1] false false true"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "oracle": "builtins_convert"
+  },
+  {
+   "name": "policy_coll_len",
+   "spec": [
+    "pol.lib-collections"
+   ],
+   "profile": "policy",
+   "source": "print(len(\"abc\"), len(\"\"), len([1, 2]), len([]), len({a: 1, b: 2}), len({}))",
+   "output": [
+    "3 0 2 0 2 0"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_coll_len_number",
+   "spec": [
+    "pol.lib-collections"
+   ],
+   "profile": "policy",
+   "source": "print(len(5))",
+   "output": [],
+   "error": "line 1: len() needs a list, dict or string",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_coll_len_null",
+   "spec": [
+    "pol.lib-collections"
+   ],
+   "profile": "policy",
+   "source": "print(len(null))",
+   "output": [],
+   "error": "line 1: len() needs a list, dict or string",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_coll_len_bool",
+   "spec": [
+    "pol.lib-collections"
+   ],
+   "profile": "policy",
+   "source": "print(len(true))",
+   "output": [],
+   "error": "line 1: len() needs a list, dict or string",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_coll_keys",
+   "spec": [
+    "pol.lib-collections"
+   ],
+   "profile": "policy",
+   "source": "print(keys({b: 1, a: 2}), keys({}), len(keys({x: 1, y: 2})))",
+   "output": [
+    "[\"b\", \"a\"] [] 2"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_coll_keys_list_refused",
+   "spec": [
+    "pol.lib-collections"
+   ],
+   "profile": "policy",
+   "source": "print(keys([1]))",
+   "output": [],
+   "error": "line 1: keys() needs a dict",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_coll_keys_number_refused",
+   "spec": [
+    "pol.lib-collections"
+   ],
+   "profile": "policy",
+   "source": "print(keys(1))",
+   "output": [],
+   "error": "line 1: keys() needs a dict",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_coll_has_dict",
+   "spec": [
+    "pol.lib-collections"
+   ],
+   "profile": "policy",
+   "source": "print(has({a: 1}, \"a\"), has({a: 1}, \"b\"), has({}, \"a\"), has({a: null}, \"a\"))",
+   "output": [
+    "true false false true"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_coll_has_dict_key_text",
+   "spec": [
+    "pol.lib-collections"
+   ],
+   "profile": "policy",
+   "source": "let k = 1 print(has({[k]: 1}, 1), has({[k]: 1}, \"1\"), has({a: 1}, null), has({[null]: 1}, null))",
+   "output": [
+    "true true false true"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_coll_has_list",
+   "spec": [
+    "pol.lib-collections"
+   ],
+   "profile": "policy",
+   "source": "print(has([1, 2], 2), has([1, 2], 3), has([1, [2]], [2]), has([], 1), has([{a: 1}], {a: 1}), has([1], \"1\"))",
+   "output": [
+    "true false true false true false"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_coll_has_string_refused",
+   "spec": [
+    "pol.lib-collections"
+   ],
+   "profile": "policy",
+   "source": "print(has(\"abc\", \"a\"))",
+   "output": [],
+   "error": "line 1: has() needs a dict or list",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_coll_has_number_refused",
+   "spec": [
+    "pol.lib-collections"
+   ],
+   "profile": "policy",
+   "source": "print(has(5, 1))",
+   "output": [],
+   "error": "line 1: has() needs a dict or list",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_coll_get",
+   "spec": [
+    "pol.lib-collections"
+   ],
+   "profile": "policy",
+   "source": "print(get({a: 1}, \"a\", 9), get({a: 1}, \"z\", 9), get({}, 1, \"d\"), get({a: null}, \"a\", 9))",
+   "output": [
+    "1 9 d null"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_coll_get_list_refused",
+   "spec": [
+    "pol.lib-collections"
+   ],
+   "profile": "policy",
+   "source": "print(get([1], 0, 9))",
+   "output": [],
+   "error": "line 1: get() needs a dict",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_coll_get_two_arguments",
+   "spec": [
+    "pol.lib-collections"
+   ],
+   "profile": "policy",
+   "source": "print(get({a: 1}, \"a\"))",
+   "output": [],
+   "error": "line 1: get() needs 3 argument(s), got 2",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_coll_append",
+   "spec": [
+    "pol.lib-collections"
+   ],
+   "profile": "policy",
+   "source": "let l = [1] print(append(l, 2), l, len(l))",
+   "output": [
+    "[1, 2] [1, 2] 2"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_coll_append_returns_same_list",
+   "spec": [
+    "pol.lib-collections"
+   ],
+   "profile": "policy",
+   "source": "let l = [] let m = append(l, 1) append(m, 2) print(l, l == m)",
+   "output": [
+    "[1, 2] true"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_coll_append_nested",
+   "spec": [
+    "pol.lib-collections"
+   ],
+   "profile": "policy",
+   "source": "let l = [1] append(l, [3]) append(l, {a: 1}) print(l)",
+   "output": [
+    "[1, [3], {a: 1}]"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_coll_append_string_refused",
+   "spec": [
+    "pol.lib-collections"
+   ],
+   "profile": "policy",
+   "source": "print(append(\"a\", \"b\"))",
+   "output": [],
+   "error": "line 1: append() needs a list",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_coll_append_number_refused",
+   "spec": [
+    "pol.lib-collections"
+   ],
+   "profile": "policy",
+   "source": "print(append(5, 1))",
+   "output": [],
+   "error": "line 1: append() needs a list",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_coll_remove_at",
+   "spec": [
+    "pol.lib-collections"
+   ],
+   "profile": "policy",
+   "source": "let l = [1, 2, 3] print(remove_at(l, 1)) print(l) print(remove_at(l, 0)) print(l)",
+   "output": [
+    "2",
+    "[1, 3]",
+    "1",
+    "[3]"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_coll_remove_at_whole_part",
+   "spec": [
+    "pol.lib-collections"
+   ],
+   "profile": "policy",
+   "source": "let l = [1, 2] print(remove_at(l, 0.9), l)",
+   "output": [
+    "1 [2]"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_coll_remove_at_out_of_range",
+   "spec": [
+    "pol.lib-collections"
+   ],
+   "profile": "policy",
+   "source": "let l = [1] print(remove_at(l, 1))",
+   "output": [],
+   "error": "line 1: remove_at() index 1 out of range (size 1)",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_coll_remove_at_negative",
+   "spec": [
+    "pol.lib-collections"
+   ],
+   "profile": "policy",
+   "source": "let l = [1] print(remove_at(l, -1))",
+   "output": [],
+   "error": "line 1: remove_at() index -1 out of range (size 1)",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_coll_remove_at_empty",
+   "spec": [
+    "pol.lib-collections"
+   ],
+   "profile": "policy",
+   "source": "print(remove_at([], 0))",
+   "output": [],
+   "error": "line 1: remove_at() index 0 out of range (size 0)",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_coll_remove_at_infinity",
+   "spec": [
+    "pol.lib-collections"
+   ],
+   "profile": "policy",
+   "source": "print(remove_at([1], 1e400))",
+   "output": [],
+   "error": "line 1: expected a finite number, got inf",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_coll_remove_at_dict_refused",
+   "spec": [
+    "pol.lib-collections"
+   ],
+   "profile": "policy",
+   "source": "print(remove_at({a: 1}, \"a\"))",
+   "output": [],
+   "error": "line 1: remove_at() needs a list",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_coll_remove_at_string_index",
+   "spec": [
+    "pol.lib-collections"
+   ],
+   "profile": "policy",
+   "source": "print(remove_at([1], \"a\"))",
+   "output": [],
+   "error": "line 1: expected a number, got string",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_coll_slice",
+   "spec": [
+    "pol.lib-collections"
+   ],
+   "profile": "policy",
+   "source": "print(slice([1,2,3,4], 1, 3), slice([1,2,3], 0, 99), slice([1,2,3], 2, 1), slice(\"hello\", 1, 3), slice(\"hi\", 5, 9), slice([], 0, 1))",
+   "output": [
+    "[2, 3] [1, 2, 3] [] el  []"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_coll_slice_negative_clamps_to_zero",
+   "spec": [
+    "pol.lib-collections"
+   ],
+   "profile": "policy",
+   "source": "print(slice([1,2,3], -2, 3), slice([1,2,3], 0, -1), slice([1,2,3], -5, -1))",
+   "output": [
+    "[1, 2, 3] [] []"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_coll_slice_whole_part",
+   "spec": [
+    "pol.lib-collections"
+   ],
+   "profile": "policy",
+   "source": "print(slice([1,2,3], 1.9, 2.9), slice([1,2,3], 0.5, 1.5))",
+   "output": [
+    "[2] [1]"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_coll_slice_is_a_copy",
+   "spec": [
+    "pol.lib-collections"
+   ],
+   "profile": "policy",
+   "source": "let a = [1, 2, 3] let b = slice(a, 0, 3) append(b, 4) print(a, b)",
+   "output": [
+    "[1, 2, 3] [1, 2, 3, 4]"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_coll_slice_string_characters",
+   "spec": [
+    "pol.lib-collections"
+   ],
+   "profile": "policy",
+   "source": "print(slice(\"héllo\", 1, 3), slice(\"😀ab\", 0, 2))",
+   "output": [
+    "él 😀a"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_coll_slice_dict_refused",
+   "spec": [
+    "pol.lib-collections"
+   ],
+   "profile": "policy",
+   "source": "print(slice({a: 1}, 0, 1))",
+   "output": [],
+   "error": "line 1: slice() needs a list or string",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_coll_slice_number_refused",
+   "spec": [
+    "pol.lib-collections"
+   ],
+   "profile": "policy",
+   "source": "print(slice(5, 0, 1))",
+   "output": [],
+   "error": "line 1: slice() needs a list or string",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_coll_slice_infinity",
+   "spec": [
+    "pol.lib-collections"
+   ],
+   "profile": "policy",
+   "source": "print(slice([1], 0, 1e400))",
+   "output": [],
+   "error": "line 1: expected a finite number, got inf",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_coll_range",
+   "spec": [
+    "pol.lib-collections"
+   ],
+   "profile": "policy",
+   "source": "print(range(4), range(2, 5), range(5, 2), range(0), range(-3), range(3, 3))",
+   "output": [
+    "[0, 1, 2, 3] [2, 3, 4] [] [] [] []"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_coll_range_whole_part",
+   "spec": [
+    "pol.lib-collections"
+   ],
+   "profile": "policy",
+   "source": "print(range(2.7), range(1.5, 4.5), range(0.9))",
+   "output": [
+    "[0, 1] [1, 2, 3] []"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_coll_range_elements_are_numbers",
+   "spec": [
+    "pol.lib-collections"
+   ],
+   "profile": "policy",
+   "source": "let r = range(3) print(type(r[0]), r[2] + 0.5, len(range(1000)))",
+   "output": [
+    "number 2.5 1000"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_coll_range_extra_arguments",
+   "spec": [
+    "pol.lib-collections"
+   ],
+   "profile": "policy",
+   "source": "print(range(1, 4, 99))",
+   "output": [
+    "[1, 2, 3]"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_coll_range_infinity",
+   "spec": [
+    "pol.lib-collections"
+   ],
+   "profile": "policy",
+   "source": "print(range(1e400))",
+   "output": [],
+   "error": "line 1: expected a finite number, got inf",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_coll_range_string_refused",
+   "spec": [
+    "pol.lib-collections"
+   ],
+   "profile": "policy",
+   "source": "print(range(\"3\"))",
+   "output": [],
+   "error": "line 1: expected a number, got string",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_coll_oracle_lists",
+   "spec": [
+    "pol.lib-collections"
+   ],
+   "profile": "policy",
+   "source": "let l = [3, 1, 2]  append(l, 9)  l[0] = 7  print(l, len(l), l[-1], slice(l, 1, 3))",
+   "output": [
+    "[7, 1, 2, 9] 4 9 [1, 2]"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "oracle": "lists"
+  },
+  {
+   "name": "policy_coll_oracle_list_ops",
+   "spec": [
+    "pol.lib-collections"
+   ],
+   "profile": "policy",
+   "source": "print(remove_at([1,2,3], 1), has([1,2], 2), range(4), range(2, 5))",
+   "output": [
+    "2 true [0, 1, 2, 3] [2, 3, 4]"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "oracle": "list_ops"
+  },
+  {
+   "name": "policy_coll_oracle_dicts",
+   "spec": [
+    "pol.lib-collections"
+   ],
+   "profile": "policy",
+   "source": "let d = { a: 1 }  d.b = 2  d[\"c\"] = 3  print(d, len(d), d.a, d[\"b\"], has(d, \"z\"), get(d, \"z\", 0))",
+   "output": [
+    "{a: 1, b: 2, c: 3} 3 1 2 false 0"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "oracle": "dicts"
+  },
+  {
+   "name": "policy_text_join",
+   "spec": [
+    "pol.lib-text"
+   ],
+   "profile": "policy",
+   "source": "print(join([\"a\", \"b\"], \"-\"), join([], \",\"), join([\"a\"], \",\"), join([1, 2.5, true, null], \"\"), join([[1], {a: 1}], \"|\"), join([\"a\", \"b\", \"c\"], \", \"))",
+   "output": [
+    "a-b  a 12.5truenull [1]|{a: 1} a, b, c"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_text_join_separator_converted",
+   "spec": [
+    "pol.lib-text"
+   ],
+   "profile": "policy",
+   "source": "print(join([\"a\", \"b\"], 5), join([\"a\", \"b\"], null), join([\"a\", \"b\"], true))",
+   "output": [
+    "a5b anullb atrueb"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_text_join_string_refused",
+   "spec": [
+    "pol.lib-text"
+   ],
+   "profile": "policy",
+   "source": "print(join(\"ab\", \",\"))",
+   "output": [],
+   "error": "line 1: join() needs a list",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_text_join_dict_refused",
+   "spec": [
+    "pol.lib-text"
+   ],
+   "profile": "policy",
+   "source": "print(join({a: 1}, \",\"))",
+   "output": [],
+   "error": "line 1: join() needs a list",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_text_join_one_argument",
+   "spec": [
+    "pol.lib-text"
+   ],
+   "profile": "policy",
+   "source": "print(join([\"a\", \"b\"]))",
+   "output": [],
+   "error": "line 1: join() needs 2 argument(s), got 1",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_text_split",
+   "spec": [
+    "pol.lib-text"
+   ],
+   "profile": "policy",
+   "source": "print(split(\"a,b,c\", \",\"), split(\"a,,b\", \",\"), split(\"\", \",\"), split(\",\", \",\"), split(\"abc\", \"abc\"), split(\"a b\", \" \"), split(\"abc\", \"d\"))",
+   "output": [
+    "[\"a\", \"b\", \"c\"] [\"a\", \"\", \"b\"] [\"\"] [\"\", \"\"] [\"\", \"\"] [\"a\", \"b\"] [\"abc\"]"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_text_split_characters",
+   "spec": [
+    "pol.lib-text"
+   ],
+   "profile": "policy",
+   "source": "print(split(\"ab\", \"\"), split(\"\", \"\"), split(\"héy\", \"\"), len(split(\"😀a\", \"\")))",
+   "output": [
+    "[\"a\", \"b\"] [] [\"h\", \"é\", \"y\"] 2"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_text_split_multi_character_separator",
+   "spec": [
+    "pol.lib-text"
+   ],
+   "profile": "policy",
+   "source": "print(split(\"aXXb\", \"XX\"), split(\"aXXXb\", \"XX\"), split(\"a--b--c\", \"--\"))",
+   "output": [
+    "[\"a\", \"b\"] [\"a\", \"Xb\"] [\"a\", \"b\", \"c\"]"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_text_split_converts",
+   "spec": [
+    "pol.lib-text"
+   ],
+   "profile": "policy",
+   "source": "print(split(5, 5), split(\"a5b\", 5), split([1], \",\"), split(true, \"u\"))",
+   "output": [
+    "[\"\", \"\"] [\"a\", \"b\"] [\"[1]\"] [\"tr\", \"e\"]"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_text_split_no_regex",
+   "spec": [
+    "pol.lib-text"
+   ],
+   "profile": "policy",
+   "source": "print(split(\"a.b\", \".\"), split(\"a|b\", \"|\"), split(\"a*b\", \"*\"))",
+   "output": [
+    "[\"a\", \"b\"] [\"a\", \"b\"] [\"a\", \"b\"]"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_text_contains",
+   "spec": [
+    "pol.lib-text"
+   ],
+   "profile": "policy",
+   "source": "print(contains(\"abc\", \"bc\"), contains(\"abc\", \"\"), contains(\"abc\", \"d\"), contains(\"\", \"\"), contains(\"abc\", \"abcd\"), contains(\"ABC\", \"abc\"))",
+   "output": [
+    "true true false true false false"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_text_contains_converts",
+   "spec": [
+    "pol.lib-text"
+   ],
+   "profile": "policy",
+   "source": "print(contains(12345, 34), contains([1], 1), contains(true, \"ru\"), contains(null, \"ul\"), contains(\"x1\", 1))",
+   "output": [
+    "true true true true true"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_text_contains_one_argument",
+   "spec": [
+    "pol.lib-text"
+   ],
+   "profile": "policy",
+   "source": "print(contains(\"a\"))",
+   "output": [],
+   "error": "line 1: contains() needs 2 argument(s), got 1",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_text_upper_lower",
+   "spec": [
+    "pol.lib-text"
+   ],
+   "profile": "policy",
+   "source": "print(upper(\"aB1 z\"), lower(\"AbC1 Z\"), upper(\"\"), lower(\"\"))",
+   "output": [
+    "AB1 Z abc1 z  "
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_text_upper_lower_converts",
+   "spec": [
+    "pol.lib-text"
+   ],
+   "profile": "policy",
+   "source": "print(upper(5), lower(null), upper([\"a\"]), upper(true), lower({A: \"B\"}))",
+   "output": [
+    "5 null [\"A\"] TRUE {a: \"b\"}"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_text_oracle_strings",
+   "spec": [
+    "pol.lib-text"
+   ],
+   "profile": "policy",
+   "source": "print(upper(\"aB\"), lower(\"aB\"), split(\"a,b,c\", \",\"), split(\"ab\", \"\"), join([\"a\",\"b\"], \"-\"), contains(\"abc\", \"bc\"), len(\"abc\"), \"abc\"[1])",
+   "output": [
+    "AB ab [\"a\", \"b\", \"c\"] [\"a\", \"b\"] a-b true 3 b"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "oracle": "builtins_strings"
+  },
+  {
+   "name": "policy_random_pick_single",
+   "spec": [
+    "pol.lib-random"
+   ],
+   "profile": "policy",
+   "source": "print(pick(7), pick(\"a\"), pick([1, 2]))",
+   "output": [
+    "7 a [1, 2]"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_random_pick_identical",
+   "spec": [
+    "pol.lib-random"
+   ],
+   "profile": "policy",
+   "source": "print(pick(4, 4, 4), pick(\"x\", \"x\"))",
+   "output": [
+    "4 x"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_random_pick_is_one_of",
+   "spec": [
+    "pol.lib-random"
+   ],
+   "profile": "policy",
+   "source": "let p = pick(1, 2, 3) print(p == 1 or p == 2 or p == 3)",
+   "output": [
+    "true"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_random_pick_no_arguments",
+   "spec": [
+    "pol.lib-random"
+   ],
+   "profile": "policy",
+   "source": "print(pick())",
+   "output": [],
+   "error": "line 1: pick() needs 1 argument(s), got 0",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_random_pick_does_not_evaluate_to_list",
+   "spec": [
+    "pol.lib-random"
+   ],
+   "profile": "policy",
+   "source": "print(type(pick([1, 2])))",
+   "output": [
+    "list"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_random_rand_equal_bounds",
+   "spec": [
+    "pol.lib-random"
+   ],
+   "profile": "policy",
+   "source": "print(rand(1, 1), rand(2.5, 2.5), rand(-3, -3))",
+   "output": [
+    "1 2.5 -3"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_random_rand_in_range",
+   "spec": [
+    "pol.lib-random"
+   ],
+   "profile": "policy",
+   "source": "let r = rand(2, 5) print(r >= 2 and r <= 5)",
+   "output": [
+    "true"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_random_rand_many_in_range",
+   "spec": [
+    "pol.lib-random"
+   ],
+   "profile": "policy",
+   "source": "let ok = true let i = 0 while i < 50 { let r = rand(-1, 1) if r < -1 or r > 1 { ok = false } i = i + 1 } print(ok)",
+   "output": [
+    "true"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_random_rand_arity",
+   "spec": [
+    "pol.lib-random"
+   ],
+   "profile": "policy",
+   "source": "print(rand(1))",
+   "output": [],
+   "error": "line 1: rand() needs 2 argument(s), got 1",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_random_rand_string",
+   "spec": [
+    "pol.lib-random"
+   ],
+   "profile": "policy",
+   "source": "print(rand(\"a\", 1))",
+   "output": [],
+   "error": "line 1: expected a number, got string",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_random_rand_is_number",
+   "spec": [
+    "pol.lib-random"
+   ],
+   "profile": "policy",
+   "source": "print(type(rand(0, 1)))",
+   "output": [
+    "number"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_print_joins_with_spaces",
+   "spec": [
+    "pol.lib-print"
+   ],
+   "profile": "policy",
+   "source": "print(1, \"a\", [1], {a: 1}, null, true, 1.5)",
+   "output": [
+    "1 a [1] {a: 1} null true 1.5"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_print_no_arguments",
+   "spec": [
+    "pol.lib-print"
+   ],
+   "profile": "policy",
+   "source": "print()",
+   "output": [
+    ""
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_print_empty_string",
+   "spec": [
+    "pol.lib-print"
+   ],
+   "profile": "policy",
+   "source": "print(\"\")",
+   "output": [
+    ""
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_print_returns_null",
+   "spec": [
+    "pol.lib-print"
+   ],
+   "profile": "policy",
+   "source": "let x = print(\"a\") print(x, type(x))",
+   "output": [
+    "a",
+    "null null"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_print_nested",
+   "spec": [
+    "pol.lib-print"
+   ],
+   "profile": "policy",
+   "source": "print(print(\"x\"))",
+   "output": [
+    "x",
+    "null"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_print_one_entry_per_call",
+   "spec": [
+    "pol.lib-print"
+   ],
+   "profile": "policy",
+   "source": "print(\"a\\nb\")\nprint(\"c\")",
+   "output": [
+    "a\nb",
+    "c"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_print_order",
+   "spec": [
+    "pol.lib-print"
+   ],
+   "profile": "policy",
+   "source": "print(1) print(2) print(3)",
+   "output": [
+    "1",
+    "2",
+    "3"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_print_arguments_text",
+   "spec": [
+    "pol.lib-print"
+   ],
+   "profile": "policy",
+   "source": "print(\"a\" + 1, 2 + 2, [2 + 2], \"x\")",
+   "output": [
+    "a1 4 [4] x"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_print_error_argument_prints_nothing",
+   "spec": [
+    "pol.lib-print"
+   ],
+   "profile": "policy",
+   "source": "print(\"a\", nope)",
+   "output": [],
+   "error": "line 1: unknown identifier 'nope'",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_print_is_not_a_value",
+   "spec": [
+    "pol.lib-print"
+   ],
+   "profile": "policy",
+   "source": "let p = print",
+   "output": [],
+   "error": "line 1: unknown identifier 'print'",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_limits_list_range_at_the_limit",
+   "spec": [
+    "pol.limits"
+   ],
+   "profile": "policy",
+   "source": "print(len(range(1000000)), len(range(0, 1000000)), len(range(-5, 999995)))",
+   "output": [
+    "1000000 1000000 1000000"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_limits_list_range_over_the_limit",
+   "spec": [
+    "pol.limits"
+   ],
+   "profile": "policy",
+   "source": "print(range(1000001))",
+   "output": [],
+   "error": "line 1: a list cannot have more than 1000000 items",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_limits_list_range_two_arguments_over",
+   "spec": [
+    "pol.limits"
+   ],
+   "profile": "policy",
+   "source": "print(range(5, 1000006))",
+   "output": [],
+   "error": "line 1: a list cannot have more than 1000000 items",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_limits_list_range_far_over_allocates_nothing",
+   "spec": [
+    "pol.limits"
+   ],
+   "profile": "policy",
+   "source": "print(range(1e12))",
+   "output": [],
+   "error": "line 1: a list cannot have more than 1000000 items",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_limits_list_range_negative_start_over",
+   "spec": [
+    "pol.limits"
+   ],
+   "profile": "policy",
+   "source": "print(range(-1000000, 1))",
+   "output": [],
+   "error": "line 1: a list cannot have more than 1000000 items",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_limits_list_concat_at_the_limit",
+   "spec": [
+    "pol.limits"
+   ],
+   "profile": "policy",
+   "source": "let a = range(500000) let b = range(500000) print(len(a + b))",
+   "output": [
+    "1000000"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_limits_list_concat_over_the_limit",
+   "spec": [
+    "pol.limits"
+   ],
+   "profile": "policy",
+   "source": "let a = range(500000) let b = range(500001) print(len(a + b))",
+   "output": [],
+   "error": "a list cannot have more than 1000000 items",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_limits_list_doubling_stops",
+   "spec": [
+    "pol.limits"
+   ],
+   "profile": "policy",
+   "source": "let l = [1] let i = 0 while i < 30 { l = l + l  i = i + 1 }\nprint(len(l))",
+   "output": [],
+   "error": "a list cannot have more than 1000000 items",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_limits_list_doubling_keeps_earlier_output",
+   "spec": [
+    "pol.limits"
+   ],
+   "profile": "policy",
+   "source": "let l = [1] let i = 0 while i < 30 { l = l + l  i = i + 1  print(i) }",
+   "output": [
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9",
+    "10",
+    "11",
+    "12",
+    "13",
+    "14",
+    "15",
+    "16",
+    "17",
+    "18",
+    "19"
+   ],
+   "error": "a list cannot have more than 1000000 items",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_limits_list_append_at_the_limit",
+   "spec": [
+    "pol.limits"
+   ],
+   "profile": "policy",
+   "source": "let l = range(999999) append(l, 1) print(len(l))",
+   "output": [
+    "1000000"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_limits_list_append_over_the_limit",
+   "spec": [
+    "pol.limits"
+   ],
+   "profile": "policy",
+   "source": "let l = range(1000000) append(l, 1)",
+   "output": [],
+   "error": "line 1: a list cannot have more than 1000000 items",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_limits_list_small_lists_unaffected",
+   "spec": [
+    "pol.limits"
+   ],
+   "profile": "policy",
+   "source": "print(range(3), [1] + [2], len(append([], 1)))",
+   "output": [
+    "[0, 1, 2] [1, 2] 1"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_lib_range_over_the_limit_message",
+   "spec": [
+    "pol.lib-collections"
+   ],
+   "profile": "policy",
+   "source": "print(range(2000000))",
+   "output": [],
+   "error": "line 1: a list cannot have more than 1000000 items",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_lib_append_in_a_loop",
+   "spec": [
+    "pol.lib-collections"
+   ],
+   "profile": "policy",
+   "source": "let l = [] let i = 0 while i < 10 { append(l, i)  i = i + 1 } print(len(l))",
+   "output": [
+    "10"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_concat_list_over_the_limit_has_no_line",
+   "spec": [
+    "pol.concat"
+   ],
+   "profile": "policy",
+   "source": "print(\"before\")\nlet a = range(600000)\nprint(len(a + a))",
+   "output": [
+    "before"
+   ],
+   "error": "a list cannot have more than 1000000 items",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_limits_string_doubling_stops",
+   "spec": [
+    "pol.limits"
+   ],
+   "profile": "policy",
+   "source": "let s = \"x\" let i = 0 while i < 30 { s = s + s  i = i + 1 }\nprint(len(s))",
+   "output": [],
+   "error": "a string cannot have more than 1000000 characters",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_limits_string_doubling_keeps_earlier_output",
+   "spec": [
+    "pol.limits"
+   ],
+   "profile": "policy",
+   "source": "let s = \"x\" let i = 0 while i < 30 { s = s + s  i = i + 1  print(i) }",
+   "output": [
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9",
+    "10",
+    "11",
+    "12",
+    "13",
+    "14",
+    "15",
+    "16",
+    "17",
+    "18",
+    "19"
+   ],
+   "error": "a string cannot have more than 1000000 characters",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_limits_string_concat_at_the_limit",
+   "spec": [
+    "pol.limits"
+   ],
+   "profile": "policy",
+   "source": "let s = \"x\" let i = 0 while i < 19 { s = s + s  i = i + 1 }\nlet t = slice(s, 0, 475712)\nprint(len(s + t), len(t + s))",
+   "output": [
+    "1000000 1000000"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_limits_string_concat_over_the_limit",
+   "spec": [
+    "pol.limits"
+   ],
+   "profile": "policy",
+   "source": "let s = \"x\" let i = 0 while i < 19 { s = s + s  i = i + 1 }\nlet t = slice(s, 0, 475713)\nprint(len(s + t))",
+   "output": [],
+   "error": "a string cannot have more than 1000000 characters",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_limits_string_concat_has_no_line",
+   "spec": [
+    "pol.limits"
+   ],
+   "profile": "policy",
+   "source": "print(\"before\")\nlet s = \"x\" let i = 0 while i < 19 { s = s + s  i = i + 1 }\nprint(len(s + s))",
+   "output": [
+    "before"
+   ],
+   "error": "a string cannot have more than 1000000 characters",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_limits_string_join_over_the_limit",
+   "spec": [
+    "pol.limits"
+   ],
+   "profile": "policy",
+   "source": "let s = \"x\" let i = 0 while i < 19 { s = s + s  i = i + 1 }\nprint(len(join([s, s], \"\")))",
+   "output": [],
+   "error": "line 2: a string cannot have more than 1000000 characters",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_limits_string_join_separator_counts",
+   "spec": [
+    "pol.limits"
+   ],
+   "profile": "policy",
+   "source": "let s = \"x\" let i = 0 while i < 19 { s = s + s  i = i + 1 }\nlet t = slice(s, 0, 475711)\nprint(len(join([s, t], \"-\")))\nprint(len(join([s, t], \"--\")))",
+   "output": [
+    "1000000"
+   ],
+   "error": "line 4: a string cannot have more than 1000000 characters",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_limits_string_str_of_a_big_list",
+   "spec": [
+    "pol.limits"
+   ],
+   "profile": "policy",
+   "source": "print(len(str(range(100000))))\nprint(len(str(range(200000))))",
+   "output": [
+    "688890"
+   ],
+   "error": "line 2: a string cannot have more than 1000000 characters",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_limits_string_print_of_a_big_list",
+   "spec": [
+    "pol.limits"
+   ],
+   "profile": "policy",
+   "source": "print(\"before\")\nprint(range(200000))",
+   "output": [
+    "before"
+   ],
+   "error": "line 2: a string cannot have more than 1000000 characters",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_limits_string_shared_lists_do_not_explode",
+   "spec": [
+    "pol.limits"
+   ],
+   "profile": "policy",
+   "source": "let l = [] let i = 0 while i < 40 { l = [l, l]  i = i + 1 }\nprint(\"built\")\nprint(l)",
+   "output": [
+    "built"
+   ],
+   "error": "line 3: a string cannot have more than 1000000 characters",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_limits_string_shared_lists_str",
+   "spec": [
+    "pol.limits"
+   ],
+   "profile": "policy",
+   "source": "let l = [] let i = 0 while i < 40 { l = [l, l]  i = i + 1 }\nprint(str(l))",
+   "output": [],
+   "error": "line 2: a string cannot have more than 1000000 characters",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_limits_string_shared_lists_concat",
+   "spec": [
+    "pol.limits"
+   ],
+   "profile": "policy",
+   "source": "let l = [] let i = 0 while i < 40 { l = [l, l]  i = i + 1 }\nprint(\"v\" + l)",
+   "output": [],
+   "error": "a string cannot have more than 1000000 characters",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_limits_string_shared_lists_as_a_key",
+   "spec": [
+    "pol.limits"
+   ],
+   "profile": "policy",
+   "source": "let l = [] let i = 0 while i < 40 { l = [l, l]  i = i + 1 }\nlet d = {}\nd[l] = 1",
+   "output": [],
+   "error": "line 3: a string cannot have more than 1000000 characters",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_limits_string_shared_lists_in_join",
+   "spec": [
+    "pol.limits"
+   ],
+   "profile": "policy",
+   "source": "let l = [] let i = 0 while i < 40 { l = [l, l]  i = i + 1 }\nprint(join([l], \",\"))",
+   "output": [],
+   "error": "line 2: a string cannot have more than 1000000 characters",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  },
+  {
+   "name": "policy_limits_string_small_strings_unaffected",
+   "spec": [
+    "pol.limits"
+   ],
+   "profile": "policy",
+   "source": "print(len(\"a\" + \"b\"), \"a\" + [1, \"x\"], str({a: [1]}), join([1, 2], \"-\"), upper(\"ab\"))",
+   "output": [
+    "2 a[1, \"x\"] {a: [1]} 1-2 AB"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_limits_string_lowercase_of_big_string_is_fine",
+   "spec": [
+    "pol.limits"
+   ],
+   "profile": "policy",
+   "source": "let s = \"x\" let i = 0 while i < 19 { s = s + s  i = i + 1 }\nprint(len(lower(s)), len(upper(s)), len(split(s, \"x\")))",
+   "output": [
+    "524288 524288 524289"
+   ],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": []
+  },
+  {
+   "name": "policy_text_longer_than_the_limit_message",
+   "spec": [
+    "pol.text"
+   ],
+   "profile": "policy",
+   "source": "print(str(range(300000)))",
+   "output": [],
+   "error": "line 1: a string cannot have more than 1000000 characters",
+   "error_line": null,
+   "exit": 1,
+   "host_calls": []
+  }
+ ]
+}

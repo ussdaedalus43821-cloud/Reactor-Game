@@ -11,6 +11,9 @@
 #
 # The one thing this cannot do is run GDScript. For that:
 #   godot --headless --path godot --script res://scripts/nova/parity_check.gd
+#   godot --headless --path godot --script res://scripts/nova/corpus_check.gd
+# (the second replays the policy dialect's specification corpus, copied from the Nova_Lang
+# repository into godot/scripts/nova/policy_corpus/ by its tools/export_policy_corpus.py.)
 set -euo pipefail
 cd "$(dirname "$0")/.."
 

@@ -31,6 +31,7 @@ const LIST_TOO_LONG := "a list cannot have more than 1000000 items"
 ## Nor any string longer than this many characters (the reference's MAX_STRING_CHARS).
 const MAX_STRING_CHARS := 1000000
 const STRING_TOO_LONG := "a string cannot have more than 1000000 characters"
+const QUOTE := "\""
 
 const FLOW_RETURN := "return"
 const FLOW_BREAK := "break"
@@ -256,9 +257,9 @@ static func _text_into(v, inside: bool, parts: PackedStringArray, used: Array, l
 			return _add_piece("}", parts, used, limit)
 		TYPE_STRING, TYPE_STRING_NAME:
 			if inside:
-				return _add_piece("\"", parts, used, limit) \
+				return _add_piece(QUOTE, parts, used, limit) \
 						and _add_piece(String(v), parts, used, limit) \
-						and _add_piece("\"", parts, used, limit)
+						and _add_piece(QUOTE, parts, used, limit)
 			return _add_piece(String(v), parts, used, limit)
 	return _add_piece(text(v), parts, used, limit)
 
