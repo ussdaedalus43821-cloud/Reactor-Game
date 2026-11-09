@@ -1,5 +1,12 @@
 # Reactor Sim — Godot + NovaLang
 
+> **Powered by NovaLang.** The reactor's control policy
+> (`godot/scripts/reactor_rules.nova`) is written in [NovaLang](https://github.com/ussdaedalus43821-cloud/Nova_Lang), and
+> runs on the GDScript NovaLang engine that ships inside the game
+> (`godot/scripts/nova/`). This repository is where that Godot engine is
+> developed and checked against NovaLang's reference implementation; Daedalus
+> uses the same engine.
+
 A nuclear reactor control room, and the small language its control logic is
 written in. Six-group delayed-neutron point kinetics integrated with
 fixed-step RK4, a policy written in NovaLang, and a Godot panel with a GPU
