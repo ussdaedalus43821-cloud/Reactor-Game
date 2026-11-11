@@ -1,0 +1,98 @@
+# The GDScript port of NovaLang's policy dialect, checked under headless Godot on every push.
+#
+# Two scripts, both of which exit non-zero when the port and its reference disagree:
+#   parity_check.gd  replays the recorded Python oracle (conformance.json) and the 900-step reactor trace;
+#   corpus_check.gd  replays the specification's corpus (godot/scripts/nova/policy_corpus/, exported from Nova_Lang).
+# Each runs on both GDScript backends, the bytecode VM (NovaVM2) and the tree-walker.
+#
+# Godot is the official Linux build, downloaded from the engine's own release page and checked against the
+# SHA-512 published with that release. To move to another Godot version change GODOT_VERSION and GODOT_SHA512
+# together (the sum is the `linux.x86_64.zip` line of SHA512-SUMS.txt in the release).
+#
+# The lines "WARNING: Exponent too high" in the output are Godot's own number parser on literals such as 1e999 in
+# the corpus; the checks expect them and they are not failures.
+
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  GODOT_VERSION: 4.7.2-stable
+  GODOT_SHA512: 9aa00f7a605200940bce3027a567b782f49bd8e940dd06ae9e987bd65aee1b1467edd56ed84fcdcbdd44354bf613bdbb4e5d2913e925850368e150c59ed54c65
+
+jobs:
+  godot:
+    name: godot (parity and corpus)
+    # Every push runs this. A pull request from a branch of this repository is already covered by its push, so
+    # the pull_request run is kept for forks only.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Download Godot and verify its checksum
+        run: |
+          set -euo pipefail
+          file="Godot_v${GODOT_VERSION}_linux.x86_64"
+          curl -fsSL --retry 3 -o "$RUNNER_TEMP/godot.zip" \
+            "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/${file}.zip"
+          echo "${GODOT_SHA512}  $RUNNER_TEMP/godot.zip" | sha512sum --check --strict
+          unzip -q "$RUNNER_TEMP/godot.zip" -d "$RUNNER_TEMP/godot"
+          chmod +x "$RUNNER_TEMP/godot/${file}"
+          echo "GODOT=$RUNNER_TEMP/godot/${file}" >> "$GITHUB_ENV"
+
+      - name: Godot version
+        run: |
+          "$GODOT" --version
+
+      # The scripts use the project's global classes, which Godot records when it imports the project. The
+      # first import of a fresh checkout can end with an error after doing its work, so it is tried twice; the
+      # checks below are what decide the job.
+      - name: Import the project
+        working-directory: godot
+        run: |
+          timeout 600 "$GODOT" --headless --path . --import || timeout 600 "$GODOT" --headless --path . --import
+
+      - name: Parity check (parity_check.gd, both backends)
+        working-directory: godot
+        run: |
+          set -euo pipefail
+          timeout 900 "$GODOT" --headless --path . --script res://scripts/nova/parity_check.gd 2>&1 | tee "$RUNNER_TEMP/parity.log"
+          # A script that fails to load prints an error and may still exit 0: require the two lines that say it ran.
+          for backend in "bytecode VM" "tree-walker"; do
+            grep -F "parity OK (${backend})" "$RUNNER_TEMP/parity.log" \
+              || { echo "::error::parity_check.gd did not report 'parity OK (${backend})'"; exit 1; }
+          done
+
+      - name: Corpus check (corpus_check.gd, both backends)
+        working-directory: godot
+        run: |
+          set -euo pipefail
+          timeout 900 "$GODOT" --headless --path . --script res://scripts/nova/corpus_check.gd 2>&1 | tee "$RUNNER_TEMP/corpus.log"
+          # Every case of the exported corpus must have run: SOURCE.txt records how many there are.
+          cases="$(grep -oE '^[0-9]+ cases' scripts/nova/policy_corpus/SOURCE.txt | grep -oE '^[0-9]+')"
+          for backend in "bytecode VM" "tree-walker"; do
+            grep -F "corpus OK (${backend}) -- ${cases} cases" "$RUNNER_TEMP/corpus.log" \
+              || { echo "::error::corpus_check.gd did not report 'corpus OK (${backend}) -- ${cases} cases'"; exit 1; }
+          done
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### Godot ${GODOT_VERSION}, commit ${GITHUB_SHA}"
+            echo '```'
+            grep -hE "^(parity|corpus) OK|cases differ|parity failure|FAIL " "$RUNNER_TEMP/parity.log" "$RUNNER_TEMP/corpus.log" 2>/dev/null | head -40 || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
