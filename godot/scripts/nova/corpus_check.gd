@@ -189,10 +189,11 @@ func _run_step(vm: NovaVM, model: ReactorModel, step: Dictionary, calls: Array, 
 		var inputs: Dictionary = tick_step.get("inputs", {}).duplicate(true)
 		var dt := float(tick_step.get("dt", 0.05))
 		var faults := bool(tick_step.get("faults", true))
+		var overrides: Dictionary = tick_step.get("overrides", {}).duplicate(true)
 		if model != null:
-			entry["ok"] = model.tick(dt, inputs, faults)
+			entry["ok"] = model.tick(dt, inputs, faults, overrides)
 		else:
-			entry["ok"] = vm.tick(dt, inputs, faults)
+			entry["ok"] = vm.tick(dt, inputs, faults, overrides)
 	elif step.has("inject_fault"):
 		entry["ok"] = vm.inject_fault(String(step["inject_fault"]))
 	elif step.has("clear_fault"):
@@ -373,7 +374,7 @@ class ReactorModel extends RefCounted:
 		vm.set_global("victory", victory)
 		vm.set_global("running", false)
 
-	func tick(dt: float, inputs: Dictionary, faults: bool) -> bool:
+	func tick(dt: float, inputs: Dictionary, faults: bool, overrides: Dictionary = {}) -> bool:
 		var given: Dictionary = inputs.duplicate()
 		var t := float(given.get("t", 0.0))
 		given["scram"] = scram
@@ -384,7 +385,7 @@ class ReactorModel extends RefCounted:
 		given["operator_scram"] = NovaEvaluator.truthy(given.get("operator_scram", false))
 		scram_requested = false
 		trip_reset = false
-		var ok := vm.tick(dt, given, faults)
+		var ok := vm.tick(dt, given, faults, overrides)
 		if ok:
 			if scram_requested and not scram:
 				scram = true

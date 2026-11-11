@@ -11377,6 +11377,800 @@
    "host_functions": [
     "log"
    ]
+  },
+  {
+   "name": "policy_overrides_beat_a_fault",
+   "spec": [
+    "pol.overrides",
+    "pol.tick"
+   ],
+   "profile": "policy",
+   "source": "reactor \"DEMO\" version 1\neffects { valve = 0.5 }\nsignals { open_enough = valve >= 0.4 }\nfault stuck duration 5 { set valve = 0.0 }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "valve",
+     "open_enough",
+     "active_fault"
+    ],
+    "steps": [
+     {
+      "inject_fault": "stuck"
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05
+       },
+       "faults": false,
+       "overrides": {
+        "valve": 0.9
+       }
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.1
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(ALARM: STUCK)"
+     ],
+     "watch": {
+      "valve": 0.5,
+      "open_enough": null,
+      "active_fault": "stuck"
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "valve": 0.0,
+      "open_enough": false,
+      "active_fault": "stuck"
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "valve": 0.9,
+      "open_enough": true,
+      "active_fault": "stuck"
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "valve": 0.0,
+      "open_enough": false,
+      "active_fault": "stuck"
+     }
+    }
+   ]
+  },
+  {
+   "name": "policy_overrides_beat_an_input",
+   "spec": [
+    "pol.overrides",
+    "pol.tick"
+   ],
+   "profile": "policy",
+   "source": "reactor \"DEMO\" version 1\nsignals { high = pressure > 7 }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "pressure",
+     "high"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0,
+        "pressure": 5
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05,
+        "pressure": 5
+       },
+       "faults": false,
+       "overrides": {
+        "pressure": 9
+       }
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.1,
+        "pressure": 5
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "pressure": 5,
+      "high": false
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "pressure": 9,
+      "high": true
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "pressure": 5,
+      "high": false
+     }
+    }
+   ]
+  },
+  {
+   "name": "policy_overrides_replace_an_effect_default_for_one_tick",
+   "spec": [
+    "pol.overrides",
+    "pol.tick"
+   ],
+   "profile": "policy",
+   "source": "reactor \"DEMO\" version 1\neffects { valve = 0.5 }\nsignals { open = valve }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "valve",
+     "open"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05
+       },
+       "faults": false,
+       "overrides": {
+        "valve": 0.9
+       }
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.1
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "valve": 0.5,
+      "open": 0.5
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "valve": 0.9,
+      "open": 0.9
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "valve": 0.5,
+      "open": 0.5
+     }
+    }
+   ]
+  },
+  {
+   "name": "policy_overrides_a_persistent_effect_keeps_the_override_value",
+   "spec": [
+    "pol.overrides",
+    "pol.tick"
+   ],
+   "profile": "policy",
+   "source": "reactor \"DEMO\" version 1\neffects { valve = 0.5 persistent }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "valve"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05
+       },
+       "faults": false,
+       "overrides": {
+        "valve": 0.9
+       }
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.1
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "valve": 0.5
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "valve": 0.9
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "valve": 0.9
+     }
+    }
+   ]
+  },
+  {
+   "name": "policy_overrides_are_seen_by_signals_and_rules",
+   "spec": [
+    "pol.overrides",
+    "pol.tick"
+   ],
+   "profile": "policy",
+   "source": "reactor \"DEMO\" version 1\neffects { alarm = false }\nsignals { hot = temp > 100 }\nrule too_hot { when hot then set alarm = true }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "temp",
+     "hot",
+     "alarm"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0,
+        "temp": 20
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05,
+        "temp": 20
+       },
+       "faults": false,
+       "overrides": {
+        "temp": 150
+       }
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.1,
+        "temp": 20
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "temp": 20,
+      "hot": false,
+      "alarm": false
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "temp": 150,
+      "hot": true,
+      "alarm": true
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "temp": 20,
+      "hot": false,
+      "alarm": false
+     }
+    }
+   ]
+  },
+  {
+   "name": "policy_overrides_are_not_a_lock_for_rules",
+   "spec": [
+    "pol.overrides",
+    "pol.tick"
+   ],
+   "profile": "policy",
+   "source": "reactor \"DEMO\" version 1\neffects { valve = 0.5 }\nsignals { seen = valve }\nrule close_it { when true then set valve = 0.1 }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "valve",
+     "seen"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false,
+       "overrides": {
+        "valve": 0.9
+       }
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "valve": 0.1,
+      "seen": 0.9
+     }
+    }
+   ]
+  },
+  {
+   "name": "policy_overrides_a_signal_of_the_same_name_replaces_the_override",
+   "spec": [
+    "pol.overrides",
+    "pol.tick"
+   ],
+   "profile": "policy",
+   "source": "reactor \"DEMO\" version 1\nsignals { level = base * 2 }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "base",
+     "level"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0,
+        "base": 3
+       },
+       "faults": false,
+       "overrides": {
+        "level": 100
+       }
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05,
+        "base": 3
+       },
+       "faults": false,
+       "overrides": {
+        "base": 10
+       }
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "base": 3,
+      "level": 6.0
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "base": 10,
+      "level": 20.0
+     }
+    }
+   ]
+  },
+  {
+   "name": "policy_overrides_an_undeclared_name_is_defined",
+   "spec": [
+    "pol.overrides",
+    "pol.tick"
+   ],
+   "profile": "policy",
+   "source": "reactor \"DEMO\" version 1\nsignals { twice = extra * 2 }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "extra",
+     "twice"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false,
+       "overrides": {
+        "extra": 21
+       }
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "extra": 21,
+      "twice": 42.0
+     }
+    }
+   ]
+  },
+  {
+   "name": "policy_overrides_none_or_empty_changes_nothing",
+   "spec": [
+    "pol.overrides",
+    "pol.tick"
+   ],
+   "profile": "policy",
+   "source": "reactor \"DEMO\" version 1\neffects { valve = 0.5 }\nsignals { open = valve }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "valve",
+     "open"
+    ],
+    "steps": [
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.0
+       },
+       "faults": false
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.05
+       },
+       "faults": false,
+       "overrides": {}
+      }
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 0.1
+       },
+       "faults": false
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "valve": 0.5,
+      "open": 0.5
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "valve": 0.5,
+      "open": 0.5
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "valve": 0.5,
+      "open": 0.5
+     }
+    }
+   ]
+  },
+  {
+   "name": "policy_overrides_time_override_reaches_the_rules_not_the_scheduler",
+   "spec": [
+    "pol.overrides",
+    "pol.tick"
+   ],
+   "profile": "policy",
+   "source": "reactor \"DEMO\" version 1\nsignals { now = t }\nfault stuck duration 5 { }",
+   "output": [],
+   "error": "",
+   "error_line": null,
+   "exit": 0,
+   "host_calls": [],
+   "engine": {
+    "seed": 1,
+    "watch": [
+     "t",
+     "now",
+     "fault_elapsed"
+    ],
+    "steps": [
+     {
+      "inject_fault": "stuck"
+     },
+     {
+      "tick": {
+       "dt": 0.05,
+       "inputs": {
+        "t": 2.0
+       },
+       "faults": false,
+       "overrides": {
+        "t": 50.0
+       }
+      }
+     }
+    ]
+   },
+   "host_functions": [
+    "log"
+   ],
+   "results": [
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [
+      "log(ALARM: STUCK)"
+     ],
+     "watch": {
+      "t": null,
+      "now": null,
+      "fault_elapsed": 0.0
+     }
+    },
+    {
+     "ok": true,
+     "error": "",
+     "output": [],
+     "host_calls": [],
+     "watch": {
+      "t": 50.0,
+      "now": 50.0,
+      "fault_elapsed": 2.0
+     }
+    }
+   ]
   }
  ]
 }

@@ -340,7 +340,8 @@ class NovaVM:
         `overrides` are values the host forces regardless of the policy (an
         operator's hand on a valve). They land after the fault bodies and
         before the signals, so they beat any fault and every trip channel
-        sees the plant as it really is."""
+        sees the plant as it really is
+        (docs/spec/14-policy-engine.md, [pol.tick], [pol.overrides])."""
         ev = self.evaluator
         ev.begin_run()
         ev.dt = dt
